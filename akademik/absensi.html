@@ -303,6 +303,34 @@ tr:hover td{background:#f8fafc;}
   .main{margin-left:0;}
   .stats-top,.absen-grid,.stat-grid{grid-template-columns:1fr;}
 }
+
+  /* Cari siswa by nama */
+  .cari-wrap{position:relative;margin-bottom:16px;}
+  .cari-wrap input{
+    width:100%;padding:11px 14px;border:2px solid #dde3ee;
+    border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:14px;outline:none;transition:border-color 0.2s;
+  }
+  .cari-wrap input:focus{border-color:var(--teal);}
+  .cari-hasil{
+    position:absolute;top:100%;left:0;right:0;z-index:50;
+    background:#fff;border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.15);
+    max-height:220px;overflow-y:auto;
+    display:none;border:1px solid #e8edf5;
+  }
+  .cari-hasil.show{display:block;}
+  .cari-item{
+    padding:10px 14px;cursor:pointer;
+    border-bottom:1px solid #f0f4f8;
+    transition:background 0.15s;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .cari-item:last-child{border-bottom:none;}
+  .cari-item:hover{background:#e8f6f8;}
+  .cari-item .ci-nama{font-size:13px;font-weight:600;}
+  .cari-item .ci-info{font-size:11px;color:#5a6a7e;}
+
 </style>
 </head>
 <body>
@@ -434,9 +462,16 @@ tr:hover td{background:#f8fafc;}
       </div>
       <button style="width:100%;padding:8px;margin-bottom:12px;background:#f0f4f8;border:1px solid #dde3ee;border-radius:8px;cursor:pointer;font-size:12px;color:var(--teks-sub);font-family:'Plus Jakarta Sans',sans-serif;" onclick="stopScan()">✕ Tutup Kamera</button>
 
+      <!-- Cari siswa by nama -->
+      <div class="cari-wrap">
+        <input type="text" id="cariNama" placeholder="🔍 Cari nama siswa (jika tidak ada kartu)..."
+          oninput="cariSiswaNama(this.value)" autocomplete="off">
+        <div class="cari-hasil" id="cariHasil"></div>
+      </div>
+
       <!-- Input Manual NISN -->
       <div class="nisn-input">
-        <input type="text" id="nisnInput" placeholder="Atau ketik NISN di sini..." maxlength="15"
+        <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..." maxlength="15"
           onkeypress="if(event.key==='Enter')prosesAbsen()">
         <button class="btn-scan" onclick="prosesAbsen()">✓ Proses</button>
       </div>
@@ -747,6 +782,7 @@ window.addEventListener('load', async () => {
   startClock();
   await loadKelas();
   await loadDashboard();
+  await loadSiswa(); // muat data siswa untuk fitur cari nama
 });
 
 // ── JAM ────────────────────────────────────────────────
@@ -983,10 +1019,77 @@ async function konfirmasiAbsen() {
 
 function resetInputAbsen() {
   document.getElementById('nisnInput').value = '';
+  document.getElementById('cariNama').value = '';
+  document.getElementById('cariHasil').classList.remove('show');
   document.getElementById('siswaPreview').classList.remove('show');
   document.getElementById('btnAbsen').disabled = true;
   siswaYangDipilih = null;
 }
+
+// ── CARI SISWA BY NAMA ──────────────────────────────────────
+function cariSiswaNama(q) {
+  const hasil = document.getElementById('cariHasil');
+  if (!q || q.length < 2) { hasil.classList.remove('show'); return; }
+
+  // Cari dari data lokal dulu
+  const query = q.toLowerCase();
+  let found = dataSiswa.filter(s =>
+    s.nama.toLowerCase().includes(query) ||
+    (s.nisn||'').includes(query) ||
+    (s.kelas||'').toLowerCase().includes(query)
+  ).slice(0, 8);
+
+  if (!found.length) {
+    hasil.innerHTML = '<div class="cari-item"><div class="ci-nama" style="color:#9aabb8;">Siswa tidak ditemukan</div></div>';
+    hasil.classList.add('show');
+    return;
+  }
+
+  hasil.innerHTML = found.map(s => `
+    <div class="cari-item" onclick="pilihSiswaDariCari('${s.nisn}','${s.nama.replace(/'/g,"\'")}','${s.kelas}')">
+      <div>
+        <div class="ci-nama">${s.nama}</div>
+        <div class="ci-info">Kelas ${s.kelas} &nbsp;|&nbsp; NISN: ${s.nisn||'—'}</div>
+      </div>
+      <span style="font-size:11px;background:#e8f6f8;color:var(--teal);padding:2px 8px;border-radius:5px;font-weight:600;">${s.kelas}</span>
+    </div>`).join('');
+  hasil.classList.add('show');
+}
+
+function pilihSiswaDariCari(nisn, nama, kelas) {
+  // Tutup dropdown
+  document.getElementById('cariHasil').classList.remove('show');
+  document.getElementById('cariNama').value = nama;
+
+  // Isi NISN dan proses
+  document.getElementById('nisnInput').value = nisn;
+
+  // Tampilkan preview
+  const s = dataSiswa.find(x => x.nisn === nisn) || {nisn, nama, kelas};
+  siswaYangDipilih = s;
+  const inisial = nama.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  document.getElementById('siswaNama').textContent = nama;
+  document.getElementById('siswaKelas').textContent = 'Kelas ' + kelas;
+  document.getElementById('siswaNisn').textContent = 'NISN: ' + nisn;
+  if (s.fotoUrl) {
+    document.getElementById('siswaFoto').innerHTML = `<img src="${s.fotoUrl}" alt="${nama}">`;
+  } else {
+    document.getElementById('siswaFoto').innerHTML = `<div class="avatar" style="background:#0a7e8c;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#fff;">${inisial}</div>`;
+  }
+  document.getElementById('siswaPreview').classList.add('show');
+  document.getElementById('btnAbsen').disabled = false;
+
+  // Mode Quick langsung proses
+  if (MODE_SCAN === 'quick') konfirmasiAbsen();
+}
+
+// Tutup dropdown saat klik di luar
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.cari-wrap')) {
+    const h = document.getElementById('cariHasil');
+    if (h) h.classList.remove('show');
+  }
+});
 
 function tampilNotif(icon, nama, detail, isError) {
   const notif = document.getElementById('notifAbsen');
