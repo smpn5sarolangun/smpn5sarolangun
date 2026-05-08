@@ -331,6 +331,46 @@ tr:hover td{background:#f8fafc;}
   .cari-item .ci-nama{font-size:13px;font-weight:600;}
   .cari-item .ci-info{font-size:11px;color:#5a6a7e;}
 
+
+  /* ── PRINT F4 ── */
+  @media print {
+    @page {
+      size: 215mm 330mm; /* F4 */
+      margin: 10mm 12mm;
+    }
+    body { background: #fff !important; font-size: 11px; }
+    .topbar, .sidebar, .notif-absen, .no-print { display: none !important; }
+    .main { margin-left: 0 !important; margin-top: 0 !important; padding: 0 !important; }
+    .page { display: block !important; }
+    .page:not(.active) { display: none !important; }
+    .print-header { display: block !important; }
+    .print-btn-bar { display: none !important; }
+    table { font-size: 10px; width: 100%; }
+    th, td { padding: 5px 8px !important; }
+    .filter-bar { display: none !important; }
+    .print-info { display: block !important; }
+  }
+  .print-header {
+    display: none;
+    text-align: center;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #0d3b6e;
+    padding-bottom: 12px;
+  }
+  .print-header h2 { font-size: 14px; font-weight: 800; color: #0d3b6e; margin-bottom: 2px; }
+  .print-header p  { font-size: 11px; color: #5a6a7e; }
+  .print-info { display: none; font-size: 11px; color: #5a6a7e; margin-bottom: 8px; }
+  .print-btn-bar {
+    display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+  }
+  .btn-cetak-pdf {
+    padding: 9px 20px; background: #1a7a4a; color: #fff; border: none;
+    border-radius: 9px; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-cetak-pdf:hover { background: #22a060; }
+
 </style>
 </head>
 <body>
@@ -636,8 +676,14 @@ tr:hover td{background:#f8fafc;}
 
 <!-- ═══ PAGE: REKAP ═══ -->
 <div class="page" id="page-rekap">
-  <h2 style="font-size:20px;font-weight:800;margin-bottom:16px;">📊 Rekap Absensi</h2>
-  <div class="filter-bar">
+  <!-- Header print -->
+  <div class="print-header">
+    <h2>REKAP ABSENSI SISWA</h2>
+    <p>SMP Negeri 05 Sarolangun &nbsp;|&nbsp; <span id="printRekamInfo"></span></p>
+  </div>
+
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:16px;" class="no-print">📊 Rekap Absensi</h2>
+  <div class="filter-bar no-print">
     <div class="fg"><label style="font-size:11px;font-weight:700;color:#9aabb8;">Dari Tanggal</label><input type="date" id="rekapDari"></div>
     <div class="fg"><label style="font-size:11px;font-weight:700;color:#9aabb8;">Sampai Tanggal</label><input type="date" id="rekapSampai"></div>
     <div class="fg"><label style="font-size:11px;font-weight:700;color:#9aabb8;">Kelas</label>
@@ -645,12 +691,24 @@ tr:hover td{background:#f8fafc;}
         <option value="">Semua Kelas</option>
       </select>
     </div>
-    <button class="btn-filter" onclick="loadRekap()">🔍 Tampilkan Rekap</button>
+    <button class="btn-filter" onclick="loadRekap()">🔍 Tampilkan</button>
   </div>
+
+  <!-- Tombol cetak -->
+  <div class="print-btn-bar no-print" id="btnBarRekap" style="display:none;">
+    <button class="btn-cetak-pdf" onclick="cetakRekap()">🖨️ Cetak PDF (F4)</button>
+    <span id="infoRekap" style="font-size:13px;color:#5a6a7e;"></span>
+  </div>
+
+  <div class="print-info" id="printInfoRekap"></div>
+
   <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.06);overflow:hidden;">
     <div style="overflow-x:auto;">
-      <table>
-        <thead><tr><th>Tanggal</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Masuk</th><th>Pulang</th><th>Status</th><th>Ket</th></tr></thead>
+      <table id="tableRekap">
+        <thead><tr>
+          <th>No</th><th>Tanggal</th><th>Nama Siswa</th><th>Kelas</th>
+          <th>Jam Masuk</th><th>Jam Pulang</th><th>Status</th><th>Keterangan</th>
+        </tr></thead>
         <tbody id="tabelRekap"><tr><td colspan="8" style="text-align:center;padding:32px;color:#9aabb8;">Pilih rentang tanggal dan klik Tampilkan</td></tr></tbody>
       </table>
     </div>
@@ -659,8 +717,15 @@ tr:hover td{background:#f8fafc;}
 
 <!-- ═══ PAGE: BULANAN ═══ -->
 <div class="page" id="page-bulanan">
-  <h2 style="font-size:20px;font-weight:800;margin-bottom:16px;">📅 Laporan Bulanan</h2>
-  <div class="filter-bar">
+
+  <!-- Header print -->
+  <div class="print-header">
+    <h2>LAPORAN BULANAN ABSENSI SISWA</h2>
+    <p>SMP Negeri 05 Sarolangun &nbsp;|&nbsp; <span id="printBulananInfo"></span></p>
+  </div>
+
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:16px;" class="no-print">📅 Laporan Bulanan</h2>
+  <div class="filter-bar no-print">
     <div class="fg">
       <label style="font-size:11px;font-weight:700;color:#9aabb8;">Bulan</label>
       <select id="bulananBulan" style="padding:10px 14px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;">
@@ -677,14 +742,52 @@ tr:hover td{background:#f8fafc;}
       <input type="number" id="bulananTahun" value="2026" min="2024" max="2030"
         style="padding:10px 14px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;width:100px;">
     </div>
+    <div class="fg">
+      <label style="font-size:11px;font-weight:700;color:#9aabb8;">Kelas</label>
+      <select id="bulananKelas" style="padding:10px 14px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;">
+        <option value="">Semua Kelas</option>
+      </select>
+    </div>
     <button class="btn-filter" onclick="loadBulanan()">🔍 Tampilkan</button>
   </div>
+
+  <!-- Tombol cetak -->
+  <div class="print-btn-bar no-print" id="btnBarBulanan" style="display:none;">
+    <button class="btn-cetak-pdf" onclick="cetakBulanan()">🖨️ Cetak PDF (F4)</button>
+    <span id="infoBulanan" style="font-size:13px;color:#5a6a7e;"></span>
+  </div>
+
+  <div class="print-info" id="printInfoBulanan"></div>
+
   <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.06);overflow:hidden;">
     <div style="overflow-x:auto;">
-      <table>
-        <thead><tr><th>Nama</th><th>Kelas</th><th>OnTime</th><th>Terlambat</th><th>Izin</th><th>Sakit</th><th>Alpa</th><th>Total Hadir</th></tr></thead>
-        <tbody id="tabelBulanan"><tr><td colspan="8" style="text-align:center;padding:32px;color:#9aabb8;">Pilih bulan dan klik Tampilkan</td></tr></tbody>
+      <table id="tableBulanan">
+        <thead><tr>
+          <th>No</th><th>Nama Siswa</th><th>Kelas</th>
+          <th>Hadir Tepat</th><th>Terlambat</th><th>Izin</th>
+          <th>Sakit</th><th>Alpa</th><th>Total Hadir</th><th>%</th>
+        </tr></thead>
+        <tbody id="tabelBulanan"><tr><td colspan="10" style="text-align:center;padding:32px;color:#9aabb8;">Pilih bulan dan klik Tampilkan</td></tr></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Tanda tangan untuk print -->
+  <div class="print-header" style="margin-top:32px;border:none;border-top:1px solid #ddd;padding-top:20px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;font-size:11px;">
+      <div>
+        <p>Mengetahui,</p>
+        <p style="font-weight:700;margin-top:4px;">Kepala Sekolah</p>
+        <div style="height:60px;"></div>
+        <p style="border-top:1px solid #333;padding-top:4px;display:inline-block;min-width:180px;">Sukardiman, M.Pd.</p>
+      </div>
+      <div>
+        <p>Sarolangun, <span id="printTglTtd"></span></p>
+        <p style="font-weight:700;margin-top:4px;">Wali Kelas <span id="printNamaKelas"></span></p>
+        <div style="height:60px;"></div>
+        <p style="border-top:1px solid #333;padding-top:4px;display:inline-block;min-width:180px;" 
+           class="ttd-walas">( __________________ )</p>
+      </div>
     </div>
   </div>
 </div>
@@ -1333,23 +1436,85 @@ async function loadRekap() {
 async function loadBulanan() {
   const bulan = document.getElementById('bulananBulan').value;
   const tahun = document.getElementById('bulananTahun').value;
+  const kelas = document.getElementById('bulananKelas')?.value || '';
   const r = await apiGet('getRekapBulanan', {bulan, tahun});
   const tbody = document.getElementById('tabelBulanan');
-  if (!r.ok || !r.data.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data</td></tr>';
+  // Tetap tampil walau tidak ada data absensi - isi dari data siswa
+  let dataAbsen = (r.ok && r.data) ? r.data : [];
+  
+  // Ambil semua siswa sesuai kelas filter
+  let semuaSiswaFilter = kelas ? dataSiswa.filter(s=>s.kelas===kelas) : dataSiswa;
+  
+  // Gabung - siswa yang belum ada absensi tetap tampil dengan nilai 0
+  let dataGabung = semuaSiswaFilter.map(s => {
+    const absen = dataAbsen.find(d => d.nisn === s.nisn || d.nama === s.nama);
+    return absen || {
+      nisn: s.nisn, nama: s.nama, kelas: s.kelas,
+      onTime:0, terlambat:0, izin:0, sakit:0, alpa:0, hadir:0
+    };
+  });
+  
+  // Tambah siswa dari absen yang tidak ada di dataSiswa
+  dataAbsen.forEach(d => {
+    if (!dataGabung.find(g => g.nisn===d.nisn || g.nama===d.nama))
+      dataGabung.push(d);
+  });
+  
+  let data = dataGabung.sort((a,b)=>a.kelas.localeCompare(b.kelas)||a.nama.localeCompare(b.nama));
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data siswa</td></tr>';
+    document.getElementById('btnBarBulanan').style.display = 'none';
     return;
   }
-  tbody.innerHTML = r.data.map(d => `
-    <tr>
+
+  // data sudah disiapkan di atas (gabung siswa + absensi)
+
+  const bulanNama = ['','Januari','Februari','Maret','April','Mei','Juni',
+    'Juli','Agustus','September','Oktober','November','Desember'];
+
+  tbody.innerHTML = data.map((d,i) => {
+    const totalHariKerja = d.onTime + d.terlambat + d.izin + d.sakit + d.alpa;
+    const pct = totalHariKerja ? Math.round(d.hadir/totalHariKerja*100) : 0;
+    return `<tr>
+      <td style="text-align:center;">${i+1}</td>
       <td style="font-weight:600">${d.nama}</td>
-      <td><span style="background:#e8f6f8;color:var(--teal);font-weight:700;padding:2px 8px;border-radius:6px;font-size:12px;">${d.kelas}</span></td>
-      <td style="color:var(--hijau);font-weight:700;">${d.onTime}</td>
-      <td style="color:#e65100;font-weight:700;">${d.terlambat}</td>
-      <td style="color:#1565c0;">${d.izin}</td>
-      <td style="color:#c62828;">${d.sakit}</td>
-      <td style="color:var(--merah);font-weight:700;">${d.alpa}</td>
-      <td style="font-weight:700;">${d.hadir}</td>
-    </tr>`).join('');
+      <td><span style="background:#e8f6f8;color:var(--teal);font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px;">${d.kelas}</span></td>
+      <td style="color:var(--hijau);font-weight:700;text-align:center;">${d.onTime}</td>
+      <td style="color:#e65100;font-weight:700;text-align:center;">${d.terlambat}</td>
+      <td style="color:#1565c0;text-align:center;">${d.izin}</td>
+      <td style="color:#c62828;text-align:center;">${d.sakit}</td>
+      <td style="color:var(--merah);font-weight:700;text-align:center;">${d.alpa}</td>
+      <td style="font-weight:700;text-align:center;">${d.hadir}</td>
+      <td style="font-weight:700;text-align:center;color:${pct>=75?'var(--hijau)':'var(--merah)'};">${pct}%</td>
+    </tr>`;
+  }).join('');
+
+  const info = `${bulanNama[parseInt(bulan)]} ${tahun}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa`;
+  document.getElementById('infoBulanan').textContent = info;
+  document.getElementById('printBulananInfo').textContent = info;
+  document.getElementById('printInfoBulanan').textContent = info;
+  document.getElementById('printTglTtd').textContent = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('printNamaKelas').textContent = kelas || 'Semua Kelas';
+  document.getElementById('btnBarBulanan').style.display = 'flex';
+}
+
+async function cetakBulanan() {
+  // Ambil nama wali kelas sesuai kelas yang dipilih
+  const kelas = document.getElementById('bulananKelas')?.value || '';
+  if (kelas) {
+    try {
+      const r = await apiGet('getWalas');
+      if (r.ok && r.data) {
+        const walas = r.data.find(w => w.kelas === kelas);
+        if (walas) {
+          document.querySelectorAll('.ttd-walas').forEach(el => {
+            el.textContent = walas.nama;
+          });
+        }
+      }
+    } catch(e) {}
+  }
+  window.print();
 }
 
 // ── JADWAL ──────────────────────────────────────────────
