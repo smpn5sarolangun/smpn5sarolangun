@@ -371,6 +371,8 @@ tr:hover td{background:#f8fafc;}
   }
   .btn-cetak-pdf:hover { background: #22a060; }
 
+
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
 </style>
 </head>
 <body>
@@ -968,42 +970,66 @@ function showPage(id) {
 }
 
 // ── LOAD DASHBOARD ─────────────────────────────────────
+function _updateDashboardUI(d) {
+  const upd = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  upd('stTotalSiswa', d.totalSiswa);
+  upd('stTotalKelas', d.totalKelas);
+  upd('stTglDash',    d.tanggal);
+  if (d.jadwal) {
+    upd('jadwalMasuk',  d.jadwal.jamMasukBatas);
+    upd('jadwalPulang', d.jadwal.jamPulangMinimal);
+    window._jadwalData = d.jadwal;
+  }
+  const s = d.statistik;
+  upd('stOnTime',      s.onTime);
+  upd('stTerlambat',   s.terlambat);
+  upd('stBelumMasuk',  s.belumMasuk);
+  upd('stBelumPulang', s.belumPulang);
+  upd('stIzin',        s.izin);
+  upd('stSakit',       s.sakit);
+  upd('stAlpa',        s.alpa);
+
+  // Tabel per kelas
+  const tbKelas = document.getElementById('tabelKelas');
+  if (tbKelas && d.perKelas) {
+    tbKelas.innerHTML = d.perKelas.map(k => `
+      <tr>
+        <td style="font-weight:700">${k.kelas}</td>
+        <td>${k.totalSiswa}</td>
+        <td>${k.hadir}</td>
+        <td>${k.persentase}%
+          <div class="persen-bar"><div class="persen-fill" style="width:${k.persentase}%"></div></div>
+        </td>
+        <td><span class="badge ${k.empty?'badge-alpa':'badge-ontime'}">${k.empty?'Empty':'Aktif'}</span></td>
+      </tr>`).join('');
+  }
+
+  // Tabel absensi terbaru
+  const tbody = document.getElementById('tabelAbsenHariIni');
+  if (tbody) {
+    if (!d.terbaru || !d.terbaru.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
+    } else {
+      tbody.innerHTML = d.terbaru.map(r => `
+        <tr>
+          <td style="font-weight:600">${r.nama}</td>
+          <td>${r.kelas}</td>
+          <td>${r.jamMasuk||'—'}</td>
+          <td>${r.jamPulang||'—'}</td>
+          <td><span class="badge badge-${r.status.toLowerCase().replace(' ','')}">${r.status}</span></td>
+        </tr>`).join('');
+    }
+  }
+}
+
 async function loadDashboard() {
   try {
     const r = await apiGet('getDashboard');
     if (!r.ok) { 
       if(r.error?.includes('Sesi')) window.location.href='login.html'; 
-      console.error('Dashboard error:', r.error);
       return; 
     }
-    const d = r.data;
-    console.log('Dashboard data:', JSON.stringify(d.statistik));
-
-    // Helper update elemen dengan aman
-    const upd = (id, val) => { 
-      const el = document.getElementById(id); 
-      if(el) el.textContent = val; 
-    };
-
-    upd('stTotalSiswa', d.totalSiswa);
-    upd('stTotalKelas', d.totalKelas);
-    upd('stTglDash',    d.tanggal);
-
-    if (d.jadwal) {
-      upd('jadwalMasuk',  d.jadwal.jamMasukBatas);
-      upd('jadwalPulang', d.jadwal.jamPulangMinimal);
-      // setJamMasuk ada di halaman jadwal - simpan ke variabel global dulu
-      window._jadwalData = d.jadwal;
-    }
-
-    const s = d.statistik;
-    upd('stOnTime',      s.onTime);
-    upd('stTerlambat',   s.terlambat);
-    upd('stBelumMasuk',  s.belumMasuk);
-    upd('stBelumPulang', s.belumPulang);
-    upd('stIzin',        s.izin);
-    upd('stSakit',       s.sakit);
-    upd('stAlpa',        s.alpa);
+    _updateDashboardUI(r.data);
 
     // Tabel absensi terbaru
     const tbody = document.getElementById('tabelAbsenHariIni');
@@ -1160,13 +1186,54 @@ async function konfirmasiAbsen() {
   });
 
   if (r.ok) {
-    tampilNotif('✅', r.pesan || siswaYangDipilih.nama, r.status ? `Status: ${r.status} (${r.jam})` : `Jam: ${r.jam}`, false);
+    tambahKeTabeAbsenHariIni(r.siswa || siswaYangDipilih, r);
     resetInputAbsen();
-    // Refresh dashboard ringan
-    setTimeout(loadDashboard, 1000);
+    setTimeout(loadDashboard, 800);
   } else {
-    tampilNotif('❌', r.error || 'Gagal', '', true);
+    // Hanya error yang perlu notif
+    tampilNotif('❌', r.error || 'Gagal absen', '', true);
     document.getElementById('btnAbsen').disabled = false;
+  }
+}
+
+
+// ── Update tabel absensi langsung setelah scan ──────────────────
+function tambahKeTabeAbsenHariIni(siswa, result) {
+  const tbody = document.getElementById('tabelAbsenHariIni');
+  if (!tbody) return;
+
+  // Hapus pesan "belum ada absensi"
+  if (tbody.innerHTML.includes('Belum ada absensi')) {
+    tbody.innerHTML = '';
+  }
+
+  const jam   = result.jam || new Date().toTimeString().slice(0,5);
+  const status = result.status || (MODE_ABSEN === 'masuk' ? 'OnTime' : 'Pulang');
+  const nama  = siswa?.nama || '—';
+  const kelas = siswa?.kelas || '—';
+
+  // Sisipkan di atas (terbaru di atas)
+  const tr = document.createElement('tr');
+  tr.style.animation = 'fadeIn 0.4s ease';
+  tr.innerHTML = `
+    <td style="font-weight:600">${nama}</td>
+    <td>${kelas}</td>
+    <td>${MODE_ABSEN === 'masuk' ? jam : '—'}</td>
+    <td>${MODE_ABSEN === 'pulang' ? jam : '—'}</td>
+    <td><span class="badge badge-${status.toLowerCase().replace(' ','')}">${status}</span></td>`;
+  tbody.insertBefore(tr, tbody.firstChild);
+
+  // Update counter statistik langsung
+  if (MODE_ABSEN === 'masuk') {
+    const elBelum = document.getElementById('stBelumMasuk');
+    const elOntime = document.getElementById('stOnTime');
+    const elTelat = document.getElementById('stTerlambat');
+    if (elBelum) elBelum.textContent = Math.max(0, parseInt(elBelum.textContent||0) - 1);
+    if (status === 'OnTime' && elOntime) elOntime.textContent = parseInt(elOntime.textContent||0) + 1;
+    if (status === 'Terlambat' && elTelat) elTelat.textContent = parseInt(elTelat.textContent||0) + 1;
+  } else {
+    const elPulang = document.getElementById('stBelumPulang');
+    if (elPulang) elPulang.textContent = Math.max(0, parseInt(elPulang.textContent||0) - 1);
   }
 }
 
