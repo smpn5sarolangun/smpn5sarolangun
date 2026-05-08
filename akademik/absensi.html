@@ -451,9 +451,9 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs()">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
-  <a class="nav-item" href="kartu.html" target="_blank">
+  <div class="nav-item" onclick="bukaHalamanKartu()">
     <span class="nav-icon">🪪</span> Cetak Kartu
-  </a>
+  </div>
 
   <div class="sidebar-section">Info Hari Ini</div>
   <div class="jadwal-box">
@@ -1038,6 +1038,8 @@ window.addEventListener('load', async () => {
     window.location.href = 'login.html';
     return;
   }
+  // Simpan token ke localStorage agar halaman kartu bisa pakai (tab baru)
+  localStorage.setItem('absensi_token_shared', TOKEN);
   const user = sessionStorage.getItem('absensi_user');
   document.getElementById('usernameTop').textContent = user || 'Admin';
 
