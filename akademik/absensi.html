@@ -1056,7 +1056,14 @@ window.addEventListener('load', async () => {
   document.getElementById('bulananTahun').value = now.getFullYear();
 
   startClock();
-  // Jalankan semua paralel - lebih cepat
+
+  // Tampilkan cache dulu (instan 0ms)
+  const cacheDash  = ambilCacheDashboard();
+  const cacheAbsen = ambilCacheAbsen();
+  if (cacheDash)  _updateDashboardUI(cacheDash);
+  if (cacheAbsen) renderTabelAbsenHariIni(cacheAbsen, true);
+
+  // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   setInterval(refreshStatistikSaja, 30 * 1000);
 });
@@ -1426,20 +1433,17 @@ async function refreshDashboardDanTabel() {
 // Refresh hanya angka statistik, tidak timpa tabel absensi
 async function refreshStatistikSaja() {
   try {
-    const r = await apiGet('getDashboard');
-    if (!r.ok) return;
-    const s = r.data.statistik;
-    const upd = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-    upd('stOnTime',      s.onTime);
-    upd('stTerlambat',   s.terlambat);
-    upd('stBelumMasuk',  s.belumMasuk);
-    upd('stBelumPulang', s.belumPulang);
-    upd('stIzin',        s.izin);
-    upd('stSakit',       s.sakit);
-    upd('stAlpa',        s.alpa);
-    upd('stTotalSiswa',  r.data.totalSiswa);
-    upd('stTotalKelas',  r.data.totalKelas);
-
+    const today = new Date().toISOString().split('T')[0];
+    const [rDash, rAbsen] = await Promise.all([
+      apiGet('getDashboard'),
+      apiGet('getAbsensiHari', {tanggal: today})
+    ]);
+    if (!rDash.ok) return;
+    _updateDashboardUI(rDash.data);
+    if (rAbsen.ok && rAbsen.data) {
+      renderTabelAbsenHariIni(rAbsen.data);
+      simpanCacheAbsen(rAbsen.data);
+    }
   } catch(e) {}
 }
 
@@ -1447,39 +1451,49 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   const tbody = document.getElementById('tabelAbsenHariIni');
   if (!tbody) return;
 
-  // Hapus pesan "belum ada absensi"
-  if (tbody.innerHTML.includes('Belum ada absensi')) {
-    tbody.innerHTML = '';
-  }
+  if (tbody.innerHTML.includes('Belum ada absensi')) tbody.innerHTML = '';
 
-  const jam   = result.jam || new Date().toTimeString().slice(0,5);
+  const jam    = result.jam || new Date().toTimeString().slice(0,5);
   const status = result.status || (MODE_ABSEN === 'masuk' ? 'OnTime' : 'Pulang');
-  const nama  = siswa?.nama || '—';
-  const kelas = siswa?.kelas || '—';
+  const nama   = siswa?.nama  || '—';
+  const kelas  = siswa?.kelas || '—';
+  const nisn   = siswa?.nisn  || '';
+  const jamMasuk  = MODE_ABSEN === 'masuk'  ? jam : '—';
+  const jamPulang = MODE_ABSEN === 'pulang' ? jam : '—';
 
-  // Sisipkan di atas (terbaru di atas)
+  // Tambah baris baru di atas
   const tr = document.createElement('tr');
   tr.style.animation = 'fadeIn 0.4s ease';
   tr.innerHTML = `
     <td style="font-weight:600">${nama}</td>
     <td>${kelas}</td>
-    <td>${MODE_ABSEN === 'masuk' ? jam : '—'}</td>
-    <td>${MODE_ABSEN === 'pulang' ? jam : '—'}</td>
+    <td>${jamMasuk}</td>
+    <td>${jamPulang}</td>
     <td><span class="badge badge-${status.toLowerCase().replace(' ','')}">${status}</span></td>`;
   tbody.insertBefore(tr, tbody.firstChild);
 
-  // Update counter statistik langsung
+  // Update counter statistik lokal
+  const upd = (id, fn) => { const el=document.getElementById(id); if(el) el.textContent=fn(parseInt(el.textContent||0)); };
   if (MODE_ABSEN === 'masuk') {
-    const elBelum = document.getElementById('stBelumMasuk');
-    const elOntime = document.getElementById('stOnTime');
-    const elTelat = document.getElementById('stTerlambat');
-    if (elBelum) elBelum.textContent = Math.max(0, parseInt(elBelum.textContent||0) - 1);
-    if (status === 'OnTime' && elOntime) elOntime.textContent = parseInt(elOntime.textContent||0) + 1;
-    if (status === 'Terlambat' && elTelat) elTelat.textContent = parseInt(elTelat.textContent||0) + 1;
+    upd('stBelumMasuk', v => Math.max(0,v-1));
+    if (status==='OnTime')    upd('stOnTime',    v => v+1);
+    if (status==='Terlambat') upd('stTerlambat', v => v+1);
   } else {
-    const elPulang = document.getElementById('stBelumPulang');
-    if (elPulang) elPulang.textContent = Math.max(0, parseInt(elPulang.textContent||0) - 1);
+    upd('stBelumPulang', v => Math.max(0,v-1));
   }
+
+  // Update cache - tambah item baru ke cache yang ada
+  try {
+    const existing = ambilCacheAbsen() || [];
+    existing.push({
+      tanggal: new Date().toISOString().split('T')[0],
+      nisn, nama, kelas,
+      jamMasuk:  MODE_ABSEN==='masuk'  ? jam : '',
+      jamPulang: MODE_ABSEN==='pulang' ? jam : '',
+      status, ket: ''
+    });
+    simpanCacheAbsen(existing);
+  } catch(e) {}
 }
 
 function resetInputAbsen() {
