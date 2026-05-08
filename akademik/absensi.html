@@ -949,9 +949,10 @@ async function apiGet(action, params={}) {
 }
 
 async function apiPost(body) {
+  // Gunakan text/plain untuk hindari CORS preflight
   const res = await fetch(SCRIPT_URL, {
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({...body, token:TOKEN})
   });
   return res.json();
