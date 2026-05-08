@@ -400,7 +400,7 @@ tr:hover td{background:#f8fafc;}
   <div class="sidebar-hari" id="sidebarHari">SENIN</div>
 
   <div class="sidebar-section">Menu</div>
-  <div class="nav-item active" onclick="showPage('dashboard')">
+  <div class="nav-item active" onclick="showPage('dashboard');refreshDashboardDanTabel()">
     <span class="nav-icon">🏠</span> Dashboard
   </div>
   <div class="nav-item" onclick="showPage('absensi')">
@@ -513,9 +513,10 @@ tr:hover td{background:#f8fafc;}
 
       <!-- Input Manual NISN -->
       <div class="nisn-input">
-        <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..." maxlength="15"
-          onkeypress="if(event.key==='Enter')prosesAbsen()">
-        <button class="btn-scan" onclick="prosesAbsen()">✓ Proses</button>
+        <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..."
+          maxlength="15" style="text-align:center;letter-spacing:2px;"
+          onkeypress="if(event.key==='Enter')prosesAbsen()"
+          oninput="if(this.value.length>=8)clearTimeout(window._nisnTimer);window._nisnTimer=setTimeout(()=>{if(this.value.length>=8)prosesAbsen();},600)">
       </div>
 
       <!-- Preview Siswa -->
@@ -537,7 +538,7 @@ tr:hover td{background:#f8fafc;}
     <div class="tabel-area">
       <div class="tabel-header">
         <h3>📝 Absensi Hari Ini</h3>
-        <button onclick="loadDashboard()" style="background:none;border:none;cursor:pointer;color:var(--teal);font-size:13px;font-weight:600;">🔄 Refresh</button>
+        <button onclick="refreshDashboardDanTabel()" style="background:none;border:none;cursor:pointer;color:var(--teal);font-size:13px;font-weight:600;">🔄 Refresh</button>
       </div>
       <div style="overflow-x:auto;max-height:320px;overflow-y:auto;">
         <table>
@@ -920,8 +921,8 @@ window.addEventListener('load', async () => {
   startClock();
   await loadKelas();
   await loadDashboard();
-  // Auto refresh dashboard setiap 5 menit
-  setInterval(loadDashboard, 5 * 60 * 1000);
+  // Refresh statistik angka setiap 5 menit (tidak timpa tabel)
+  setInterval(refreshStatistikSaja, 30 * 1000); // refresh setiap 30 detik
   await loadSiswa(); // muat data siswa untuk fitur cari nama
 });
 
@@ -1188,7 +1189,7 @@ async function konfirmasiAbsen() {
   if (r.ok) {
     tambahKeTabeAbsenHariIni(r.siswa || siswaYangDipilih, r);
     resetInputAbsen();
-    setTimeout(loadDashboard, 800);
+    // Tidak perlu refresh dari server - UI sudah diupdate lokal
   } else {
     // Hanya error yang perlu notif
     tampilNotif('❌', r.error || 'Gagal absen', '', true);
@@ -1197,7 +1198,95 @@ async function konfirmasiAbsen() {
 }
 
 
+
+
+// ── CACHE LOKAL (instan saat buka halaman) ──────────────────────
+const ABSEN_CACHE_KEY = 'absensi_hari_ini';
+
+function getTglHariIni() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function simpanCacheAbsen(data) {
+  try {
+    localStorage.setItem(ABSEN_CACHE_KEY, JSON.stringify({
+      tgl: getTglHariIni(), data
+    }));
+  } catch(e) {}
+}
+
+function ambilCacheAbsen() {
+  try {
+    const raw = localStorage.getItem(ABSEN_CACHE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (obj.tgl !== getTglHariIni()) {
+      localStorage.removeItem(ABSEN_CACHE_KEY); // ganti hari → hapus
+      return null;
+    }
+    return obj.data;
+  } catch(e) { return null; }
+}
+
+// ── Render tabel absensi hari ini dari data sheet ───────────────
+function renderTabelAbsenHariIni(data, dariCache) {
+  const tbody = document.getElementById('tabelAbsenHariIni');
+  if (!tbody) return;
+  if (!data || !data.length) {
+    if (!dariCache) { // jangan timpa cache dengan kosong
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
+    }
+    return;
+  }
+  // Simpan ke cache lokal
+  if (!dariCache) simpanCacheAbsen(data);
+
+  tbody.innerHTML = data.slice().reverse().map(r => `
+    <tr>
+      <td style="font-weight:600">${r.nama}</td>
+      <td>${r.kelas}</td>
+      <td>${r.jamMasuk||'—'}</td>
+      <td>${r.jamPulang||'—'}</td>
+      <td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','')}">${r.status}</span></td>
+    </tr>`).join('');
+}
+
 // ── Update tabel absensi langsung setelah scan ──────────────────
+
+
+
+
+
+async function refreshDashboardDanTabel() {
+  const today = new Date().toISOString().split('T')[0];
+  const [rDash, rAbsen] = await Promise.all([
+    apiGet('getDashboard'),
+    apiGet('getAbsensiHari', {tanggal: today})
+  ]);
+  if (rDash.ok) _updateDashboardUI(rDash.data);
+  if (rAbsen.ok) renderTabelAbsenHariIni(rAbsen.data); // otomatis simpan ke cache
+}
+
+// Refresh hanya angka statistik, tidak timpa tabel absensi
+async function refreshStatistikSaja() {
+  try {
+    const r = await apiGet('getDashboard');
+    if (!r.ok) return;
+    const s = r.data.statistik;
+    const upd = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+    upd('stOnTime',      s.onTime);
+    upd('stTerlambat',   s.terlambat);
+    upd('stBelumMasuk',  s.belumMasuk);
+    upd('stBelumPulang', s.belumPulang);
+    upd('stIzin',        s.izin);
+    upd('stSakit',       s.sakit);
+    upd('stAlpa',        s.alpa);
+    upd('stTotalSiswa',  r.data.totalSiswa);
+    upd('stTotalKelas',  r.data.totalKelas);
+
+  } catch(e) {}
+}
+
 function tambahKeTabeAbsenHariIni(siswa, result) {
   const tbody = document.getElementById('tabelAbsenHariIni');
   if (!tbody) return;
