@@ -376,7 +376,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal')">
+  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal()">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <a class="nav-item" href="kartu.html" target="_blank">
@@ -691,25 +691,50 @@ tr:hover td{background:#f8fafc;}
 
 <!-- ═══ PAGE: JADWAL ═══ -->
 <div class="page" id="page-jadwal">
-  <h2 style="font-size:20px;font-weight:800;margin-bottom:20px;">⏰ Pengaturan Jadwal Absensi</h2>
-  <div style="background:#fff;border-radius:16px;padding:28px;box-shadow:0 2px 16px rgba(0,0,0,0.06);max-width:480px;">
-    <div class="fg">
-      <label>Batas Jam Masuk (lebih dari ini = Terlambat)</label>
-      <input type="time" id="setJamMasuk" value="07:30">
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:6px;">⏰ Pengaturan Jadwal Absensi</h2>
+  <p style="font-size:13px;color:var(--teks-sub);margin-bottom:20px;">Atur jam masuk dan pulang per hari — sistem otomatis pakai jadwal sesuai hari saat absensi</p>
+
+  <div style="background:#fff;border-radius:16px;padding:28px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:20px;">
+    <h3 style="font-size:15px;font-weight:700;color:var(--biru);margin-bottom:16px;border-bottom:2px solid var(--abu);padding-bottom:10px;">📅 Jadwal Per Hari</h3>
+
+    <!-- Tabel jadwal per hari -->
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:var(--abu);">
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--teks-sub);border-radius:8px 0 0 8px;">Hari</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--teks-sub);">Aktif</th>
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--teks-sub);">Batas Jam Masuk</th>
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--teks-sub);">Jam Pulang</th>
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--teks-sub);border-radius:0 8px 8px 0;">Keterangan</th>
+          </tr>
+        </thead>
+        <tbody id="tabelJadwal">
+          <!-- Diisi oleh JS -->
+        </tbody>
+      </table>
     </div>
-    <div class="fg">
-      <label>Jam Pulang Minimal</label>
-      <input type="time" id="setJamPulang" value="12:00">
+
+    <div style="background:#e8f0fb;border-radius:10px;padding:12px 16px;margin-top:16px;font-size:12px;color:var(--biru-mid);">
+      💡 <strong>Batas Jam Masuk</strong> = lebih dari jam ini dianggap Terlambat.<br>
+      Hari yang tidak aktif = libur, tidak ada absensi.
     </div>
-    <div class="fg">
+  </div>
+
+  <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:20px;max-width:400px;">
+    <h3 style="font-size:15px;font-weight:700;color:var(--biru);margin-bottom:14px;">⚙️ Pengaturan Umum</h3>
+    <div class="fg" style="margin-bottom:14px;">
       <label>Tandai Alpa Otomatis Jam</label>
       <input type="time" id="setJamAlpa" value="14:00">
       <span style="font-size:11px;color:#9aabb8;">Siswa belum absen setelah jam ini = Alpa</span>
     </div>
-    <button onclick="simpanJadwal()" style="width:100%;padding:13px;background:var(--biru);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;margin-bottom:12px;">💾 Simpan Pengaturan</button>
-    <button onclick="prosesAlpaManual()" style="width:100%;padding:13px;background:var(--merah);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;">⚠️ Proses Alpa Sekarang (Hari Ini)</button>
-    <div id="jadwalMsg" style="margin-top:12px;font-size:13px;display:none;padding:10px 14px;border-radius:8px;"></div>
   </div>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <button onclick="simpanJadwal()" style="padding:13px 28px;background:var(--biru);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;">💾 Simpan Jadwal</button>
+    <button onclick="prosesAlpaManual()" style="padding:13px 28px;background:var(--merah);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;">⚠️ Proses Alpa Hari Ini</button>
+  </div>
+  <div id="jadwalMsg" style="margin-top:12px;font-size:13px;display:none;padding:10px 14px;border-radius:8px;max-width:480px;"></div>
 </div>
 
 </div><!-- end main -->
@@ -757,6 +782,14 @@ let scanStream = null;
 
 // ── INIT ──────────────────────────────────────────────
 window.addEventListener('load', async () => {
+  // Load jadwal tersimpan
+  try {
+    const rj = await apiGet('getJadwalAbsen');
+    if (rj.ok && rj.data && rj.data.jadwalPerHari) {
+      jadwalPerHari = rj.data.jadwalPerHari;
+    }
+  } catch(e) {}
+  renderTabelJadwal();
   // Cek session
   TOKEN = sessionStorage.getItem('absensi_token');
   const expiry = parseInt(sessionStorage.getItem('absensi_expiry')||'0');
@@ -1320,20 +1353,83 @@ async function loadBulanan() {
 }
 
 // ── JADWAL ──────────────────────────────────────────────
+// Data jadwal per hari
+const HARI_LIST = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+let jadwalPerHari = {
+  Senin:   {aktif:true,  masuk:'07:30', pulang:'13:00'},
+  Selasa:  {aktif:true,  masuk:'07:30', pulang:'13:00'},
+  Rabu:    {aktif:true,  masuk:'07:30', pulang:'13:00'},
+  Kamis:   {aktif:true,  masuk:'07:30', pulang:'13:00'},
+  Jumat:   {aktif:true,  masuk:'07:30', pulang:'11:00'},
+  Sabtu:   {aktif:false, masuk:'07:30', pulang:'12:00'},
+};
+
+function renderTabelJadwal() {
+  const tbody = document.getElementById('tabelJadwal');
+  if (!tbody) return;
+  tbody.innerHTML = HARI_LIST.map(hari => {
+    const j = jadwalPerHari[hari];
+    return `<tr style="border-bottom:1px solid #f0f4f8;">
+      <td style="padding:12px 14px;font-weight:700;">${hari}</td>
+      <td style="padding:12px 14px;text-align:center;">
+        <input type="checkbox" id="aktif_${hari}" ${j.aktif?'checked':''}
+          onchange="jadwalPerHari['${hari}'].aktif=this.checked;toggleRowJadwal('${hari}')"
+          style="width:16px;height:16px;cursor:pointer;accent-color:var(--teal);">
+      </td>
+      <td style="padding:8px 14px;">
+        <input type="time" id="masuk_${hari}" value="${j.masuk}"
+          onchange="jadwalPerHari['${hari}'].masuk=this.value"
+          ${!j.aktif?'disabled':''} style="padding:6px 10px;border:1.5px solid #dde3ee;border-radius:7px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;${!j.aktif?'opacity:0.4;':''}">
+      </td>
+      <td style="padding:8px 14px;">
+        <input type="time" id="pulang_${hari}" value="${j.pulang}"
+          onchange="jadwalPerHari['${hari}'].pulang=this.value"
+          ${!j.aktif?'disabled':''} style="padding:6px 10px;border:1.5px solid #dde3ee;border-radius:7px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;${!j.aktif?'opacity:0.4;':''}">
+      </td>
+      <td style="padding:12px 14px;font-size:12px;color:var(--teks-sub);">
+        ${j.aktif ? `Terlambat > ${j.masuk} · Pulang ${j.pulang}` : '<span style="color:#e53935;">Libur</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleRowJadwal(hari) {
+  const aktif = jadwalPerHari[hari].aktif;
+  document.getElementById('masuk_'+hari).disabled  = !aktif;
+  document.getElementById('pulang_'+hari).disabled = !aktif;
+  document.getElementById('masuk_'+hari).style.opacity  = aktif ? '1' : '0.4';
+  document.getElementById('pulang_'+hari).style.opacity = aktif ? '1' : '0.4';
+  renderTabelJadwal();
+}
+
 async function simpanJadwal() {
-  const r = await apiPost({
-    action:'simpanJadwal',
-    jamMasukBatas:    document.getElementById('setJamMasuk').value,
-    jamPulangMinimal: document.getElementById('setJamPulang').value,
+  // Ambil nilai terbaru dari input
+  HARI_LIST.forEach(hari => {
+    jadwalPerHari[hari].aktif  = document.getElementById('aktif_'+hari)?.checked ?? jadwalPerHari[hari].aktif;
+    jadwalPerHari[hari].masuk  = document.getElementById('masuk_'+hari)?.value   || jadwalPerHari[hari].masuk;
+    jadwalPerHari[hari].pulang = document.getElementById('pulang_'+hari)?.value  || jadwalPerHari[hari].pulang;
   });
+
+  // Hitung jam masuk & pulang hari ini untuk sidebar
+  const hariIni = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date().getDay()];
+  const jHariIni = jadwalPerHari[hariIni] || jadwalPerHari['Senin'];
+
+  const r = await apiPost({
+    action: 'simpanJadwal',
+    jadwalPerHari: jadwalPerHari,
+    jamMasukBatas:    jHariIni.masuk,
+    jamPulangMinimal: jHariIni.pulang,
+    hariAktif: HARI_LIST.filter(h => jadwalPerHari[h].aktif)
+  });
+
   const msg = document.getElementById('jadwalMsg');
   msg.textContent = r.ok ? '✅ Jadwal berhasil disimpan!' : ('❌ ' + (r.error||'Gagal'));
   msg.style.display = 'block';
   msg.style.background = r.ok ? '#e8f6ef' : '#fdecea';
   msg.style.color = r.ok ? '#1a7a4a' : '#c0392b';
   if (r.ok) {
-    document.getElementById('jadwalMasuk').textContent = document.getElementById('setJamMasuk').value;
-    document.getElementById('jadwalPulang').textContent = document.getElementById('setJamPulang').value;
+    document.getElementById('jadwalMasuk').textContent  = jHariIni.masuk;
+    document.getElementById('jadwalPulang').textContent = jHariIni.pulang;
   }
   setTimeout(() => msg.style.display='none', 3000);
 }
