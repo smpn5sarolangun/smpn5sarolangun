@@ -1250,9 +1250,16 @@ async function doLogout() {
   window.location.href = 'login.html';
 }
 
-// Load siswa saat buka halaman siswa (lazy load)
-document.querySelector('[onclick="showPage('siswa')"]').addEventListener('click', () => {
-  if (!dataSiswa.length) loadSiswa();
+// Load siswa lazy
+window.addEventListener('load', function() {
+  document.querySelectorAll('.nav-item').forEach(function(el) {
+    var oc = el.getAttribute('onclick') || '';
+    if (oc.indexOf('siswa') > -1) {
+      el.addEventListener('click', function() {
+        setTimeout(function() { if (!dataSiswa.length) loadSiswa(); }, 100);
+      });
+    }
+  });
 });
 </script>
 </body>
