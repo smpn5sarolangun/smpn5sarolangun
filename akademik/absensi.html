@@ -1056,11 +1056,9 @@ window.addEventListener('load', async () => {
   document.getElementById('bulananTahun').value = now.getFullYear();
 
   startClock();
-  await loadKelas();
-  await loadDashboard();
-  // Refresh statistik angka setiap 5 menit (tidak timpa tabel)
-  setInterval(refreshStatistikSaja, 30 * 1000); // refresh setiap 30 detik
-  await loadSiswa(); // muat data siswa untuk fitur cari nama
+  // Jalankan semua paralel - lebih cepat
+  await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
+  setInterval(refreshStatistikSaja, 30 * 1000);
 });
 
 // ── JAM ────────────────────────────────────────────────
@@ -1170,20 +1168,21 @@ async function loadDashboard() {
       if(r.error?.includes('Sesi')) window.location.href='login.html'; 
       return; 
     }
-    _updateDashboardUI(r.data);
+    const d = r.data;
+    _updateDashboardUI(d);
 
     // Tabel absensi terbaru
     const tbody = document.getElementById('tabelAbsenHariIni');
-    if (!d.terbaru.length) {
+    if (!d.terbaru || !d.terbaru.length) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
     } else {
-      tbody.innerHTML = d.terbaru.map(r => `
+      tbody.innerHTML = d.terbaru.map(row => `
         <tr>
-          <td style="font-weight:600">${r.nama}</td>
-          <td>${r.kelas}</td>
-          <td>${r.jamMasuk||'—'}</td>
-          <td>${r.jamPulang||'—'}</td>
-          <td><span class="badge badge-${r.status.toLowerCase().replace(' ','')}">${r.status}</span></td>
+          <td style="font-weight:600">${row.nama}</td>
+          <td>${row.kelas}</td>
+          <td>${row.jamMasuk||'—'}</td>
+          <td>${row.jamPulang||'—'}</td>
+          <td><span class="badge badge-${row.status.toLowerCase().replace(' ','')}">${row.status}</span></td>
         </tr>`).join('');
     }
 
@@ -1210,7 +1209,7 @@ async function loadKelas() {
   const r = await apiGet('getKelas');
   if (!r.ok) return;
   dataKelas = r.data;
-  ['filterKelasRekam','izinKelas','filterKelasSiswa','rekapKelas','rekapKelas'].forEach(id => {
+  ['filterKelasRekam','izinKelas','filterKelasSiswa','rekapKelas','rekapKelas','bulananKelasCustom'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
     const cur = sel.value;
@@ -1892,21 +1891,42 @@ async function loadRekap() {
   const dari   = document.getElementById('rekapDari').value;
   const sampai = document.getElementById('rekapSampai').value;
   const kelas  = document.getElementById('rekapKelas').value;
-  const r = await apiGet('getRekap', {dari, sampai, kelas});
+  const status = document.getElementById('rekapStatus')?.value || '';
+  if (!dari || !sampai) { alert('Pilih rentang tanggal terlebih dahulu.'); return; }
   const tbody = document.getElementById('tabelRekap');
-  if (!r.ok || !r.data.length) {
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#9aabb8;">Memuat data...</td></tr>';
+  document.getElementById('btnBarRekap').style.display = 'none';
+  const r = await apiGet('getRekap', {dari, sampai, kelas});
+  if (!r.ok || !r.data || !r.data.length) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data</td></tr>';
     return;
   }
-  tbody.innerHTML = r.data.map(d => `
+  let data = r.data;
+  if (status) data = data.filter(d => (d.status||'') === status);
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data untuk filter ini</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map((d,i) => `
     <tr>
-      <td>${d.tanggal}</td><td>${d.nisn||'—'}</td>
-      <td style="font-weight:600">${d.nama}</td><td>${d.kelas}</td>
-      <td>${d.jamMasuk||'—'}</td><td>${d.jamPulang||'—'}</td>
-      <td><span class="badge badge-${(d.status||'').toLowerCase().replace(' ','')}">${d.status}</span></td>
+      <td style="text-align:center;">${i+1}</td>
+      <td>${d.tanggal||'—'}</td>
+      <td style="font-weight:600">${d.nama}</td>
+      <td>${d.kelas}</td>
+      <td>${d.jamMasuk||'—'}</td>
+      <td>${d.jamPulang||'—'}</td>
+      <td><span class="badge badge-${(d.status||'').toLowerCase().replace(' ','')}">${d.status||'—'}</span></td>
       <td>${d.ket||'—'}</td>
     </tr>`).join('');
+  const fmtTgl = iso => new Date(iso).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+  const info = `${fmtTgl(dari)} s.d. ${fmtTgl(sampai)}${kelas?' | Kelas '+kelas:''} | ${data.length} data`;
+  const elInfo = document.getElementById('infoRekap');
+  if (elInfo) elInfo.textContent = info;
+  const elPrint = document.getElementById('printInfoRekap');
+  if (elPrint) elPrint.textContent = info;
+  document.getElementById('btnBarRekap').style.display = 'flex';
 }
+
 
 // ── LAPORAN BULANAN ─────────────────────────────────────
 async function loadBulanan() {
@@ -1974,8 +1994,68 @@ async function loadBulanan() {
   document.getElementById('btnBarBulanan').style.display = 'flex';
 }
 
+async function loadBulananCustom() {
+  const dari   = document.getElementById('bulananDari')?.value;
+  const sampai = document.getElementById('bulananSampai')?.value;
+  const kelas  = document.getElementById('bulananKelasCustom')?.value || '';
+  if (!dari || !sampai) { alert('Pilih rentang tanggal terlebih dahulu.'); return; }
+  const tbody = document.getElementById('tabelBulanan');
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#9aabb8;">Memuat data...</td></tr>';
+  document.getElementById('btnBarBulanan').style.display = 'none';
+
+  const r = await apiGet('getRekap', { dari, sampai, kelas });
+  let dataAbsen = (r.ok && r.data) ? r.data : [];
+
+  // Gabung dengan data siswa — siswa tanpa absensi tetap tampil
+  let semuaSiswaFilter = kelas ? dataSiswa.filter(s=>s.kelas===kelas) : dataSiswa;
+  let dataGabung = semuaSiswaFilter.map(s => {
+    const absen = dataAbsen.find(d => d.nisn === s.nisn || d.nama === s.nama);
+    return absen || { nisn:s.nisn, nama:s.nama, kelas:s.kelas, onTime:0, terlambat:0, izin:0, sakit:0, alpa:0, hadir:0 };
+  });
+  dataAbsen.forEach(d => {
+    if (!dataGabung.find(g => g.nisn===d.nisn || g.nama===d.nama)) dataGabung.push(d);
+  });
+  let data = dataGabung.sort((a,b)=>a.kelas.localeCompare(b.kelas)||a.nama.localeCompare(b.nama));
+
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map((d,i) => {
+    const totalHariKerja = d.onTime + d.terlambat + d.izin + d.sakit + d.alpa;
+    const pct = totalHariKerja ? Math.round(d.hadir/totalHariKerja*100) : 0;
+    return `<tr>
+      <td style="text-align:center;">${i+1}</td>
+      <td style="font-weight:600">${d.nama}</td>
+      <td><span style="background:#e8f6f8;color:var(--teal);font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px;">${d.kelas}</span></td>
+      <td style="color:var(--hijau);font-weight:700;text-align:center;">${d.onTime}</td>
+      <td style="color:#e65100;font-weight:700;text-align:center;">${d.terlambat}</td>
+      <td style="color:#1565c0;text-align:center;">${d.izin}</td>
+      <td style="color:#c62828;text-align:center;">${d.sakit}</td>
+      <td style="color:var(--merah);font-weight:700;text-align:center;">${d.alpa}</td>
+      <td style="font-weight:700;text-align:center;">${d.hadir}</td>
+      <td style="font-weight:700;text-align:center;color:${pct>=75?'var(--hijau)':'var(--merah)'};">${pct}%</td>
+    </tr>`;
+  }).join('');
+
+  const fmtTgl = iso => new Date(iso).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+  const info = `${fmtTgl(dari)} s.d. ${fmtTgl(sampai)}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa`;
+  document.getElementById('infoBulanan').textContent = info;
+  document.getElementById('printBulananInfo').textContent = info;
+  document.getElementById('printInfoBulanan').textContent = info;
+  document.getElementById('printTglTtd').textContent = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('printNamaKelas').textContent = kelas || 'Semua Kelas';
+  document.getElementById('btnBarBulanan').style.display = 'flex';
+}
+
 async function cetakBulanan() {
-  // Ambil nama wali kelas sesuai kelas yang dipilih
+  // Cek apakah data sudah dimuat
+  const tbody = document.getElementById('tabelBulanan');
+  if (!tbody || !tbody.querySelector('tr td')) {
+    alert('Klik Tampilkan dulu untuk memuat data sebelum mencetak.');
+    return;
+  }
   const kelas = document.getElementById('bulananKelas')?.value || '';
   if (kelas) {
     try {
@@ -2111,6 +2191,11 @@ window.addEventListener('load', function() {
     }
   });
 });
+
+function bukaHalamanKartu(){
+  if(TOKEN) localStorage.setItem('absensi_token_shared', TOKEN);
+  window.open('kartu.html', '_blank');
+}
 </script>
 
 <!-- Modal Detail Siswa -->
