@@ -1049,6 +1049,11 @@ window.addEventListener('load', async () => {
   document.getElementById('izinTgl').value = today;
   document.getElementById('rekapDari').value = today;
   document.getElementById('rekapSampai').value = today;
+  // Set default rentang tanggal bulanan
+  const elDari   = document.getElementById('bulananDari');
+  const elSampai = document.getElementById('bulananSampai');
+  if (elDari)   elDari.value   = today;
+  if (elSampai) elSampai.value = today;
 
   // Set bulan sekarang
   const now = new Date();
@@ -1400,24 +1405,37 @@ function getTglHariIni() {
 
 // Cache absensi tabel
 function simpanCacheAbsen(data) {
-  try { localStorage.setItem(ABSEN_CACHE_KEY, JSON.stringify({tgl:getTglHariIni(), data})); } catch(e){}
+  try { localStorage.setItem(ABSEN_CACHE_KEY, JSON.stringify({
+    tgl: getTglHariIni(), ts: Date.now(), data
+  })); } catch(e){}
 }
 function ambilCacheAbsen() {
   try {
     const obj = JSON.parse(localStorage.getItem(ABSEN_CACHE_KEY)||'null');
-    if (!obj || obj.tgl !== getTglHariIni()) { localStorage.removeItem(ABSEN_CACHE_KEY); return null; }
+    if (!obj) return null;
+    // Expired jika beda hari ATAU lebih dari 5 menit
+    if (obj.tgl !== getTglHariIni() || (Date.now() - (obj.ts||0)) > 5*60*1000) {
+      localStorage.removeItem(ABSEN_CACHE_KEY);
+      return null;
+    }
     return obj.data;
   } catch(e) { return null; }
 }
 
 // Cache dashboard stats
 function simpanCacheDashboard(data) {
-  try { localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({tgl:getTglHariIni(), data})); } catch(e){}
+  try { localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+    tgl: getTglHariIni(), ts: Date.now(), data
+  })); } catch(e){}
 }
 function ambilCacheDashboard() {
   try {
     const obj = JSON.parse(localStorage.getItem(DASHBOARD_CACHE_KEY)||'null');
-    if (!obj || obj.tgl !== getTglHariIni()) { localStorage.removeItem(DASHBOARD_CACHE_KEY); return null; }
+    if (!obj) return null;
+    if (obj.tgl !== getTglHariIni() || (Date.now() - (obj.ts||0)) > 5*60*1000) {
+      localStorage.removeItem(DASHBOARD_CACHE_KEY);
+      return null;
+    }
     return obj.data;
   } catch(e) { return null; }
 }
@@ -1977,6 +1995,27 @@ async function loadRekap() {
 
 
 // ── LAPORAN BULANAN ─────────────────────────────────────
+
+function setModeBulanan(mode) {
+  const isBulan = mode === 'bulan';
+  const elBulan  = document.getElementById('filterModeBulan');
+  const elCustom = document.getElementById('filterModeCustom');
+  const btnB = document.getElementById('btnModeBulan');
+  const btnC = document.getElementById('btnModeCustom');
+  if (elBulan)  elBulan.style.display  = isBulan ? 'flex' : 'none';
+  if (elCustom) elCustom.style.display = isBulan ? 'none' : 'flex';
+  if (btnB) {
+    btnB.style.background  = isBulan ? 'var(--teal)' : '#fff';
+    btnB.style.color       = isBulan ? '#fff' : 'var(--teks-sub)';
+    btnB.style.borderColor = isBulan ? 'var(--teal)' : '#dde3ee';
+  }
+  if (btnC) {
+    btnC.style.background  = isBulan ? '#fff' : 'var(--teal)';
+    btnC.style.color       = isBulan ? 'var(--teks-sub)' : '#fff';
+    btnC.style.borderColor = isBulan ? '#dde3ee' : 'var(--teal)';
+  }
+}
+
 async function loadBulanan() {
   const bulan = document.getElementById('bulananBulan').value;
   const tahun = document.getElementById('bulananTahun').value;
