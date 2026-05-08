@@ -1209,7 +1209,7 @@ async function loadKelas() {
   const r = await apiGet('getKelas');
   if (!r.ok) return;
   dataKelas = r.data;
-  ['filterKelasRekam','izinKelas','filterKelasSiswa','rekapKelas','rekapKelas','bulananKelasCustom'].forEach(id => {
+  ['filterKelasRekam','izinKelas','filterKelasSiswa','rekapKelas','rekapKelas','bulananKelasCustom','bulananKelas'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
     const cur = sel.value;
