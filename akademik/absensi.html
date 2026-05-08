@@ -373,6 +373,41 @@ tr:hover td{background:#f8fafc;}
 
 
   @keyframes fadeIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+
+  /* Modal Detail Siswa */
+  .modal-detail{
+    position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;
+    display:none;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-detail.open{display:flex;}
+  .modal-detail-box{
+    background:#fff;border-radius:20px;width:100%;max-width:520px;
+    max-height:80vh;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal-detail-head{
+    padding:18px 24px;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid #f0f4f8;
+  }
+  .modal-detail-head h3{font-size:16px;font-weight:700;}
+  .modal-detail-body{overflow-y:auto;padding:16px 24px;flex:1;}
+  .modal-detail-item{
+    display:flex;align-items:center;gap:12px;padding:10px 0;
+    border-bottom:1px solid #f8fafc;
+  }
+  .modal-detail-item:last-child{border-bottom:none;}
+  .modal-detail-no{
+    width:28px;height:28px;border-radius:50%;background:var(--abu);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;color:var(--teks-sub);flex-shrink:0;
+  }
+  .modal-detail-nama{font-size:13px;font-weight:600;flex:1;}
+  .modal-detail-kelas{
+    font-size:11px;font-weight:700;color:var(--teal);
+    background:#e8f6f8;padding:2px 8px;border-radius:4px;
+  }
+  .modal-detail-jam{font-size:12px;color:var(--teks-sub);}
+
 </style>
 </head>
 <body>
@@ -403,12 +438,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item active" onclick="showPage('dashboard');refreshDashboardDanTabel()">
     <span class="nav-icon">🏠</span> Dashboard
   </div>
-  <div class="nav-item" onclick="showPage('absensi')">
-    <span class="nav-icon">📋</span> Rekam Absen
-  </div>
-  <div class="nav-item" onclick="showPage('izin')">
-    <span class="nav-icon">📝</span> Daftar Izin/Sakit
-  </div>
+
   <div class="nav-item" onclick="showPage('siswa')">
     <span class="nav-icon">👥</span> Siswa & Data
   </div>
@@ -738,32 +768,44 @@ tr:hover td{background:#f8fafc;}
 
 <!-- ═══ PAGE: REKAP ═══ -->
 <div class="page" id="page-rekap">
-  <!-- Header print -->
   <div class="print-header">
     <h2>REKAP ABSENSI SISWA</h2>
     <p>SMP Negeri 05 Sarolangun &nbsp;|&nbsp; <span id="printRekamInfo"></span></p>
   </div>
-
   <h2 style="font-size:20px;font-weight:800;margin-bottom:16px;" class="no-print">📊 Rekap Absensi</h2>
   <div class="filter-bar no-print">
-    <div class="fg"><label style="font-size:11px;font-weight:700;color:#9aabb8;">Dari Tanggal</label><input type="date" id="rekapDari"></div>
-    <div class="fg"><label style="font-size:11px;font-weight:700;color:#9aabb8;">Sampai Tanggal</label><input type="date" id="rekapSampai"></div>
-    <div class="fg"><label style="font-size:11px;font-weight:700;color:#9aabb8;">Kelas</label>
+    <div class="fg">
+      <label style="font-size:11px;font-weight:700;color:#9aabb8;">Dari Tanggal</label>
+      <input type="date" id="rekapDari">
+    </div>
+    <div class="fg">
+      <label style="font-size:11px;font-weight:700;color:#9aabb8;">Sampai Tanggal</label>
+      <input type="date" id="rekapSampai">
+    </div>
+    <div class="fg">
+      <label style="font-size:11px;font-weight:700;color:#9aabb8;">Kelas</label>
       <select id="rekapKelas" style="padding:10px 14px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;">
         <option value="">Semua Kelas</option>
       </select>
     </div>
+    <div class="fg">
+      <label style="font-size:11px;font-weight:700;color:#9aabb8;">Status</label>
+      <select id="rekapStatus" style="padding:10px 14px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;">
+        <option value="">Semua Status</option>
+        <option value="OnTime">OnTime</option>
+        <option value="Terlambat">Terlambat</option>
+        <option value="Izin">Izin</option>
+        <option value="Sakit">Sakit</option>
+        <option value="Alpa">Alpa</option>
+      </select>
+    </div>
     <button class="btn-filter" onclick="loadRekap()">🔍 Tampilkan</button>
   </div>
-
-  <!-- Tombol cetak -->
   <div class="print-btn-bar no-print" id="btnBarRekap" style="display:none;">
     <button class="btn-cetak-pdf" onclick="cetakRekap()">🖨️ Cetak PDF (F4)</button>
     <span id="infoRekap" style="font-size:13px;color:#5a6a7e;"></span>
   </div>
-
   <div class="print-info" id="printInfoRekap"></div>
-
   <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.06);overflow:hidden;">
     <div style="overflow-x:auto;">
       <table id="tableRekap">
@@ -771,7 +813,9 @@ tr:hover td{background:#f8fafc;}
           <th>No</th><th>Tanggal</th><th>Nama Siswa</th><th>Kelas</th>
           <th>Jam Masuk</th><th>Jam Pulang</th><th>Status</th><th>Keterangan</th>
         </tr></thead>
-        <tbody id="tabelRekap"><tr><td colspan="8" style="text-align:center;padding:32px;color:#9aabb8;">Pilih rentang tanggal dan klik Tampilkan</td></tr></tbody>
+        <tbody id="tabelRekap">
+          <tr><td colspan="8" style="text-align:center;padding:32px;color:#9aabb8;">Pilih rentang tanggal dan klik Tampilkan</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
@@ -1063,6 +1107,9 @@ function showPage(id) {
 
 // ── LOAD DASHBOARD ─────────────────────────────────────
 function _updateDashboardUI(d) {
+  // Simpan ke cache
+  simpanCacheDashboard(d);
+
   const upd = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
   upd('stTotalSiswa', d.totalSiswa);
   upd('stTotalKelas', d.totalKelas);
@@ -1161,7 +1208,7 @@ async function loadKelas() {
   const r = await apiGet('getKelas');
   if (!r.ok) return;
   dataKelas = r.data;
-  ['filterKelasRekam','izinKelas','filterKelasSiswa','rekapKelas'].forEach(id => {
+  ['filterKelasRekam','izinKelas','filterKelasSiswa','rekapKelas','rekapKelas'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
     const cur = sel.value;
@@ -1302,29 +1349,33 @@ function playSukses() { try { AUDIO_SUKSES.currentTime=0; AUDIO_SUKSES.play(); }
 function playGagal()  { try { AUDIO_GAGAL.currentTime=0;  AUDIO_GAGAL.play();  } catch(e){} }
 
 // ── CACHE LOKAL (instan saat buka halaman) ──────────────────────
-const ABSEN_CACHE_KEY = 'absensi_hari_ini';
+const ABSEN_CACHE_KEY   = 'absensi_hari_ini';
+const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini';
 
 function getTglHariIni() {
   return new Date().toISOString().split('T')[0];
 }
 
+// Cache absensi tabel
 function simpanCacheAbsen(data) {
-  try {
-    localStorage.setItem(ABSEN_CACHE_KEY, JSON.stringify({
-      tgl: getTglHariIni(), data
-    }));
-  } catch(e) {}
+  try { localStorage.setItem(ABSEN_CACHE_KEY, JSON.stringify({tgl:getTglHariIni(), data})); } catch(e){}
 }
-
 function ambilCacheAbsen() {
   try {
-    const raw = localStorage.getItem(ABSEN_CACHE_KEY);
-    if (!raw) return null;
-    const obj = JSON.parse(raw);
-    if (obj.tgl !== getTglHariIni()) {
-      localStorage.removeItem(ABSEN_CACHE_KEY); // ganti hari → hapus
-      return null;
-    }
+    const obj = JSON.parse(localStorage.getItem(ABSEN_CACHE_KEY)||'null');
+    if (!obj || obj.tgl !== getTglHariIni()) { localStorage.removeItem(ABSEN_CACHE_KEY); return null; }
+    return obj.data;
+  } catch(e) { return null; }
+}
+
+// Cache dashboard stats
+function simpanCacheDashboard(data) {
+  try { localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({tgl:getTglHariIni(), data})); } catch(e){}
+}
+function ambilCacheDashboard() {
+  try {
+    const obj = JSON.parse(localStorage.getItem(DASHBOARD_CACHE_KEY)||'null');
+    if (!obj || obj.tgl !== getTglHariIni()) { localStorage.removeItem(DASHBOARD_CACHE_KEY); return null; }
     return obj.data;
   } catch(e) { return null; }
 }
@@ -1364,8 +1415,11 @@ async function refreshDashboardDanTabel() {
     apiGet('getDashboard'),
     apiGet('getAbsensiHari', {tanggal: today})
   ]);
-  if (rDash.ok) _updateDashboardUI(rDash.data);
-  if (rAbsen.ok) renderTabelAbsenHariIni(rAbsen.data); // otomatis simpan ke cache
+  if (rDash.ok) _updateDashboardUI(rDash.data); // simpan ke cache otomatis
+  if (rAbsen.ok) {
+    renderTabelAbsenHariIni(rAbsen.data);
+    simpanCacheAbsen(rAbsen.data);
+  }
 }
 
 // Refresh hanya angka statistik, tidak timpa tabel absensi
@@ -1589,8 +1643,76 @@ function tampilNotif(icon, nama, detail, isError) {
 }
 
 function filterTabel(status) {
-  // Scroll ke tabel dan highlight
-  document.getElementById('page-dashboard').querySelector('.tabel-area').scrollIntoView({behavior:'smooth'});
+  bukаModalDetail(status);
+}
+
+function bukаModalDetail(status) {
+  const modal = document.getElementById('modalDetail');
+  const isi   = document.getElementById('modalDetailIsi');
+  const judul = document.getElementById('modalDetailJudul');
+
+  const labelMap = {
+    OnTime:      {label:'✅ Hadir On-Time',       color:'var(--hijau)'},
+    Terlambat:   {label:'⏰ Terlambat',            color:'#e65100'},
+    belumMasuk:  {label:'⏳ Belum Masuk',          color:'#f57f17'},
+    belumPulang: {label:'🏠 Belum Pulang',         color:'#7d3c98'},
+    Izin:        {label:'📝 Izin',                 color:'#1565c0'},
+    Sakit:       {label:'🤒 Sakit',                color:'#c62828'},
+    Alpa:        {label:'❌ Alpa',                  color:'var(--merah)'},
+  };
+
+  const info = labelMap[status] || {label: status, color:'var(--teks)'};
+  judul.textContent = info.label;
+  judul.style.color = info.color;
+
+  // Ambil data dari sheet
+  isi.innerHTML = '<div style="text-align:center;padding:32px;color:var(--teks-sub);"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;"></div>Memuat...</div>';
+  modal.classList.add('open');
+
+  const today = new Date().toISOString().split('T')[0];
+
+  apiGet('getAbsensiHari', {tanggal: today}).then(r => {
+    if (!r.ok) { isi.innerHTML = '<p style="text-align:center;color:var(--teks-sub);padding:24px;">Gagal memuat data</p>'; return; }
+
+    let siswaList = [];
+
+    if (status === 'belumMasuk') {
+      const sudahAbsen = new Set(r.data.map(d => d.nisn).filter(Boolean));
+      const sudahAbsenNama = new Set(r.data.map(d => d.nama));
+      siswaList = dataSiswa.filter(s => 
+        !sudahAbsen.has(s.nisn) && !sudahAbsenNama.has(s.nama)
+      ).map(s => ({nama:s.nama, kelas:s.kelas, info:'Belum absen'}));
+    } else if (status === 'belumPulang') {
+      siswaList = r.data.filter(d => 
+        ['OnTime','Terlambat'].includes(d.status) && !d.jamPulang
+      ).map(d => ({nama:d.nama, kelas:d.kelas, info:'Masuk '+d.jamMasuk}));
+    } else {
+      siswaList = r.data.filter(d => d.status === status)
+        .map(d => ({
+          nama:d.nama, kelas:d.kelas,
+          info: d.jamMasuk ? 'Masuk '+d.jamMasuk : (d.jamPulang ? 'Pulang '+d.jamPulang : d.ket||'')
+        }));
+    }
+
+    if (!siswaList.length) {
+      isi.innerHTML = `<p style="text-align:center;color:var(--teks-sub);padding:32px;">Tidak ada siswa</p>`;
+      return;
+    }
+
+    isi.innerHTML = `
+      <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa</p>
+      ${siswaList.map((s,i) => `
+        <div class="modal-detail-item">
+          <div class="modal-detail-no">${i+1}</div>
+          <div class="modal-detail-nama">${s.nama}</div>
+          <div class="modal-detail-kelas">${s.kelas}</div>
+          <div class="modal-detail-jam">${s.info}</div>
+        </div>`).join('')}`;
+  });
+}
+
+function tutupModalDetail() {
+  document.getElementById('modalDetail').classList.remove('open');
 }
 
 // ── LOAD ABSENSI HARI ───────────────────────────────────
@@ -1988,5 +2110,19 @@ window.addEventListener('load', function() {
   });
 });
 </script>
+
+<!-- Modal Detail Siswa -->
+<div class="modal-detail" id="modalDetail" onclick="if(event.target===this)tutupModalDetail()">
+  <div class="modal-detail-box">
+    <div class="modal-detail-head">
+      <h3 id="modalDetailJudul">Detail Siswa</h3>
+      <button onclick="tutupModalDetail()"
+        style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--teks-sub);">✕</button>
+    </div>
+    <div class="modal-detail-body" id="modalDetailIsi">
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
