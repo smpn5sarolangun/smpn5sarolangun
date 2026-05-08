@@ -152,23 +152,45 @@ async function doLogin(){
   document.getElementById('alertError').classList.remove('show');
 
   try{
+    // Gunakan fetch dengan mode cors - Apps Script sudah support CORS
     const res = await fetch(SCRIPT_URL, {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({action:'login', username, password})
     });
+    
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    
     const data = await res.json();
     if(data.ok){
-      // Simpan session
       sessionStorage.setItem('absensi_token', data.token);
       sessionStorage.setItem('absensi_user', data.username);
       sessionStorage.setItem('absensi_expiry', Date.now() + (data.expiry * 60 * 1000));
       window.location.href = 'absensi.html';
     } else {
-      showError(data.error || 'Login gagal');
+      showError(data.error || 'Username atau password salah');
     }
   } catch(e){
-    showError('Tidak dapat terhubung ke server. Periksa koneksi internet.');
+    // Fallback: coba via GET dengan parameter
+    try {
+      const params = new URLSearchParams({
+        action: 'loginGet',
+        username: username,
+        pw: password
+      });
+      const res2 = await fetch(SCRIPT_URL + '?' + params.toString());
+      const data2 = await res2.json();
+      if(data2.ok){
+        sessionStorage.setItem('absensi_token', data2.token);
+        sessionStorage.setItem('absensi_user', data2.username);
+        sessionStorage.setItem('absensi_expiry', Date.now() + (data2.expiry * 60 * 1000));
+        window.location.href = 'absensi.html';
+      } else {
+        showError(data2.error || 'Login gagal');
+      }
+    } catch(e2){
+      showError('Tidak dapat terhubung: ' + e.message);
+    }
   } finally {
     setBtnLoading(false);
   }
