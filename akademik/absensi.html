@@ -416,7 +416,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal()">
+  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs()">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <a class="nav-item" href="kartu.html" target="_blank">
@@ -918,6 +918,8 @@ window.addEventListener('load', async () => {
   startClock();
   await loadKelas();
   await loadDashboard();
+  // Auto refresh dashboard setiap 5 menit
+  setInterval(loadDashboard, 5 * 60 * 1000);
   await loadSiswa(); // muat data siswa untuk fitur cari nama
 });
 
@@ -968,25 +970,39 @@ function showPage(id) {
 async function loadDashboard() {
   try {
     const r = await apiGet('getDashboard');
-    if (!r.ok) { if(r.error?.includes('Sesi')) window.location.href='login.html'; return; }
+    if (!r.ok) { 
+      if(r.error?.includes('Sesi')) window.location.href='login.html'; 
+      console.error('Dashboard error:', r.error);
+      return; 
+    }
     const d = r.data;
+    console.log('Dashboard data:', JSON.stringify(d.statistik));
 
-    document.getElementById('stTotalSiswa').textContent  = d.totalSiswa;
-    document.getElementById('stTotalKelas').textContent  = d.totalKelas;
-    document.getElementById('stTglDash').textContent     = d.tanggal;
-    document.getElementById('jadwalMasuk').textContent   = d.jadwal.jamMasukBatas;
-    document.getElementById('jadwalPulang').textContent  = d.jadwal.jamPulangMinimal;
-    document.getElementById('setJamMasuk').value = d.jadwal.jamMasukBatas;
-    document.getElementById('setJamPulang').value = d.jadwal.jamPulangMinimal;
+    // Helper update elemen dengan aman
+    const upd = (id, val) => { 
+      const el = document.getElementById(id); 
+      if(el) el.textContent = val; 
+    };
+
+    upd('stTotalSiswa', d.totalSiswa);
+    upd('stTotalKelas', d.totalKelas);
+    upd('stTglDash',    d.tanggal);
+
+    if (d.jadwal) {
+      upd('jadwalMasuk',  d.jadwal.jamMasukBatas);
+      upd('jadwalPulang', d.jadwal.jamPulangMinimal);
+      // setJamMasuk ada di halaman jadwal - simpan ke variabel global dulu
+      window._jadwalData = d.jadwal;
+    }
 
     const s = d.statistik;
-    document.getElementById('stOnTime').textContent     = s.onTime;
-    document.getElementById('stTerlambat').textContent  = s.terlambat;
-    document.getElementById('stBelumMasuk').textContent = s.belumMasuk;
-    document.getElementById('stBelumPulang').textContent= s.belumPulang;
-    document.getElementById('stIzin').textContent       = s.izin;
-    document.getElementById('stSakit').textContent      = s.sakit;
-    document.getElementById('stAlpa').textContent       = s.alpa;
+    upd('stOnTime',      s.onTime);
+    upd('stTerlambat',   s.terlambat);
+    upd('stBelumMasuk',  s.belumMasuk);
+    upd('stBelumPulang', s.belumPulang);
+    upd('stIzin',        s.izin);
+    upd('stSakit',       s.sakit);
+    upd('stAlpa',        s.alpa);
 
     // Tabel absensi terbaru
     const tbody = document.getElementById('tabelAbsenHariIni');
@@ -1528,6 +1544,16 @@ let jadwalPerHari = {
   Jumat:   {aktif:true,  masuk:'07:30', pulang:'11:00'},
   Sabtu:   {aktif:false, masuk:'07:30', pulang:'12:00'},
 };
+
+function loadJadwalInputs() {
+  if (window._jadwalData) {
+    const jm = document.getElementById('setJamMasuk');
+    const jp = document.getElementById('setJamPulang');
+    const ja = document.getElementById('setJamAlpa');
+    if(jm) jm.value = window._jadwalData.jamMasukBatas    || '07:30';
+    if(jp) jp.value = window._jadwalData.jamPulangMinimal || '12:00';
+  }
+}
 
 function renderTabelJadwal() {
   const tbody = document.getElementById('tabelJadwal');
