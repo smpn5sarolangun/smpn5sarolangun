@@ -469,7 +469,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs()">
+  <div class="nav-item" onclick="showPage('jadwal');loadJadwalDariServer()">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <div class="nav-item" onclick="bukaHalamanKartu()">
@@ -2316,6 +2316,22 @@ let jadwalPerHari = {
   Jumat:   {aktif:true,  masuk:'07:30', pulang:'11:00'},
   Sabtu:   {aktif:false, masuk:'07:30', pulang:'12:00'},
 };
+
+async function loadJadwalDariServer() {
+  try {
+    const rj = await apiGet('getJadwalAbsen');
+    if (rj.ok && rj.data) {
+      window._jadwalData = rj.data;
+      if (rj.data.jadwalPerHari) {
+        jadwalPerHari = rj.data.jadwalPerHari;
+      }
+    }
+  } catch(e) {
+    console.warn('loadJadwalDariServer error:', e);
+  }
+  renderTabelJadwal();
+  loadJadwalInputs();
+}
 
 function loadJadwalInputs() {
   if (window._jadwalData) {
