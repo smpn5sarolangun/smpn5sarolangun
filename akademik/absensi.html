@@ -365,6 +365,12 @@ tr:hover td{background:#f8fafc;}
       print-color-adjust: exact !important;
     }
   }
+  /* Halaman 2 - hanya tampil saat print */
+  .print-h2 { display: none !important; }
+  @media print {
+    .print-h2 { display: block !important; }
+  }
+
   .print-header {
     display: none;
     text-align: center;
@@ -2064,53 +2070,70 @@ async function loadBulanan() {
   const kelas = document.getElementById('bulananKelas')?.value || '';
   const tbody = document.getElementById('tabelBulanan');
 
-  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 10px;"></div>Memuat...</td></tr>';
+  // Hitung dari/sampai dari bulan+tahun
+  const bln2     = String(bulan).padStart(2,'0');
+  const dari     = tahun + '-' + bln2 + '-01';
+  const lastDay  = new Date(parseInt(tahun), parseInt(bulan), 0).getDate();
+  const sampai   = tahun + '-' + bln2 + '-' + String(lastDay).padStart(2,'0');
 
-  const r = await apiGet('getRekapBulananSiswa', {bulan, tahun});
+  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:32px;"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 10px;"></div>Memuat...</td></tr>';
+  document.getElementById('btnBarBulanan').style.display = 'none';
 
-  // Server sudah kembalikan semua siswa (hadir + belum hadir)
-  // Cukup filter kelas di sini jika dipilih
+  // Kirim dari/sampai agar server bisa hitung hari efektif
+  const r = await apiGet('getRekapBulananSiswa', {bulan, tahun, dari, sampai, kelas});
+
   let data = (r.ok && r.data) ? r.data : [];
   if (kelas) data = data.filter(d => d.kelas === kelas);
 
+  // Simpan untuk cetak halaman 2
+  window._lastDaftarLibur = r.daftarLibur || [];
+  window._lastDari        = dari;
+  window._lastSampai      = sampai;
+  window._lastHariEfektif = r.hariEfektif || 0;
+
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data siswa</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data siswa</td></tr>';
     document.getElementById('btnBarBulanan').style.display = 'none';
     return;
   }
 
-  // data langsung dari server - properti sudah benar (gabung siswa + absensi)
-
-  const bulanNama = ['','Januari','Februari','Maret','April','Mei','Juni',
+  const hariEfektif = r.hariEfektif || 0;
+  const bulanNama   = ['','Januari','Februari','Maret','April','Mei','Juni',
     'Juli','Agustus','September','Oktober','November','Desember'];
 
   tbody.innerHTML = data.map((d,i) => {
-    const totalHariKerja = d.onTime + d.terlambat + d.izin + d.sakit + d.alpa;
-    const pct = totalHariKerja ? Math.round(d.hadir/totalHariKerja*100) : 0;
+    const onTime    = parseInt(d.onTime    || 0) || 0;
+    const terlambat = parseInt(d.terlambat || 0) || 0;
+    const izin      = parseInt(d.izin      || 0) || 0;
+    const sakit     = parseInt(d.sakit     || 0) || 0;
+    const alpa      = parseInt(d.alpa      || 0) || 0;
+    const hadir     = onTime + terlambat;
+    const hEfektif  = parseInt(d.hariEfektif || hariEfektif || 0) || 0;
+    const pct       = hEfektif ? Math.round(hadir/hEfektif*100) : 0;
     return `<tr>
       <td style="text-align:center;">${i+1}</td>
-      <td style="font-weight:600">${d.nama}</td>
-      <td><span style="background:#e8f6f8;color:var(--teal);font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px;">${d.kelas}</span></td>
-      <td style="color:var(--hijau);font-weight:700;text-align:center;">${d.onTime}</td>
-      <td style="color:#e65100;font-weight:700;text-align:center;">${d.terlambat}</td>
-      <td style="color:#1565c0;text-align:center;">${d.izin}</td>
-      <td style="color:#c62828;text-align:center;">${d.sakit}</td>
-      <td style="color:var(--merah);font-weight:700;text-align:center;">${d.alpa}</td>
-      <td style="font-weight:700;text-align:center;">${d.hadir}</td>
+      <td style="font-weight:600">${d.nama||'—'}</td>
+      <td style="text-align:center;"><span style="background:#e8f6f8;color:var(--teal);font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px;">${d.kelas||'—'}</span></td>
+      <td style="font-weight:700;text-align:center;">${hEfektif}</td>
+      <td style="color:var(--hijau);font-weight:700;text-align:center;">${onTime}</td>
+      <td style="color:#e65100;font-weight:700;text-align:center;">${terlambat}</td>
+      <td style="color:#1565c0;text-align:center;">${izin}</td>
+      <td style="color:#c62828;text-align:center;">${sakit}</td>
+      <td style="color:var(--merah);font-weight:700;text-align:center;">${alpa}</td>
+      <td style="font-weight:700;text-align:center;">${hadir}</td>
       <td style="font-weight:700;text-align:center;color:${pct>=75?'var(--hijau)':'var(--merah)'};">${pct}%</td>
     </tr>`;
   }).join('');
 
-  const info = `${bulanNama[parseInt(bulan)]} ${tahun}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa`;
-  document.getElementById('infoBulanan').textContent = info;
+  const info = `${bulanNama[parseInt(bulan)]} ${tahun}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa | ${hariEfektif} hari efektif`;
+  document.getElementById('infoBulanan').textContent      = info;
   document.getElementById('printBulananInfo').textContent = info;
   document.getElementById('printInfoBulanan').textContent = info;
-  document.getElementById('printTglTtd').textContent = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  const kelasLabel = document.getElementById('bulananKelasCustom')?.value 
-                     || document.getElementById('bulananKelas')?.value || '';
-  document.getElementById('printNamaKelas').textContent = kelasLabel || 'Semua Kelas';
-  document.getElementById('btnBarBulanan').style.display = 'flex';
+  document.getElementById('printTglTtd').textContent      = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('printNamaKelas').textContent   = kelas || 'Semua Kelas';
+  document.getElementById('btnBarBulanan').style.display  = 'flex';
 }
+
 
 async function loadBulananCustom() {
   const dari   = document.getElementById('bulananDari')?.value;
