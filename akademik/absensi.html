@@ -1094,6 +1094,7 @@ window.addEventListener('load', async () => {
     const rj = await apiGet('getJadwalAbsen');
     if (rj.ok && rj.data && rj.data.jadwalPerHari) {
       jadwalPerHari = rj.data.jadwalPerHari;
+      window._jadwalData = rj.data; // simpan seluruh data jadwal termasuk jamAlpa
     }
   } catch(e) {}
   renderTabelJadwal();
@@ -1169,9 +1170,22 @@ function fmtTgl(tgl) {
 
 function fmtJam(jam) {
   if (!jam || jam === '—') return '—';
-  // Ambil HH:mm saja, ganti : dengan .
-  var s = String(jam).trim().slice(0,5);
-  return s.replace(':', '.');
+  var s = String(jam).trim();
+
+  // Format panjang Google Sheets: "Sat Dec 30 1899 07:42:00 GMT+0707 (...)"
+  // Cari pola HH:mm:ss di tengah string
+  var mLong = s.match(/(\d{1,2}):(\d{2}):\d{2}/);
+  if (mLong) {
+    return String(mLong[1]).padStart(2,'0') + '.' + mLong[2];
+  }
+
+  // Format HH:mm atau HH.mm (sudah bersih)
+  var mShort = s.match(/^(\d{1,2})[:\.](\d{2})/);
+  if (mShort) {
+    return String(mShort[1]).padStart(2,'0') + '.' + mShort[2];
+  }
+
+  return s.slice(0,5);
 }
 
 function startClock() {
@@ -1219,6 +1233,14 @@ function showPage(id) {
 
 // ── LOAD DASHBOARD ─────────────────────────────────────
 function _updateDashboardUI(d) {
+  // Bersihkan format jam di data terbaru sebelum disimpan ke cache
+  if (d.terbaru && d.terbaru.length) {
+    d.terbaru = d.terbaru.map(r => ({
+      ...r,
+      jamMasuk:  fmtJam(r.jamMasuk),
+      jamPulang: fmtJam(r.jamPulang),
+    }));
+  }
   // Simpan ke cache
   simpanCacheDashboard(d);
 
@@ -1265,8 +1287,8 @@ function _updateDashboardUI(d) {
         <tr>
           <td style="font-weight:600">${r.nama}</td>
           <td>${r.kelas}</td>
-          <td>${r.jamMasuk||'—'}</td>
-          <td>${r.jamPulang||'—'}</td>
+          <td>${fmtJam(r.jamMasuk)}</td>
+          <td>${fmtJam(r.jamPulang)}</td>
           <td><span class="badge badge-${r.status.toLowerCase().replace(' ','')}">${r.status}</span></td>
         </tr>`).join('');
     }
@@ -1292,8 +1314,8 @@ async function loadDashboard() {
         <tr>
           <td style="font-weight:600">${row.nama}</td>
           <td>${row.kelas}</td>
-          <td>${row.jamMasuk||'—'}</td>
-          <td>${row.jamPulang||'—'}</td>
+          <td>${fmtJam(row.jamMasuk)}</td>
+          <td>${fmtJam(row.jamPulang)}</td>
           <td><span class="badge badge-${row.status.toLowerCase().replace(' ','')}">${row.status}</span></td>
         </tr>`).join('');
     }
@@ -2302,6 +2324,7 @@ function loadJadwalInputs() {
     const ja = document.getElementById('setJamAlpa');
     if(jm) jm.value = window._jadwalData.jamMasukBatas    || '07:30';
     if(jp) jp.value = window._jadwalData.jamPulangMinimal || '12:00';
+    if(ja) ja.value = window._jadwalData.jamAlpa          || '14:00';
   }
 }
 
@@ -2360,6 +2383,7 @@ async function simpanJadwal() {
     jadwalPerHari: jadwalPerHari,
     jamMasukBatas:    jHariIni.masuk,
     jamPulangMinimal: jHariIni.pulang,
+    jamAlpa: document.getElementById('setJamAlpa')?.value || '14:00',
     hariAktif: HARI_LIST.filter(h => jadwalPerHari[h].aktif)
   });
 
