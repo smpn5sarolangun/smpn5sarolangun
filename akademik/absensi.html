@@ -2367,36 +2367,57 @@ function toggleRowJadwal(hari) {
 }
 
 async function simpanJadwal() {
-  // Ambil nilai terbaru dari input
-  HARI_LIST.forEach(hari => {
-    jadwalPerHari[hari].aktif  = document.getElementById('aktif_'+hari)?.checked ?? jadwalPerHari[hari].aktif;
-    jadwalPerHari[hari].masuk  = document.getElementById('masuk_'+hari)?.value   || jadwalPerHari[hari].masuk;
-    jadwalPerHari[hari].pulang = document.getElementById('pulang_'+hari)?.value  || jadwalPerHari[hari].pulang;
-  });
-
-  // Hitung jam masuk & pulang hari ini untuk sidebar
-  const hariIni = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date().getDay()];
-  const jHariIni = jadwalPerHari[hariIni] || jadwalPerHari['Senin'];
-
-  const r = await apiPost({
-    action: 'simpanJadwal',
-    jadwalPerHari: jadwalPerHari,
-    jamMasukBatas:    jHariIni.masuk,
-    jamPulangMinimal: jHariIni.pulang,
-    jamAlpa: document.getElementById('setJamAlpa')?.value || '14:00',
-    hariAktif: HARI_LIST.filter(h => jadwalPerHari[h].aktif)
-  });
-
   const msg = document.getElementById('jadwalMsg');
-  msg.textContent = r.ok ? '✅ Jadwal berhasil disimpan!' : ('❌ ' + (r.error||'Gagal'));
-  msg.style.display = 'block';
-  msg.style.background = r.ok ? '#e8f6ef' : '#fdecea';
-  msg.style.color = r.ok ? '#1a7a4a' : '#c0392b';
-  if (r.ok) {
-    document.getElementById('jadwalMasuk').textContent  = jHariIni.masuk;
-    document.getElementById('jadwalPulang').textContent = jHariIni.pulang;
+  try {
+    // Ambil nilai terbaru dari input
+    HARI_LIST.forEach(hari => {
+      jadwalPerHari[hari].aktif  = document.getElementById('aktif_'+hari)?.checked ?? jadwalPerHari[hari].aktif;
+      jadwalPerHari[hari].masuk  = document.getElementById('masuk_'+hari)?.value   || jadwalPerHari[hari].masuk;
+      jadwalPerHari[hari].pulang = document.getElementById('pulang_'+hari)?.value  || jadwalPerHari[hari].pulang;
+    });
+
+    // Hitung jam masuk & pulang hari ini untuk sidebar
+    const hariIni = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date().getDay()];
+    const jHariIni = jadwalPerHari[hariIni] || jadwalPerHari['Senin'];
+
+    const jamAlpa = document.getElementById('setJamAlpa')?.value || '14:00';
+    console.log('[simpanJadwal] Mengirim:', { jadwalPerHari, jamAlpa, token: TOKEN ? 'ada' : 'KOSONG' });
+
+    if (!TOKEN) {
+      if (msg) { msg.textContent = '❌ Sesi tidak valid, silakan login ulang'; msg.style.display='block'; msg.style.background='#fdecea'; msg.style.color='#c0392b'; }
+      return;
+    }
+
+    if (msg) { msg.textContent = '⏳ Menyimpan...'; msg.style.display='block'; msg.style.background='#e8f0fe'; msg.style.color='#1a3c8a'; }
+
+    const r = await apiPost({
+      action: 'simpanJadwal',
+      jadwalPerHari: jadwalPerHari,
+      jamMasukBatas:    jHariIni.masuk,
+      jamPulangMinimal: jHariIni.pulang,
+      jamAlpa:          jamAlpa,
+      hariAktif: HARI_LIST.filter(h => jadwalPerHari[h].aktif)
+    });
+
+    console.log('[simpanJadwal] Respon server:', r);
+
+    if (msg) {
+      msg.textContent = r.ok ? '✅ Jadwal berhasil disimpan!' : ('❌ ' + (r.error||'Gagal'));
+      msg.style.background = r.ok ? '#e8f6ef' : '#fdecea';
+      msg.style.color = r.ok ? '#1a7a4a' : '#c0392b';
+    }
+    if (r.ok) {
+      // Update tampilan sidebar
+      document.getElementById('jadwalMasuk').textContent  = jHariIni.masuk;
+      document.getElementById('jadwalPulang').textContent = jHariIni.pulang;
+      // Simpan jamAlpa ke _jadwalData agar input tidak reset
+      if (window._jadwalData) window._jadwalData.jamAlpa = jamAlpa;
+    }
+  } catch(e) {
+    console.error('[simpanJadwal] Error:', e);
+    if (msg) { msg.textContent = '❌ Error: ' + e.message; msg.style.display='block'; msg.style.background='#fdecea'; msg.style.color='#c0392b'; }
   }
-  setTimeout(() => msg.style.display='none', 3000);
+  if (msg) setTimeout(() => msg.style.display='none', 4000);
 }
 
 async function prosesAlpaManual() {
