@@ -931,6 +931,24 @@ tr:hover td{background:#f8fafc;}
     </div>
   </div>
 
+  <!-- Tanda tangan halaman 1 (hanya tampil saat print) -->
+  <div class="print-h2" style="margin-top:32px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;font-size:11px;margin-top:24px;">
+      <div>
+        <p style="margin:0;">Mengetahui,</p>
+        <p style="font-weight:700;margin:4px 0;">Kepala Sekolah</p>
+        <div style="height:60px;"></div>
+        <p style="display:inline-block;min-width:180px;padding-top:4px;"><strong>Sukardiman, M.Pd.</strong></p>
+      </div>
+      <div>
+        <p style="margin:0;">Sarolangun, <span id="printTglTtd"></span></p>
+        <p style="font-weight:700;margin:4px 0;">Wali Kelas <span id="printNamaKelas"></span></p>
+        <div style="height:60px;"></div>
+        <p class="ttd-walas" style="display:inline-block;min-width:180px;padding-top:4px;">( __________________ )</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Halaman 2: Daftar Libur + Tanda Tangan -->
   <div class="print-h2" id="printHalaman2" style="page-break-before:always;">
     <!-- Header halaman 2 -->
@@ -2201,7 +2219,11 @@ async function loadBulananCustom() {
 }
 
 async function cetakBulanan() {
-  const kelas     = document.getElementById('bulananKelasCustom')?.value || '';
+  // Ambil kelas dari mode yang sedang aktif (Per Bulan atau Rentang Tanggal)
+  const isCustomMode = document.getElementById('filterModeCustom')?.style.display !== 'none';
+  const kelas = isCustomMode
+    ? (document.getElementById('bulananKelasCustom')?.value || '')
+    : (document.getElementById('bulananKelas')?.value || '');
   const libur     = window._lastDaftarLibur || [];
   const dari      = window._lastDari        || '';
   const sampai    = window._lastSampai      || '';
