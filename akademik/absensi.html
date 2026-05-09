@@ -832,7 +832,30 @@ tr:hover td{background:#f8fafc;}
 
   <h2 style="font-size:20px;font-weight:800;margin-bottom:16px;" class="no-print">📅 Laporan Bulanan</h2>
   <!-- Toggle mode filter -->
-  
+  <div style="display:flex;gap:8px;margin-bottom:14px;" class="no-print">
+    <button id="btnModeBulan" onclick="setModeBulanan('bulan')"
+      style="padding:8px 18px;border-radius:8px;border:2px solid var(--teal);background:var(--teal);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">
+      📅 Per Bulan
+    </button>
+    <button id="btnModeCustom" onclick="setModeBulanan('custom')"
+      style="padding:8px 18px;border-radius:8px;border:2px solid #dde3ee;background:#fff;color:var(--teks-sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">
+      📆 Rentang Tanggal
+    </button>
+  </div>
+
+  <!-- Filter per bulan -->
+  <div class="filter-bar no-print" id="filterModeBulan">
+    <div class="fg">
+      <label style="font-size:11px;font-weight:700;color:#9aabb8;">Bulan</label>
+      <select id="bulananBulan" style="padding:10px 14px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;">
+        <option value="01">Januari</option><option value="02">Februari</option>
+        <option value="03">Maret</option><option value="04">April</option>
+        <option value="05">Mei</option><option value="06">Juni</option>
+        <option value="07">Juli</option><option value="08">Agustus</option>
+        <option value="09">September</option><option value="10">Oktober</option>
+        <option value="11">November</option><option value="12">Desember</option>
+      </select>
+    </div>
     <div class="fg">
       <label style="font-size:11px;font-weight:700;color:#9aabb8;">Tahun</label>
       <input type="number" id="bulananTahun" value="2026" min="2024" max="2030"
@@ -848,7 +871,7 @@ tr:hover td{background:#f8fafc;}
   </div>
 
   <!-- Filter rentang tanggal custom -->
-  <div class="filter-bar no-print" id="filterModeCustom">
+  <div class="filter-bar no-print" id="filterModeCustom" style="display:none;">
     <div class="fg">
       <label style="font-size:11px;font-weight:700;color:#9aabb8;">Dari Tanggal</label>
       <input type="date" id="bulananDari" style="padding:10px 14px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;">
@@ -2056,7 +2079,6 @@ async function loadBulananCustom() {
   tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 10px;"></div>Memuat...</td></tr>';
   document.getElementById('btnBarBulanan').style.display = 'none';
 
-  // Pakai getRekapBulananSiswa - server yang rekap
   const r = await apiGet('getRekapBulananSiswa', {dari, sampai, kelas});
   if (!r.ok || !r.data) {
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data</td></tr>';
@@ -2104,8 +2126,9 @@ async function cetakBulanan() {
     const r = await apiGet('getWalas');
     if (r.ok && r.data) {
       const walas = kelas ? r.data.find(w => w.kelas === kelas) : null;
-      const namaWalas = walas ? walas.nama : '____________________';
-      document.querySelectorAll('.ttd-walas').forEach(el => el.textContent = namaWalas);
+      document.querySelectorAll('.ttd-walas').forEach(el => {
+        el.textContent = walas ? walas.nama : '____________________';
+      });
     }
   } catch(e) {}
   window.print();
