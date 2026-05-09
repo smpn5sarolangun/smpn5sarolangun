@@ -2020,37 +2020,24 @@ async function loadBulanan() {
   const bulan = document.getElementById('bulananBulan').value;
   const tahun = document.getElementById('bulananTahun').value;
   const kelas = document.getElementById('bulananKelas')?.value || '';
-  const r = await apiGet('getRekapBulanan', {bulan, tahun});
   const tbody = document.getElementById('tabelBulanan');
-  // Tetap tampil walau tidak ada data absensi - isi dari data siswa
-  let dataAbsen = (r.ok && r.data) ? r.data : [];
-  
-  // Ambil semua siswa sesuai kelas filter
-  let semuaSiswaFilter = kelas ? dataSiswa.filter(s=>s.kelas===kelas) : dataSiswa;
-  
-  // Gabung - siswa yang belum ada absensi tetap tampil dengan nilai 0
-  let dataGabung = semuaSiswaFilter.map(s => {
-    const absen = dataAbsen.find(d => d.nisn === s.nisn || d.nama === s.nama);
-    return absen || {
-      nisn: s.nisn, nama: s.nama, kelas: s.kelas,
-      onTime:0, terlambat:0, izin:0, sakit:0, alpa:0, hadir:0
-    };
-  });
-  
-  // Tambah siswa dari absen yang tidak ada di dataSiswa
-  dataAbsen.forEach(d => {
-    if (!dataGabung.find(g => g.nisn===d.nisn || g.nama===d.nama))
-      dataGabung.push(d);
-  });
-  
-  let data = dataGabung.sort((a,b)=>a.kelas.localeCompare(b.kelas)||a.nama.localeCompare(b.nama));
+
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 10px;"></div>Memuat...</td></tr>';
+
+  const r = await apiGet('getRekapBulanan', {bulan, tahun});
+
+  // Server sudah kembalikan semua siswa (hadir + belum hadir)
+  // Cukup filter kelas di sini jika dipilih
+  let data = (r.ok && r.data) ? r.data : [];
+  if (kelas) data = data.filter(d => d.kelas === kelas);
+
   if (!data.length) {
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data siswa</td></tr>';
     document.getElementById('btnBarBulanan').style.display = 'none';
     return;
   }
 
-  // data sudah disiapkan di atas (gabung siswa + absensi)
+  // data langsung dari server - properti sudah benar (gabung siswa + absensi)
 
   const bulanNama = ['','Januari','Februari','Maret','April','Mei','Juni',
     'Juli','Agustus','September','Oktober','November','Desember'];
