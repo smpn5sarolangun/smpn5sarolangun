@@ -917,14 +917,13 @@ tr:hover td{background:#f8fafc;}
         <p>Mengetahui,</p>
         <p style="font-weight:700;margin-top:4px;">Kepala Sekolah</p>
         <div style="height:60px;"></div>
-        <p style="border-top:1px solid #333;padding-top:4px;display:inline-block;min-width:180px;">Sukardiman, M.Pd.</p>
+        <p style="display:inline-block;min-width:180px;">Sukardiman, M.Pd.</p>
       </div>
       <div>
         <p>Sarolangun, <span id="printTglTtd"></span></p>
         <p style="font-weight:700;margin-top:4px;">Wali Kelas <span id="printNamaKelas"></span></p>
         <div style="height:60px;"></div>
-        <p style="border-top:1px solid #333;padding-top:4px;display:inline-block;min-width:180px;" 
-           class="ttd-walas">( __________________ )</p>
+        <p class="ttd-walas" style="display:inline-block;min-width:180px;">( __________________ )</p>
       </div>
     </div>
   </div>
@@ -1396,8 +1395,8 @@ function playSukses() { try { AUDIO_SUKSES.currentTime=0; AUDIO_SUKSES.play(); }
 function playGagal()  { try { AUDIO_GAGAL.currentTime=0;  AUDIO_GAGAL.play();  } catch(e){} }
 
 // ── CACHE LOKAL (instan saat buka halaman) ──────────────────────
-const ABSEN_CACHE_KEY   = 'absensi_hari_ini';
-const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini';
+const ABSEN_CACHE_KEY   = 'absensi_hari_ini_v3';
+const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini_v3';
 
 function getTglHariIni() {
   return new Date().toISOString().split('T')[0];
@@ -2064,7 +2063,9 @@ async function loadBulanan() {
   document.getElementById('printBulananInfo').textContent = info;
   document.getElementById('printInfoBulanan').textContent = info;
   document.getElementById('printTglTtd').textContent = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('printNamaKelas').textContent = kelas || 'Semua Kelas';
+  const kelasLabel = document.getElementById('bulananKelasCustom')?.value 
+                     || document.getElementById('bulananKelas')?.value || '';
+  document.getElementById('printNamaKelas').textContent = kelasLabel || 'Semua Kelas';
   document.getElementById('btnBarBulanan').style.display = 'flex';
 }
 
@@ -2119,7 +2120,9 @@ async function loadBulananCustom() {
   document.getElementById('printBulananInfo').textContent = info;
   document.getElementById('printInfoBulanan').textContent = info;
   document.getElementById('printTglTtd').textContent = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('printNamaKelas').textContent = kelas || 'Semua Kelas';
+  const kelasLabel = document.getElementById('bulananKelasCustom')?.value 
+                     || document.getElementById('bulananKelas')?.value || '';
+  document.getElementById('printNamaKelas').textContent = kelasLabel || 'Semua Kelas';
   document.getElementById('btnBarBulanan').style.display = 'flex';
 }
 
