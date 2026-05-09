@@ -1444,8 +1444,8 @@ function playSukses() { try { AUDIO_SUKSES.currentTime=0; AUDIO_SUKSES.play(); }
 function playGagal()  { try { AUDIO_GAGAL.currentTime=0;  AUDIO_GAGAL.play();  } catch(e){} }
 
 // ── CACHE LOKAL (instan saat buka halaman) ──────────────────────
-const ABSEN_CACHE_KEY   = 'absensi_hari_ini_v4';
-const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini_v4';
+const ABSEN_CACHE_KEY   = 'absensi_hari_ini_v5';
+const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini_v5';
 
 function getTglHariIni() {
   return new Date().toISOString().split('T')[0];
@@ -2085,6 +2085,9 @@ async function loadBulanan() {
   let data = (r.ok && r.data) ? r.data : [];
   if (kelas) data = data.filter(d => d.kelas === kelas);
 
+  // Log untuk debug
+  console.log('getRekapBulananSiswa response:', r.ok, 'data len:', data.length, 'hariEfektif:', r.hariEfektif);
+
   // Simpan untuk cetak halaman 2
   window._lastDaftarLibur = r.daftarLibur || [];
   window._lastDari        = dari;
@@ -2098,6 +2101,7 @@ async function loadBulanan() {
   }
 
   const hariEfektif = r.hariEfektif || 0;
+  console.log('loadBulanan OK - data:', data.length, 'hariEfektif:', hariEfektif);
   const bulanNama   = ['','Januari','Februari','Maret','April','Mei','Juni',
     'Juli','Agustus','September','Oktober','November','Desember'];
 
