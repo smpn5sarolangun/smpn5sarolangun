@@ -2348,7 +2348,7 @@ async function simpanToggleAlpa(aktif) {
   updateSliderAlpa(aktif);
   const msg = document.getElementById('msgToggleAlpa');
   try {
-    const r = await apiGet('setAlpaOtomatis', {aktif: aktif ? 'true' : 'false'});
+    const r = await apiPost({action: 'setAlpaOtomatis', aktif: aktif ? 'true' : 'false'});
     if (msg) {
       msg.textContent = r.ok 
         ? (aktif ? '✅ Alpa otomatis diaktifkan' : '⭕ Alpa otomatis dimatikan')
