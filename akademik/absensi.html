@@ -469,7 +469,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();loadToggleAlpa()">
+  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();setTimeout(loadToggleAlpa, 100)">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <div class="nav-item" onclick="bukaHalamanKartu()">
@@ -1097,6 +1097,7 @@ window.addEventListener('load', async () => {
     }
   } catch(e) {}
   renderTabelJadwal();
+  setTimeout(loadToggleAlpa, 500); // load status toggle
   // Cek session
   TOKEN = sessionStorage.getItem('absensi_token');
   const expiry = parseInt(sessionStorage.getItem('absensi_expiry')||'0');
@@ -2337,11 +2338,12 @@ async function loadToggleAlpa() {
 }
 
 function updateSliderAlpa(aktif) {
+  const chk    = document.getElementById('toggleAlpaOtomatis');
   const slider = document.getElementById('sliderAlpa');
   const dot    = document.getElementById('sliderDot');
-  if (!slider || !dot) return;
-  slider.style.background  = aktif ? 'var(--teal)' : '#ccc';
-  dot.style.transform      = aktif ? 'translateX(24px)' : 'translateX(0)';
+  if (chk)    chk.checked             = aktif;
+  if (slider) slider.style.background = aktif ? '#0a7e8c' : '#ccc';
+  if (dot)    dot.style.transform     = aktif ? 'translateX(24px)' : 'translateX(0px)';
 }
 
 async function simpanToggleAlpa(aktif) {
