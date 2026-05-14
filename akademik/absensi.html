@@ -469,7 +469,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal');loadJadwalDariServer()">
+  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();loadToggleAlpa()">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <div class="nav-item" onclick="bukaHalamanKartu()">
@@ -931,24 +931,6 @@ tr:hover td{background:#f8fafc;}
     </div>
   </div>
 
-  <!-- Tanda tangan halaman 1 (hanya tampil saat print) -->
-  <div class="print-h2" style="margin-top:32px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;font-size:11px;margin-top:24px;">
-      <div>
-        <p style="margin:0;">Mengetahui,</p>
-        <p style="font-weight:700;margin:4px 0;">Kepala Sekolah</p>
-        <div style="height:60px;"></div>
-        <p style="display:inline-block;min-width:180px;padding-top:4px;"><strong>Sukardiman, M.Pd.</strong></p>
-      </div>
-      <div>
-        <p style="margin:0;">Sarolangun, <span id="printTglTtd"></span></p>
-        <p style="font-weight:700;margin:4px 0;">Wali Kelas <span id="printNamaKelas"></span></p>
-        <div style="height:60px;"></div>
-        <p class="ttd-walas" style="display:inline-block;min-width:180px;padding-top:4px;">( __________________ )</p>
-      </div>
-    </div>
-  </div>
-
   <!-- Halaman 2: Daftar Libur + Tanda Tangan -->
   <div class="print-h2" id="printHalaman2" style="page-break-before:always;">
     <!-- Header halaman 2 -->
@@ -1028,13 +1010,31 @@ tr:hover td{background:#f8fafc;}
     </div>
   </div>
 
-  <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:20px;max-width:400px;">
+  <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:20px;max-width:480px;">
     <h3 style="font-size:15px;font-weight:700;color:var(--biru);margin-bottom:14px;">⚙️ Pengaturan Umum</h3>
+
+    <!-- Toggle Alpa Otomatis -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#f8fafc;border-radius:12px;margin-bottom:16px;border:1.5px solid #e8edf5;">
+      <div>
+        <div style="font-size:14px;font-weight:700;">⏰ Alpa Otomatis</div>
+        <div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Tandai alpa otomatis setiap hari di jam yang ditentukan</div>
+        <div style="font-size:11px;color:#9aabb8;margin-top:4px;">Otomatis skip hari Minggu & tanggal merah</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;margin-left:16px;">
+        <input type="checkbox" id="toggleAlpaOtomatis" onchange="simpanToggleAlpa(this.checked)"
+          style="opacity:0;width:0;height:0;">
+        <span id="sliderAlpa" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:28px;transition:0.3s;">
+          <span style="position:absolute;content:'';height:20px;width:20px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:0.3s;display:block;" id="sliderDot"></span>
+        </span>
+      </label>
+    </div>
+
     <div class="fg" style="margin-bottom:14px;">
       <label>Tandai Alpa Otomatis Jam</label>
-      <input type="time" id="setJamAlpa" value="14:00">
+      <input type="time" id="setJamAlpa" value="10:00">
       <span style="font-size:11px;color:#9aabb8;">Siswa belum absen setelah jam ini = Alpa</span>
     </div>
+    <div id="msgToggleAlpa" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px;margin-top:8px;"></div>
   </div>
 
   <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -1089,7 +1089,15 @@ let scanStream = null;
 
 // ── INIT ──────────────────────────────────────────────
 window.addEventListener('load', async () => {
-  // Cek session DULU sebelum apapun
+  // Load jadwal tersimpan
+  try {
+    const rj = await apiGet('getJadwalAbsen');
+    if (rj.ok && rj.data && rj.data.jadwalPerHari) {
+      jadwalPerHari = rj.data.jadwalPerHari;
+    }
+  } catch(e) {}
+  renderTabelJadwal();
+  // Cek session
   TOKEN = sessionStorage.getItem('absensi_token');
   const expiry = parseInt(sessionStorage.getItem('absensi_expiry')||'0');
   if (!TOKEN || Date.now() > expiry) {
@@ -1100,17 +1108,6 @@ window.addEventListener('load', async () => {
   localStorage.setItem('absensi_token_shared', TOKEN);
   const user = sessionStorage.getItem('absensi_user');
   document.getElementById('usernameTop').textContent = user || 'Admin';
-
-  // Load jadwal SETELAH token siap
-  try {
-    const rj = await apiGet('getJadwalAbsen');
-    if (rj.ok && rj.data && rj.data.jadwalPerHari) {
-      jadwalPerHari = rj.data.jadwalPerHari;
-      window._jadwalData = rj.data;
-    }
-  } catch(e) {}
-  renderTabelJadwal();
-  loadJadwalInputs();
 
   // Set tanggal default
   const today = new Date().toISOString().split('T')[0];
@@ -1172,22 +1169,9 @@ function fmtTgl(tgl) {
 
 function fmtJam(jam) {
   if (!jam || jam === '—') return '—';
-  var s = String(jam).trim();
-
-  // Format panjang Google Sheets: "Sat Dec 30 1899 07:42:00 GMT+0707 (...)"
-  // Cari pola HH:mm:ss di tengah string
-  var mLong = s.match(/(\d{1,2}):(\d{2}):\d{2}/);
-  if (mLong) {
-    return String(mLong[1]).padStart(2,'0') + '.' + mLong[2];
-  }
-
-  // Format HH:mm atau HH.mm (sudah bersih)
-  var mShort = s.match(/^(\d{1,2})[:\.](\d{2})/);
-  if (mShort) {
-    return String(mShort[1]).padStart(2,'0') + '.' + mShort[2];
-  }
-
-  return s.slice(0,5);
+  // Ambil HH:mm saja, ganti : dengan .
+  var s = String(jam).trim().slice(0,5);
+  return s.replace(':', '.');
 }
 
 function startClock() {
@@ -1235,14 +1219,6 @@ function showPage(id) {
 
 // ── LOAD DASHBOARD ─────────────────────────────────────
 function _updateDashboardUI(d) {
-  // Bersihkan format jam di data terbaru sebelum disimpan ke cache
-  if (d.terbaru && d.terbaru.length) {
-    d.terbaru = d.terbaru.map(r => ({
-      ...r,
-      jamMasuk:  fmtJam(r.jamMasuk),
-      jamPulang: fmtJam(r.jamPulang),
-    }));
-  }
   // Simpan ke cache
   simpanCacheDashboard(d);
 
@@ -1289,8 +1265,8 @@ function _updateDashboardUI(d) {
         <tr>
           <td style="font-weight:600">${r.nama}</td>
           <td>${r.kelas}</td>
-          <td>${fmtJam(r.jamMasuk)}</td>
-          <td>${fmtJam(r.jamPulang)}</td>
+          <td>${r.jamMasuk||'—'}</td>
+          <td>${r.jamPulang||'—'}</td>
           <td><span class="badge badge-${r.status.toLowerCase().replace(' ','')}">${r.status}</span></td>
         </tr>`).join('');
     }
@@ -1316,8 +1292,8 @@ async function loadDashboard() {
         <tr>
           <td style="font-weight:600">${row.nama}</td>
           <td>${row.kelas}</td>
-          <td>${fmtJam(row.jamMasuk)}</td>
-          <td>${fmtJam(row.jamPulang)}</td>
+          <td>${row.jamMasuk||'—'}</td>
+          <td>${row.jamPulang||'—'}</td>
           <td><span class="badge badge-${row.status.toLowerCase().replace(' ','')}">${row.status}</span></td>
         </tr>`).join('');
     }
@@ -1452,9 +1428,36 @@ async function prosesAbsen() {
   }
 }
 
+
+// ── CEK DUPLIKAT ABSEN DI CACHE ─────────────────────────────────
+function cekSudahAbsenHariIni(nisn) {
+  try {
+    const cache = ambilCacheAbsen() || [];
+    const today = getTglHariIni();
+    return cache.find(x => 
+      (x.nisn === nisn || x.nisn === String(nisn).replace(/^0+/,'')) && 
+      x.tanggal === today &&
+      x.jamMasuk  // hanya cek absen masuk
+    ) || null;
+  } catch(e) { return null; }
+}
+
 async function konfirmasiAbsen() {
   if (!siswaYangDipilih) return;
   document.getElementById('btnAbsen').disabled = true;
+
+  // ── CEK DUPLIKAT DI CACHE (instan, tanpa tunggu server) ──
+  if (MODE_ABSEN === 'masuk') {
+    const sudah = cekSudahAbsenHariIni(siswaYangDipilih.nisn);
+    if (sudah) {
+      playGagal();
+      tampilNotif('⚠️', siswaYangDipilih.nama + ' sudah absen masuk hari ini', 
+        'Jam ' + (sudah.jamMasuk || '—'), true);
+      document.getElementById('btnAbsen').disabled = false;
+      resetInputAbsen();
+      return;
+    }
+  }
 
   const r = await apiPost({
     action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
@@ -1467,8 +1470,10 @@ async function konfirmasiAbsen() {
     resetInputAbsen();
   } else {
     playGagal();
-    tampilNotif('❌', r.error || 'Gagal absen', '', true);
+    // Tampilkan pesan error dari server (termasuk pesan duplikat)
+    tampilNotif('⚠️', r.error || 'Gagal absen', '', true);
     document.getElementById('btnAbsen').disabled = false;
+    resetInputAbsen();
   }
 }
 
@@ -2243,11 +2248,7 @@ async function loadBulananCustom() {
 }
 
 async function cetakBulanan() {
-  // Ambil kelas dari mode yang sedang aktif (Per Bulan atau Rentang Tanggal)
-  const isCustomMode = document.getElementById('filterModeCustom')?.style.display !== 'none';
-  const kelas = isCustomMode
-    ? (document.getElementById('bulananKelasCustom')?.value || '')
-    : (document.getElementById('bulananKelas')?.value || '');
+  const kelas     = document.getElementById('bulananKelasCustom')?.value || '';
   const libur     = window._lastDaftarLibur || [];
   const dari      = window._lastDari        || '';
   const sampai    = window._lastSampai      || '';
@@ -2319,21 +2320,47 @@ let jadwalPerHari = {
   Sabtu:   {aktif:false, masuk:'07:30', pulang:'12:00'},
 };
 
-async function loadJadwalDariServer() {
+
+// ── TOGGLE ALPA OTOMATIS ─────────────────────────────────────────
+async function loadToggleAlpa() {
   try {
-    const rj = await apiGet('getJadwalAbsen');
-    if (rj.ok && rj.data) {
-      window._jadwalData = rj.data;
-      if (rj.data.jadwalPerHari) {
-        jadwalPerHari = rj.data.jadwalPerHari;
+    const r = await apiGet('getAlpaOtomatis');
+    if (r.ok) {
+      const aktif = r.aktif !== false;
+      const chk = document.getElementById('toggleAlpaOtomatis');
+      if (chk) {
+        chk.checked = aktif;
+        updateSliderAlpa(aktif);
       }
     }
+  } catch(e) {}
+}
+
+function updateSliderAlpa(aktif) {
+  const slider = document.getElementById('sliderAlpa');
+  const dot    = document.getElementById('sliderDot');
+  if (!slider || !dot) return;
+  slider.style.background  = aktif ? 'var(--teal)' : '#ccc';
+  dot.style.transform      = aktif ? 'translateX(24px)' : 'translateX(0)';
+}
+
+async function simpanToggleAlpa(aktif) {
+  updateSliderAlpa(aktif);
+  const msg = document.getElementById('msgToggleAlpa');
+  try {
+    const r = await apiGet('setAlpaOtomatis', {aktif: aktif ? 'true' : 'false'});
+    if (msg) {
+      msg.textContent = r.ok 
+        ? (aktif ? '✅ Alpa otomatis diaktifkan' : '⭕ Alpa otomatis dimatikan')
+        : '❌ Gagal menyimpan';
+      msg.style.display   = 'block';
+      msg.style.background = r.ok ? (aktif ? '#e8f6ef' : '#fff3e0') : '#fdecea';
+      msg.style.color      = r.ok ? (aktif ? '#1a7a4a' : '#e65100') : '#c0392b';
+      setTimeout(() => msg.style.display = 'none', 3000);
+    }
   } catch(e) {
-    console.warn('loadJadwalDariServer error:', e);
+    if (msg) { msg.textContent = '❌ Error: ' + e.message; msg.style.display = 'block'; }
   }
-  // Render SETELAH data dari server sudah masuk
-  renderTabelJadwal();
-  loadJadwalInputs();
 }
 
 function loadJadwalInputs() {
@@ -2343,7 +2370,6 @@ function loadJadwalInputs() {
     const ja = document.getElementById('setJamAlpa');
     if(jm) jm.value = window._jadwalData.jamMasukBatas    || '07:30';
     if(jp) jp.value = window._jadwalData.jamPulangMinimal || '12:00';
-    if(ja) ja.value = window._jadwalData.jamAlpa          || '14:00';
   }
 }
 
@@ -2386,57 +2412,35 @@ function toggleRowJadwal(hari) {
 }
 
 async function simpanJadwal() {
+  // Ambil nilai terbaru dari input
+  HARI_LIST.forEach(hari => {
+    jadwalPerHari[hari].aktif  = document.getElementById('aktif_'+hari)?.checked ?? jadwalPerHari[hari].aktif;
+    jadwalPerHari[hari].masuk  = document.getElementById('masuk_'+hari)?.value   || jadwalPerHari[hari].masuk;
+    jadwalPerHari[hari].pulang = document.getElementById('pulang_'+hari)?.value  || jadwalPerHari[hari].pulang;
+  });
+
+  // Hitung jam masuk & pulang hari ini untuk sidebar
+  const hariIni = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date().getDay()];
+  const jHariIni = jadwalPerHari[hariIni] || jadwalPerHari['Senin'];
+
+  const r = await apiPost({
+    action: 'simpanJadwal',
+    jadwalPerHari: jadwalPerHari,
+    jamMasukBatas:    jHariIni.masuk,
+    jamPulangMinimal: jHariIni.pulang,
+    hariAktif: HARI_LIST.filter(h => jadwalPerHari[h].aktif)
+  });
+
   const msg = document.getElementById('jadwalMsg');
-  try {
-    // Ambil nilai terbaru dari input
-    HARI_LIST.forEach(hari => {
-      jadwalPerHari[hari].aktif  = document.getElementById('aktif_'+hari)?.checked ?? jadwalPerHari[hari].aktif;
-      jadwalPerHari[hari].masuk  = document.getElementById('masuk_'+hari)?.value   || jadwalPerHari[hari].masuk;
-      jadwalPerHari[hari].pulang = document.getElementById('pulang_'+hari)?.value  || jadwalPerHari[hari].pulang;
-    });
-
-    // Hitung jam masuk & pulang hari ini untuk sidebar
-    const hariIni = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date().getDay()];
-    const jHariIni = jadwalPerHari[hariIni] || jadwalPerHari['Senin'];
-
-    const jamAlpa = document.getElementById('setJamAlpa')?.value || '14:00';
-    console.log('[simpanJadwal] Mengirim:', { jadwalPerHari, jamAlpa, token: TOKEN ? 'ada' : 'KOSONG' });
-
-    if (!TOKEN) {
-      if (msg) { msg.textContent = '❌ Sesi tidak valid, silakan login ulang'; msg.style.display='block'; msg.style.background='#fdecea'; msg.style.color='#c0392b'; }
-      return;
-    }
-
-    if (msg) { msg.textContent = '⏳ Menyimpan...'; msg.style.display='block'; msg.style.background='#e8f0fe'; msg.style.color='#1a3c8a'; }
-
-    const r = await apiPost({
-      action: 'simpanJadwal',
-      jadwalPerHari: jadwalPerHari,
-      jamMasukBatas:    jHariIni.masuk,
-      jamPulangMinimal: jHariIni.pulang,
-      jamAlpa:          jamAlpa,
-      hariAktif: HARI_LIST.filter(h => jadwalPerHari[h].aktif)
-    });
-
-    console.log('[simpanJadwal] Respon server:', r);
-
-    if (msg) {
-      msg.textContent = r.ok ? '✅ Jadwal berhasil disimpan!' : ('❌ ' + (r.error||'Gagal'));
-      msg.style.background = r.ok ? '#e8f6ef' : '#fdecea';
-      msg.style.color = r.ok ? '#1a7a4a' : '#c0392b';
-    }
-    if (r.ok) {
-      // Update tampilan sidebar
-      document.getElementById('jadwalMasuk').textContent  = jHariIni.masuk;
-      document.getElementById('jadwalPulang').textContent = jHariIni.pulang;
-      // Simpan jamAlpa ke _jadwalData agar input tidak reset
-      if (window._jadwalData) window._jadwalData.jamAlpa = jamAlpa;
-    }
-  } catch(e) {
-    console.error('[simpanJadwal] Error:', e);
-    if (msg) { msg.textContent = '❌ Error: ' + e.message; msg.style.display='block'; msg.style.background='#fdecea'; msg.style.color='#c0392b'; }
+  msg.textContent = r.ok ? '✅ Jadwal berhasil disimpan!' : ('❌ ' + (r.error||'Gagal'));
+  msg.style.display = 'block';
+  msg.style.background = r.ok ? '#e8f6ef' : '#fdecea';
+  msg.style.color = r.ok ? '#1a7a4a' : '#c0392b';
+  if (r.ok) {
+    document.getElementById('jadwalMasuk').textContent  = jHariIni.masuk;
+    document.getElementById('jadwalPulang').textContent = jHariIni.pulang;
   }
-  if (msg) setTimeout(() => msg.style.display='none', 4000);
+  setTimeout(() => msg.style.display='none', 3000);
 }
 
 async function prosesAlpaManual() {
