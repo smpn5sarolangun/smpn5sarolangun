@@ -1534,12 +1534,13 @@ function renderTabelAbsenHariIni(data, dariCache) {
   const tbody = document.getElementById('tabelAbsenHariIni');
   if (!tbody) return;
   if (!data || !data.length) {
-    if (!dariCache) { // jangan timpa cache dengan kosong
+    if (!dariCache) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
+      // Jangan simpan kosong ke cache - biarkan cache lama tetap ada
     }
     return;
   }
-  // Simpan ke cache lokal
+  // Simpan ke cache hanya jika data dari server (bukan dari cache)
   if (!dariCache) simpanCacheAbsen(data);
 
   tbody.innerHTML = data.slice().reverse().map(r => `
@@ -1574,7 +1575,7 @@ async function refreshDashboardDanTabel() {
 // Refresh hanya angka statistik, tidak timpa tabel absensi
 async function refreshStatistikSaja() {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTglHariIni(); // pakai fungsi yang sama
     const [rDash, rAbsen] = await Promise.all([
       apiGet('getDashboard'),
       apiGet('getAbsensiHari', {tanggal: today})
