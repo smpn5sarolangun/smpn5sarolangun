@@ -1485,8 +1485,8 @@ function playSukses() { try { AUDIO_SUKSES.currentTime=0; AUDIO_SUKSES.play(); }
 function playGagal()  { try { AUDIO_GAGAL.currentTime=0;  AUDIO_GAGAL.play();  } catch(e){} }
 
 // ── CACHE LOKAL (instan saat buka halaman) ──────────────────────
-const ABSEN_CACHE_KEY   = 'absensi_hari_ini_v5';
-const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini_v5';
+const ABSEN_CACHE_KEY   = 'absensi_hari_ini_v6';
+const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini_v6';
 
 function getTglHariIni() {
   return new Date().toISOString().split('T')[0];
