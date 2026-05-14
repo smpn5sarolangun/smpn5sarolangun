@@ -1089,15 +1089,8 @@ let scanStream = null;
 
 // ── INIT ──────────────────────────────────────────────
 window.addEventListener('load', async () => {
-  // Load jadwal tersimpan
-  try {
-    const rj = await apiGet('getJadwalAbsen');
-    if (rj.ok && rj.data && rj.data.jadwalPerHari) {
-      jadwalPerHari = rj.data.jadwalPerHari;
-    }
-  } catch(e) {}
+  // Render tabel jadwal dulu dengan default
   renderTabelJadwal();
-  setTimeout(loadToggleAlpa, 500); // load status toggle
   // Cek session
   TOKEN = sessionStorage.getItem('absensi_token');
   const expiry = parseInt(sessionStorage.getItem('absensi_expiry')||'0');
@@ -2318,7 +2311,7 @@ let jadwalPerHari = {
   Rabu:    {aktif:true,  masuk:'07:30', pulang:'13:00'},
   Kamis:   {aktif:true,  masuk:'07:30', pulang:'13:00'},
   Jumat:   {aktif:true,  masuk:'07:30', pulang:'11:00'},
-  Sabtu:   {aktif:false, masuk:'07:30', pulang:'12:00'},
+  Sabtu:   {aktif:true,  masuk:'07:30', pulang:'12:00'},
 };
 
 
@@ -2405,11 +2398,15 @@ function renderTabelJadwal() {
 }
 
 function toggleRowJadwal(hari) {
-  const aktif = jadwalPerHari[hari].aktif;
-  document.getElementById('masuk_'+hari).disabled  = !aktif;
-  document.getElementById('pulang_'+hari).disabled = !aktif;
-  document.getElementById('masuk_'+hari).style.opacity  = aktif ? '1' : '0.4';
-  document.getElementById('pulang_'+hari).style.opacity = aktif ? '1' : '0.4';
+  // Update state dulu sebelum render
+  const chk = document.getElementById('aktif_'+hari);
+  if (chk) jadwalPerHari[hari].aktif = chk.checked;
+  // Update input jam juga
+  const msk = document.getElementById('masuk_'+hari);
+  const plg = document.getElementById('pulang_'+hari);
+  if (msk) jadwalPerHari[hari].masuk  = msk.value || jadwalPerHari[hari].masuk;
+  if (plg) jadwalPerHari[hari].pulang = plg.value || jadwalPerHari[hari].pulang;
+  // Render ulang tabel
   renderTabelJadwal();
 }
 
