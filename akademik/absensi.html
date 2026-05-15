@@ -1479,16 +1479,17 @@ async function konfirmasiAbsen() {
     const qStatus = MODE_ABSEN === 'masuk'
       ? (qJam <= qBatas ? 'OnTime' : 'Terlambat')
       : 'Pulang';
+    // Simpan semua data SEBELUM reset (penting!)
+    const qNisn   = siswaYangDipilih.nisn;
+    const qAction = MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang';
+    const qToken  = TOKEN;
     playSukses();
     tambahKeTabeAbsenHariIni(siswaYangDipilih, {status: qStatus, jam: qJam});
-    resetInputAbsen();
-    // Kirim ke server di background (tidak blokir antrian)
-    const qPayload = {
-      action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
-      nisn: siswaYangDipilih.nisn,
-      token: TOKEN
-    };
-    setTimeout(async function() { try { await apiPost(qPayload); } catch(e) {} }, 0);
+    resetInputAbsen(); // siswaYangDipilih jadi null setelah ini
+    // Kirim ke server di background dengan data yang sudah disimpan
+    setTimeout(async function() {
+      try { await apiPost({action: qAction, nisn: qNisn, token: qToken}); } catch(e) {}
+    }, 0);
     return;
   }
 
