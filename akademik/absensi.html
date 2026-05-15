@@ -1891,78 +1891,86 @@ function bukаModalDetail(status) {
   const judul = document.getElementById('modalDetailJudul');
 
   const labelMap = {
-    OnTime:      {label:'✅ Hadir On-Time',       color:'var(--hijau)'},
-    Terlambat:   {label:'⏰ Terlambat',            color:'#e65100'},
-    belumMasuk:  {label:'⏳ Belum Masuk',          color:'#f57f17'},
-    belumPulang: {label:'🏠 Belum Pulang',         color:'#7d3c98'},
-    Izin:        {label:'📝 Izin',                 color:'#1565c0'},
-    Sakit:       {label:'🤒 Sakit',                color:'#c62828'},
-    Alpa:        {label:'❌ Alpa',                  color:'var(--merah)'},
+    OnTime:      {label:'\u2705 Hadir On-Time',  color:'var(--hijau)'},
+    Terlambat:   {label:'\u23f0 Terlambat',       color:'#e65100'},
+    belumMasuk:  {label:'\u23f3 Belum Masuk',     color:'#f57f17'},
+    belumPulang: {label:'\U0001f3e0 Belum Pulang',color:'#7d3c98'},
+    Izin:        {label:'\U0001f4dd Izin',         color:'#1565c0'},
+    Sakit:       {label:'\U0001f912 Sakit',        color:'#c62828'},
+    Alpa:        {label:'\u274c Alpa',             color:'var(--merah)'},
   };
 
   const info = labelMap[status] || {label: status, color:'var(--teks)'};
   judul.textContent = info.label;
   judul.style.color = info.color;
-
-  // Ambil data dari sheet
-  isi.innerHTML = '<div style="text-align:center;padding:32px;color:var(--teks-sub);"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;"></div>Memuat...</div>';
   modal.classList.add('open');
 
-  const today = new Date().toISOString().split('T')[0];
+  // Baca langsung dari tabel DOM - instan, tidak fetch server
+  const tbody = document.getElementById('tabelAbsenHariIni');
+  const rows  = tbody ? Array.from(tbody.querySelectorAll('tr')) : [];
 
-  apiGet('getAbsensiHari', {tanggal: today}).then(r => {
-    if (!r.ok) { isi.innerHTML = '<p style="text-align:center;color:var(--teks-sub);padding:24px;">Gagal memuat data</p>'; return; }
+  const dataDOM = rows.map(function(row) {
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 5) return null;
+    return {
+      nama:      cells[0].textContent.trim(),
+      kelas:     cells[1].textContent.trim(),
+      jamMasuk:  cells[2].textContent.trim(),
+      jamPulang: cells[3].textContent.trim(),
+      status:    cells[4].textContent.trim()
+    };
+  }).filter(Boolean);
 
-    let siswaList = [];
+  var siswaList = [];
 
-    if (status === 'belumMasuk') {
-      const sudahAbsen = new Set(r.data.map(d => d.nisn).filter(Boolean));
-      const sudahAbsenNama = new Set(r.data.map(d => d.nama));
-      siswaList = dataSiswa.filter(s => 
-        !sudahAbsen.has(s.nisn) && !sudahAbsenNama.has(s.nama)
-      ).map(s => ({nama:s.nama, kelas:s.kelas, info:'Belum absen'}));
-    } else if (status === 'belumPulang') {
-      siswaList = r.data.filter(d => 
-        ['OnTime','Terlambat'].includes(d.status) && !d.jamPulang
-      ).map(d => ({nama:d.nama, kelas:d.kelas, info:'Masuk '+d.jamMasuk}));
-    } else {
-      siswaList = r.data.filter(d => d.status === status)
-        .map(d => ({
-          nama:d.nama, kelas:d.kelas,
-          info: d.jamMasuk ? 'Masuk '+fmtJam(d.jamMasuk) : (d.jamPulang ? 'Pulang '+fmtJam(d.jamPulang) : d.ket||'')
-        }));
-    }
+  if (status === 'belumMasuk') {
+    const sudahNama = new Set(dataDOM.map(function(d){ return d.nama; }));
+    siswaList = dataSiswa
+      .filter(function(s){ return !sudahNama.has(s.nama); })
+      .map(function(s){ return {nisn: s.nisn, nama: s.nama, kelas: s.kelas, info: 'Belum absen'}; });
 
-    if (!siswaList.length) {
-      isi.innerHTML = `<p style="text-align:center;color:var(--teks-sub);padding:32px;">Tidak ada siswa</p>`;
-      return;
-    }
+  } else if (status === 'belumPulang') {
+    siswaList = dataDOM
+      .filter(function(d){ return ['OnTime','Terlambat'].includes(d.status) && (!d.jamPulang || d.jamPulang === '\u2014'); })
+      .map(function(d){ return {nama: d.nama, kelas: d.kelas, info: 'Masuk ' + d.jamMasuk}; });
 
-    if (status === 'belumMasuk') {
-      var html3 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk — klik nama untuk input</p>';
-      siswaList.forEach(function(s, i) {
-        var nn = s.nama.replace(/'/g, '&#39;');
-        html3 += '<div class="modal-detail-item" id="mdrow' + i + '" style="flex-direction:column;align-items:flex-start;">';
-        html3 += '<div style="display:flex;align-items:center;gap:8px;width:100%;cursor:pointer;" onclick="toggleMdForm(' + i + ')">';
-        html3 += '<div class="modal-detail-no">' + (i+1) + '</div>';
-        html3 += '<div class="modal-detail-nama" style="flex:1;">' + s.nama + '</div>';
-        html3 += '<div class="modal-detail-kelas">' + s.kelas + '</div></div>';
-        html3 += '<div id="mdform' + i + '" style="display:none;padding:8px 0 4px 36px;gap:8px;flex-wrap:wrap;">';
-        html3 += '<button onclick="pilihMdStatus(' + i + ',\'Izin\')" id="mdbtn' + i + 'Izin" style="padding:5px 12px;border:2px solid #1565c0;border-radius:8px;color:#1565c0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Izin</button>';
-        html3 += '<button onclick="pilihMdStatus(' + i + ',\'Sakit\')" id="mdbtn' + i + 'Sakit" style="padding:5px 12px;border:2px solid #c62828;border-radius:8px;color:#c62828;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Sakit</button>';
-        html3 += '<button onclick="pilihMdStatus(' + i + ',\'Alpa\')" id="mdbtn' + i + 'Alpa" style="padding:5px 12px;border:2px solid #e53935;border-radius:8px;color:#e53935;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Alpa</button>';
-        html3 += '<button onclick="simpanMdStatus(' + i + ',\'' + s.nisn + '\',\'' + nn + '\',\'' + s.kelas + '\')" id="mdsave' + i + '" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Simpan</button>';
-        html3 += '</div></div>';
-      });
-      isi.innerHTML = html3;
-    } else {
-      var html4 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">' + siswaList.length + ' siswa</p>';
-      siswaList.forEach(function(s, i) {
-        html4 += '<div class="modal-detail-item"><div class="modal-detail-no">' + (i+1) + '</div><div class="modal-detail-nama">' + s.nama + '</div><div class="modal-detail-kelas">' + s.kelas + '</div><div class="modal-detail-jam">' + s.info + '</div></div>';
-      });
-      isi.innerHTML = html4;
-    }
-  });
+  } else {
+    siswaList = dataDOM
+      .filter(function(d){ return d.status === status; })
+      .map(function(d){ return {nama: d.nama, kelas: d.kelas, info: d.jamMasuk && d.jamMasuk !== '\u2014' ? 'Masuk ' + d.jamMasuk : ''}; });
+  }
+
+  if (!siswaList.length) {
+    isi.innerHTML = '<p style="text-align:center;color:var(--teks-sub);padding:32px;">Tidak ada siswa</p>';
+    return;
+  }
+
+  if (status === 'belumMasuk') {
+    var html3 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk \u2014 klik nama untuk input</p>';
+    siswaList.forEach(function(s, i) {
+      var nn = s.nama.replace(/"/g, '&quot;');
+      var nisnVal = (s.nisn && s.nisn !== 'undefined') ? s.nisn : '';
+      var row = '<div class="modal-detail-item" id="mdrow'+i+'" style="flex-direction:column;align-items:flex-start;">';
+      row += '<div style="display:flex;align-items:center;gap:8px;width:100%;cursor:pointer;" onclick="toggleMdForm('+i+')">';
+      row += '<div class="modal-detail-no">'+(i+1)+'</div>';
+      row += '<div class="modal-detail-nama" style="flex:1;">'+s.nama+'</div>';
+      row += '<div class="modal-detail-kelas">'+s.kelas+'</div></div>';
+      row += '<div id="mdform'+i+'" style="display:none;padding:8px 0 4px 36px;gap:8px;flex-wrap:wrap;">';
+      row += '<button onclick="pilihMdStatus('+i+',\'Izin\')" id="mdbtn'+i+'Izin" style="padding:5px 12px;border:2px solid #1565c0;border-radius:8px;color:#1565c0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Izin</button>';
+      row += '<button onclick="pilihMdStatus('+i+',\'Sakit\')" id="mdbtn'+i+'Sakit" style="padding:5px 12px;border:2px solid #c62828;border-radius:8px;color:#c62828;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Sakit</button>';
+      row += '<button onclick="pilihMdStatus('+i+',\'Alpa\')" id="mdbtn'+i+'Alpa" style="padding:5px 12px;border:2px solid #e53935;border-radius:8px;color:#e53935;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Alpa</button>';
+      row += '<button onclick="simpanMdStatus('+i+',\"'+nisnVal+'\",\"'+nn+'\",\"'+s.kelas+'\")" id="mdsave'+i+'" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Simpan</button>';
+      row += '</div></div>';
+      html3 += row;
+    });
+    isi.innerHTML = html3;
+  } else {
+    var html4 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">'+siswaList.length+' siswa</p>';
+    siswaList.forEach(function(s, i) {
+      html4 += '<div class="modal-detail-item"><div class="modal-detail-no">'+(i+1)+'</div><div class="modal-detail-nama">'+s.nama+'</div><div class="modal-detail-kelas">'+s.kelas+'</div><div class="modal-detail-jam">'+s.info+'</div></div>';
+    });
+    isi.innerHTML = html4;
+  }
 }
 
 var _mdStatus = {};
