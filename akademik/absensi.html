@@ -467,7 +467,7 @@ tr:hover td{background:#f8fafc;}
   <div class="sidebar-hari" id="sidebarHari">SENIN</div>
 
   <div class="sidebar-section">Menu</div>
-  <div class="nav-item active" onclick="showPage('dashboard');refreshDashboardDanTabel()">
+  <div class="nav-item active" onclick="showPage('dashboard');refreshDashboardDanTabel();setTimeout(fokusNisn,300)">
     <span class="nav-icon">🏠</span> Dashboard
   </div>
 
@@ -575,7 +575,7 @@ tr:hover td{background:#f8fafc;}
 
       <!-- Input Manual NISN -->
       <div class="nisn-input">
-        <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..."
+        <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..." autofocus
           maxlength="15" style="text-align:center;letter-spacing:2px;"
           onkeypress="if(event.key==='Enter')prosesAbsen()"
           oninput="if(this.value.length>=8)clearTimeout(window._nisnTimer);window._nisnTimer=setTimeout(()=>{if(this.value.length>=8)prosesAbsen();},600)">
@@ -1155,6 +1155,7 @@ window.addEventListener('load', async () => {
   // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   await loadToggleAlpa(); // load status toggle alpa
+  fokusNisn(); // auto fokus ke field NISN
   setInterval(refreshStatistikSaja, 30 * 1000);
   // Restore mode scan dari localStorage
   var savedMode = localStorage.getItem('mode_scan') || 'quick';
@@ -1720,6 +1721,13 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   } catch(e) {}
 }
 
+function fokusNisn() {
+  setTimeout(function() {
+    var el = document.getElementById('nisnInput');
+    if (el) el.focus();
+  }, 100);
+}
+
 function resetInputAbsen() {
   document.getElementById('nisnInput').value = '';
   document.getElementById('cariNama').value = '';
@@ -1727,6 +1735,7 @@ function resetInputAbsen() {
   document.getElementById('siswaPreview').classList.remove('show');
   document.getElementById('btnAbsen').disabled = true;
   siswaYangDipilih = null;
+  fokusNisn();  fokusNisn();
 }
 
 
