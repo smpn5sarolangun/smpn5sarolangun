@@ -1131,6 +1131,7 @@ window.addEventListener('load', async () => {
 
   // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
+  await loadToggleAlpa(); // load status toggle alpa
   setInterval(refreshStatistikSaja, 30 * 1000);
 });
 
