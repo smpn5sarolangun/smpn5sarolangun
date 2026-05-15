@@ -578,7 +578,7 @@ tr:hover td{background:#f8fafc;}
         <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..." autofocus
           maxlength="15" style="text-align:center;letter-spacing:2px;"
           onkeypress="if(event.key==='Enter')prosesAbsen()"
-          oninput="if(this.value.length>=8)clearTimeout(window._nisnTimer);window._nisnTimer=setTimeout(()=>{if(this.value.length>=8)prosesAbsen();},600)">
+          oninput="if(window._sedangProses)return;clearTimeout(window._nisnTimer);if(this.value.length===10){window._sedangProses=true;prosesAbsen();}else{window._nisnTimer=setTimeout(()=>{if(this.value.length>=8&&!window._sedangProses){window._sedangProses=true;prosesAbsen();}},300);}">
       </div>
 
       <!-- Preview Siswa -->
@@ -1735,7 +1735,8 @@ function resetInputAbsen() {
   document.getElementById('siswaPreview').classList.remove('show');
   document.getElementById('btnAbsen').disabled = true;
   siswaYangDipilih = null;
-  fokusNisn();  fokusNisn();
+  fokusNisn();  window._sedangProses = false;
+  fokusNisn();
 }
 
 
