@@ -1707,14 +1707,20 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   // Update cache - tambah item baru ke cache yang ada
   try {
     const existing = ambilCacheAbsen() || [];
-    existing.push({
-      tanggal: new Date().toISOString().split('T')[0],
-      nisn, nama, kelas,
-      jamMasuk:  MODE_ABSEN==='masuk'  ? fmtJam(jam) : '',
-      jamPulang: MODE_ABSEN==='pulang' ? fmtJam(jam) : '',
-      status, ket: ''
-    });
-    simpanCacheAbsen(existing);
+    const today2 = getTglHariIni();
+    const sudahAda = existing.find(x =>
+      String(x.nisn||'').replace(/^0+/,'') === String(nisn||'').replace(/^0+/,'') &&
+      x.tanggal === today2 && x.jamMasuk
+    );
+    if (!sudahAda) {
+      existing.push({
+        tanggal: today2, nisn, nama, kelas,
+        jamMasuk:  MODE_ABSEN==='masuk'  ? fmtJam(jam) : '',
+        jamPulang: MODE_ABSEN==='pulang' ? fmtJam(jam) : '',
+        status, ket: ''
+      });
+      simpanCacheAbsen(existing);
+    }
   } catch(e) {}
 }
 
@@ -2102,6 +2108,49 @@ async function simpanStatusModal(i, nisn, nama, kelas) {
     playGagal();
     if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan'; }
     alert(r.error || 'Gagal menyimpan');
+  }
+}
+
+
+var _mdStatus = {};
+function toggleMdForm(i) {
+  var form = document.getElementById('mdform'+i);
+  if (!form) return;
+  var open = form.style.display !== 'flex';
+  document.querySelectorAll('[id^="mdform"]').forEach(function(f){f.style.display='none';});
+  form.style.display = open ? 'flex' : 'none';
+}
+function pilihMdStatus(i, st) {
+  _mdStatus[i] = st;
+  ['Izin','Sakit','Alpa'].forEach(function(s) {
+    var b = document.getElementById('mdbtn'+i+s);
+    if (!b) return;
+    var color = s==='Izin'?'#1565c0':s==='Sakit'?'#c62828':'#e53935';
+    b.style.background = s===st ? color : '#fff';
+    b.style.color = s===st ? '#fff' : color;
+  });
+  var sv = document.getElementById('mdsave'+i);
+  if (sv) sv.style.display = 'inline-block';
+}
+async function simpanMdStatus(i, nisn, nama, kelas) {
+  var st = _mdStatus[i];
+  if (!st) return;
+  var sv = document.getElementById('mdsave'+i);
+  if (sv) { sv.disabled=true; sv.textContent='...'; }
+  var r = await apiPost({action:'absenManual', nisn:nisn, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:getTglHariIni()});
+  if (r.ok) {
+    playSukses();
+    var row = document.getElementById('mdrow'+i);
+    if (row) { row.style.opacity='0'; row.style.transition='all 0.3s'; setTimeout(function(){row.remove();},300); }
+    var el = document.getElementById('mdCountBM');
+    if (el) { var n=parseInt(el.textContent)-1; el.textContent=n+' siswa belum masuk'; }
+    var elBM=document.getElementById('stBelumMasuk'); if(elBM) elBM.textContent=Math.max(0,parseInt(elBM.textContent||0)-1);
+    var elSt=document.getElementById(st==='Izin'?'stIzin':st==='Sakit'?'stSakit':'stAlpa');
+    if(elSt) elSt.textContent=parseInt(elSt.textContent||0)+1;
+  } else {
+    playGagal();
+    if(sv){sv.disabled=false;sv.textContent='Simpan';}
+    alert(r.error||'Gagal');
   }
 }
 
