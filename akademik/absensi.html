@@ -469,7 +469,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();setTimeout(loadToggleAlpa, 100)">
+  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();setTimeout(function(){if(_alpaOtomatisAktif!==null)updateSliderAlpa(_alpaOtomatisAktif);loadToggleAlpa();},100)">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <div class="nav-item" onclick="bukaHalamanKartu()">
@@ -678,13 +678,13 @@ tr:hover td{background:#f8fafc;}
     <div class="stat-mini bg-blmpulang" onclick="filterTabel('belumPulang')">
       <div class="sn" id="stBelumPulang">0</div><div class="sl">Belum Pulang</div><div class="sd">Detail Siswa</div>
     </div>
-    <div class="stat-mini bg-izin">
+    <div class="stat-mini bg-izin" onclick="filterTabel('Izin')" style="cursor:pointer;">
       <div class="sn" id="stIzin">0</div><div class="sl">Izin</div><div class="sd">Detail Siswa</div>
     </div>
     <div class="stat-mini" style="background:linear-gradient(135deg,#00897b,#00695c);box-shadow:0 4px 12px rgba(0,137,123,0.3);">
       <div class="sn" id="stSakit">0</div><div class="sl">Sakit</div><div class="sd">Detail Siswa</div>
     </div>
-    <div class="stat-mini bg-alpa" style="grid-column:span 3;">
+    <div class="stat-mini bg-alpa" onclick="filterTabel('Alpa')" style="grid-column:span 3;cursor:pointer;">
       <div class="sn" id="stAlpa">0</div><div class="sl">Alpa</div><div class="sd">Detail Siswa</div>
     </div>
   </div>
@@ -1478,6 +1478,20 @@ async function konfirmasiAbsen() {
     }
   }
 
+  // Mode Quick: UI dulu, server background
+  if (MODE_SCAN === 'quick') {
+    const qJam = new Date().toTimeString().slice(0,5);
+    const qBatas = window._jadwalData ? window._jadwalData.jamMasukBatas : '07:30';
+    const qStatus = MODE_ABSEN === 'masuk' ? (qJam <= qBatas ? 'OnTime' : 'Terlambat') : 'Pulang';
+    playSukses();
+    tambahKeTabeAbsenHariIni(siswaYangDipilih, {status: qStatus, jam: qJam});
+    resetInputAbsen();
+    (async function() { try { await apiPost({
+    action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
+    nisn: siswaYangDipilih.nisn
+  }); } catch(e) {} })();
+    return;
+  }
   const r = await apiPost({
     action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
     nisn: siswaYangDipilih.nisn
@@ -2343,15 +2357,17 @@ let jadwalPerHari = {
 
 // ── TOGGLE ALPA OTOMATIS ─────────────────────────────────────────
 async function loadToggleAlpa() {
+  var lokal = localStorage.getItem('alpa_otomatis');
+  if (lokal !== null) {
+    _alpaOtomatisAktif = (lokal === 'true');
+    updateSliderAlpa(_alpaOtomatisAktif);
+  }
   try {
     const r = await apiGet('getAlpaOtomatis');
     if (r.ok) {
-      const aktif = r.aktif !== false;
-      const chk = document.getElementById('toggleAlpaOtomatis');
-      if (chk) {
-        chk.checked = aktif;
-        updateSliderAlpa(aktif);
-      }
+      _alpaOtomatisAktif = (r.aktif !== false);
+      localStorage.setItem('alpa_otomatis', _alpaOtomatisAktif ? 'true' : 'false');
+      updateSliderAlpa(_alpaOtomatisAktif);
     }
   } catch(e) {}
 }
@@ -2366,6 +2382,8 @@ function updateSliderAlpa(aktif) {
 }
 
 async function simpanToggleAlpa(aktif) {
+  _alpaOtomatisAktif = aktif;
+  localStorage.setItem('alpa_otomatis', aktif ? 'true' : 'false');
   updateSliderAlpa(aktif);
   const msg = document.getElementById('msgToggleAlpa');
   try {
