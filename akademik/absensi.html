@@ -1434,25 +1434,36 @@ function stopScan() {
 }
 
 // ── PROSES ABSEN ────────────────────────────────────────
-async function prosesAbsen() {
+async async function prosesAbsen() {
   const nisn = document.getElementById('nisnInput').value.trim();
   if (!nisn) return;
 
-  // Cari data siswa dulu
-  const r = await apiGet('cariSiswa', {nisn});
-  if (!r.ok || !r.data) {
-    tampilNotif('❌', 'Siswa tidak ditemukan', `NISN: ${nisn}`, true);
-    return;
+  // Cari dari dataSiswa lokal dulu (instan, tidak fetch server)
+  const nisnBersih = nisn.replace(/\.0$/, '').replace(/^0+/, '');
+  var siswa = dataSiswa.find(function(s) {
+    var sn = String(s.nisn||'').replace(/\.0$/, '').replace(/^0+/, '');
+    return sn === nisnBersih || s.nisn === nisn;
+  });
+
+  if (!siswa) {
+    // Fallback ke server jika tidak ada di lokal
+    const r = await apiGet('cariSiswa', {nisn});
+    if (!r.ok || !r.data) {
+      tampilNotif('❌', 'Siswa tidak ditemukan', 'NISN: ' + nisn, true);
+      window._sedangProses = false;
+      return;
+    }
+    siswa = r.data;
   }
 
-  siswaYangDipilih = r.data;
+  siswaYangDipilih = siswa;
   const preview = document.getElementById('siswaPreview');
-  document.getElementById('siswaNama').textContent = r.data.nama;
-  document.getElementById('siswaKelas').textContent = `Kelas ${r.data.kelas}`;
-  document.getElementById('siswaNisn').textContent = `NISN: ${r.data.nisn}`;
+  document.getElementById('siswaNama').textContent  = siswa.nama;
+  document.getElementById('siswaKelas').textContent = 'Kelas ' + siswa.kelas;
+  document.getElementById('siswaNisn').textContent  = 'NISN: ' + siswa.nisn;
 
-  if (r.data.fotoUrl) {
-    document.getElementById('siswaFoto').innerHTML = `<img src="${r.data.fotoUrl}" alt="Foto">`;
+  if (siswa.fotoUrl) {
+    document.getElementById('siswaFoto').innerHTML = '<img src="' + siswa.fotoUrl + '" alt="Foto">';
   }
 
   preview.classList.add('show');
@@ -1735,7 +1746,8 @@ function resetInputAbsen() {
   document.getElementById('siswaPreview').classList.remove('show');
   document.getElementById('btnAbsen').disabled = true;
   siswaYangDipilih = null;
-  fokusNisn();  window._sedangProses = false;
+  fokusNisn();  // Delay reset flag agar sisa karakter barcode reader diabaikan
+  setTimeout(function() { window._sedangProses = false; }, 500);
   fokusNisn();
 }
 
@@ -1852,7 +1864,8 @@ function pilihSiswaDariCari(nisn, nama, kelas) {
   document.getElementById('cariHasil').classList.remove('show');
   document.getElementById('cariNama').value = nama;
 
-  // Isi NISN dan proses
+  // Isi NISN - set flag dulu agar oninput tidak trigger prosesAbsen
+  window._sedangProses = true;
   document.getElementById('nisnInput').value = nisn;
 
   // Tampilkan preview
