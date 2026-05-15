@@ -1300,8 +1300,8 @@ async function loadDashboard() {
         <tr>
           <td style="font-weight:600">${row.nama}</td>
           <td>${row.kelas}</td>
-          <td>${row.jamMasuk||'—'}</td>
-          <td>${row.jamPulang||'—'}</td>
+          <td>${fmtJam(row.jamMasuk)||'—'}</td>
+          <td>${fmtJam(row.jamPulang)||'—'}</td>
           <td><span class="badge badge-${row.status.toLowerCase().replace(' ','')}">${row.status}</span></td>
         </tr>`).join('');
     }
