@@ -429,6 +429,42 @@ tr:hover td{background:#f8fafc;}
   }
   .modal-detail-jam{font-size:12px;color:var(--teks-sub);}
 
+
+  /* Form status di modal belum masuk */
+  .status-btn-group { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .status-btn {
+    padding:6px 14px; border:2px solid #dde3ee; border-radius:8px;
+    font-family:'Plus Jakarta Sans',sans-serif; font-size:12px; font-weight:700;
+    cursor:pointer; background:#fff; transition:all 0.15s;
+  }
+  .status-btn:hover { opacity:0.85; }
+  .status-btn.izin   { border-color:#1565c0; color:#1565c0; }
+  .status-btn.sakit  { border-color:#c62828; color:#c62828; }
+  .status-btn.alpa   { border-color:var(--merah); color:var(--merah); }
+  .status-btn.aktif.izin  { background:#1565c0; color:#fff; }
+  .status-btn.aktif.sakit { background:#c62828; color:#fff; }
+  .status-btn.aktif.alpa  { background:var(--merah); color:#fff; }
+  .modal-siswa-row { 
+    border-bottom:1px solid #f0f4f8; padding:10px 0;
+  }
+  .modal-siswa-row:last-child { border-bottom:none; }
+  .modal-siswa-header {
+    display:flex; align-items:center; gap:12px; cursor:pointer;
+  }
+  .modal-siswa-header:hover .modal-detail-nama { color:var(--teal); }
+  .simpan-status-btn {
+    margin-top:8px; padding:6px 16px;
+    background:var(--teal); color:#fff; border:none;
+    border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:12px; font-weight:700; cursor:pointer;
+    display:none;
+  }
+  .status-saved { 
+    font-size:11px; color:#1a7a4a; background:#e8f6ef;
+    padding:3px 10px; border-radius:6px; margin-left:8px;
+    display:none;
+  }
+
 </style>
 </head>
 <body>
@@ -1900,16 +1936,106 @@ function bukаModalDetail(status) {
       return;
     }
 
-    isi.innerHTML = `
-      <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa</p>
-      ${siswaList.map((s,i) => `
-        <div class="modal-detail-item">
-          <div class="modal-detail-no">${i+1}</div>
-          <div class="modal-detail-nama">${s.nama}</div>
-          <div class="modal-detail-kelas">${s.kelas}</div>
-          <div class="modal-detail-jam">${s.info}</div>
-        </div>`).join('')}`;
+    // Untuk belumMasuk - tampilkan form status
+    if (status === 'belumMasuk') {
+      isi.innerHTML = `
+        <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa belum masuk — klik nama untuk input status</p>
+        ${siswaList.map((s,i) => `
+          <div class="modal-siswa-row" id="mrow_${i}">
+            <div class="modal-siswa-header" onclick="toggleFormStatus(${i})">
+              <div class="modal-detail-no">${i+1}</div>
+              <div class="modal-detail-nama">${s.nama}</div>
+              <div class="modal-detail-kelas">${s.kelas}</div>
+              <span class="status-saved" id="msaved_${i}">✓ Tersimpan</span>
+            </div>
+            <div id="mform_${i}" style="display:none;padding:8px 0 4px 36px;">
+              <div class="status-btn-group">
+                <button class="status-btn izin"  onclick="pilihStatus(${i},'Izin')">📝 Izin</button>
+                <button class="status-btn sakit" onclick="pilihStatus(${i},'Sakit')">🤒 Sakit</button>
+                <button class="status-btn alpa"  onclick="pilihStatus(${i},'Alpa')">❌ Alpa</button>
+              </div>
+              <button class="simpan-status-btn" id="mbtn_${i}"
+                onclick="simpanStatusModal(${i},'${s.nisn}','${s.nama.replace(/'/g,"\'")}','${s.kelas}')">
+                💾 Simpan
+              </button>
+            </div>
+          </div>`).join('')}`;
+    } else {
+      isi.innerHTML = `
+        <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa</p>
+        ${siswaList.map((s,i) => `
+          <div class="modal-detail-item">
+            <div class="modal-detail-no">${i+1}</div>
+            <div class="modal-detail-nama">${s.nama}</div>
+            <div class="modal-detail-kelas">${s.kelas}</div>
+            <div class="modal-detail-jam">${s.info}</div>
+          </div>`).join('')}`;
+    }
   });
+}
+
+
+// ── INPUT STATUS DARI MODAL BELUM MASUK ─────────────────────────
+var _selectedStatus = {}; // {index: status}
+
+function toggleFormStatus(i) {
+  const form = document.getElementById('mform_' + i);
+  if (!form) return;
+  const show = form.style.display === 'none';
+  // Tutup semua form lain
+  document.querySelectorAll('[id^="mform_"]').forEach(f => f.style.display = 'none');
+  form.style.display = show ? 'block' : 'none';
+}
+
+function pilihStatus(i, status) {
+  _selectedStatus[i] = status;
+  // Update tampilan tombol
+  const form = document.getElementById('mform_' + i);
+  if (!form) return;
+  form.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('aktif'));
+  const aktifBtn = form.querySelector('.status-btn.' + status.toLowerCase());
+  if (aktifBtn) aktifBtn.classList.add('aktif');
+  // Tampilkan tombol simpan
+  const btnSimpan = document.getElementById('mbtn_' + i);
+  if (btnSimpan) btnSimpan.style.display = 'inline-block';
+}
+
+async function simpanStatusModal(i, nisn, nama, kelas) {
+  const status = _selectedStatus[i];
+  if (!status) return;
+
+  const btn = document.getElementById('mbtn_' + i);
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
+
+  const today = getTglHariIni();
+  const r = await apiPost({
+    action: 'absenManual',
+    nisn, nama, kelas,
+    status,
+    keterangan: '',
+    tanggal: today
+  });
+
+  if (r.ok) {
+    playSukses();
+    // Sembunyikan form, tampilkan badge tersimpan
+    const form  = document.getElementById('mform_' + i);
+    const saved = document.getElementById('msaved_' + i);
+    const row   = document.getElementById('mrow_' + i);
+    if (form)  form.style.display  = 'none';
+    if (saved) { saved.style.display = 'inline-block'; saved.textContent = '✓ ' + status; }
+    if (row)   { row.style.opacity = '0.5'; row.style.pointerEvents = 'none'; }
+    // Update statistik dashboard
+    const elBelum = document.getElementById('stBelumMasuk');
+    if (elBelum) elBelum.textContent = Math.max(0, parseInt(elBelum.textContent||0) - 1);
+    if (status === 'Izin')  { const el=document.getElementById('stIzin');  if(el) el.textContent=parseInt(el.textContent||0)+1; }
+    if (status === 'Sakit') { const el=document.getElementById('stSakit'); if(el) el.textContent=parseInt(el.textContent||0)+1; }
+    if (status === 'Alpa')  { const el=document.getElementById('stAlpa');  if(el) el.textContent=parseInt(el.textContent||0)+1; }
+  } else {
+    playGagal();
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan'; }
+    alert(r.error || 'Gagal menyimpan');
+  }
 }
 
 function tutupModalDetail() {
@@ -2366,11 +2492,11 @@ async function loadToggleAlpa() {
     const r = await apiGet('getAlpaOtomatis');
     if (r.ok) {
       const aktif = r.aktif !== false;
-      const chk = document.getElementById('toggleAlpaOtomatis');
-      if (chk) {
-        chk.checked = aktif;
-        updateSliderAlpa(aktif);
-      }
+      // Coba langsung
+      updateSliderAlpa(aktif);
+      // Coba lagi setelah 200ms kalau elemen belum ready
+      setTimeout(() => updateSliderAlpa(aktif), 200);
+      setTimeout(() => updateSliderAlpa(aktif), 500);
     }
   } catch(e) {}
 }
