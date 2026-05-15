@@ -1426,13 +1426,38 @@ async function prosesAbsen() {
 // ── CEK DUPLIKAT ABSEN DI CACHE ─────────────────────────────────
 function cekSudahAbsenHariIni(nisn) {
   try {
+    const nisnBersih = String(nisn||'').trim().replace(/\.0$/, '');
+    const nisnNoZero = nisnBersih.replace(/^0+/, '');
+    const today      = getTglHariIni();
+
+    // Cek 1: dari cache lokal
     const cache = ambilCacheAbsen() || [];
-    const today = getTglHariIni();
-    return cache.find(x => 
-      (x.nisn === nisn || x.nisn === String(nisn).replace(/^0+/,'')) && 
-      x.tanggal === today &&
-      x.jamMasuk  // hanya cek absen masuk
-    ) || null;
+    const dariCache = cache.find(x => {
+      const xn = String(x.nisn||'').trim().replace(/\.0$/, '').replace(/^0+/, '');
+      return (xn === nisnBersih || xn === nisnNoZero) &&
+             x.tanggal === today && x.jamMasuk;
+    });
+    if (dariCache) return dariCache;
+
+    // Cek 2: dari tabel yang tampil di layar (lebih reliable)
+    const tbody = document.getElementById('tabelAbsenHariIni');
+    if (tbody) {
+      const rows = tbody.querySelectorAll('tr');
+      for (const row of rows) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 3) {
+          const namaCel = cells[0].textContent.trim();
+          // Cek apakah nama siswa sudah ada di tabel
+          if (siswaYangDipilih && namaCel === siswaYangDipilih.nama) {
+            const jamCel = cells[2].textContent.trim();
+            if (jamCel && jamCel !== '—') {
+              return { jamMasuk: jamCel };
+            }
+          }
+        }
+      }
+    }
+    return null;
   } catch(e) { return null; }
 }
 
