@@ -355,6 +355,7 @@ tr:hover td{background:#f8fafc;}
       border-collapse: collapse !important;
       border: 1px solid #000 !important;
       border-radius: 0 !important;
+      overflow: visible !important;
     }
     th, td { 
       padding: 5px 8px !important; 
@@ -365,6 +366,12 @@ tr:hover td{background:#f8fafc;}
       background: #e0e0e0 !important; 
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+    }
+    /* Override container yang menyembunyikan sudut tabel */
+    #tableBulanan, .card, [style*="border-radius"], [style*="overflow:hidden"],
+    [style*="overflow: hidden"] {
+      border-radius: 0 !important;
+      overflow: visible !important;
     }
     .print-header { display: block !important; }
     #printTtdH1 { display: block !important; }
@@ -589,13 +596,7 @@ tr:hover td{background:#f8fafc;}
       </button>
 
       <!-- Tombol mode manual -->
-      <div style="margin-top:10px;text-align:center;">
-        <button onclick="togglePanelManual()"
-          style="background:none;border:none;color:var(--teks-sub);font-size:12px;cursor:pointer;
-          font-family:'Plus Jakarta Sans',sans-serif;text-decoration:underline;">
-          ✏️ Input manual (Izin/Sakit/Alpa)
-        </button>
-      </div>
+      
 
       <!-- Panel manual - tersembunyi -->
       <div id="panelManual" style="display:none;margin-top:12px;background:var(--abu);border-radius:12px;padding:16px;">
@@ -685,8 +686,8 @@ tr:hover td{background:#f8fafc;}
     <div class="stat-mini bg-izin" onclick="filterTabel('Izin')" style="cursor:pointer;">
       <div class="sn" id="stIzin">0</div><div class="sl">Izin</div><div class="sd">Detail Siswa</div>
     </div>
-    <div class="stat-mini" style="background:linear-gradient(135deg,#00897b,#00695c);box-shadow:0 4px 12px rgba(0,137,123,0.3);">
-      <div class="sn" id="stSakit">0</div><div class="sl">Sakit</div><div class="sd">Detail Siswa</div>
+    <div class="stat-mini" onclick="filterTabel('Sakit')" style="cursor:pointer;" style="background:linear-gradient(135deg,#00897b,#00695c);box-shadow:0 4px 12px rgba(0,137,123,0.3);">
+      <div class="sn" id="stSakit" onclick="filterTabel('Sakit')" style="cursor:pointer;">0</div><div class="sl">Sakit</div><div class="sd">Detail Siswa</div>
     </div>
     <div class="stat-mini bg-alpa" onclick="filterTabel('Alpa')" style="grid-column:span 3;cursor:pointer;">
       <div class="sn" id="stAlpa">0</div><div class="sl">Alpa</div><div class="sd">Detail Siswa</div>
