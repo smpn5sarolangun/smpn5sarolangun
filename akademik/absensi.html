@@ -448,7 +448,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs()">
+  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();setTimeout(loadToggleAlpa,200)">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <div class="nav-item" onclick="bukaHalamanKartu()">
@@ -961,11 +961,25 @@ tr:hover td{background:#f8fafc;}
     </div>
   </div>
 
-  <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:20px;max-width:400px;">
+  <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:20px;max-width:480px;">
     <h3 style="font-size:15px;font-weight:700;color:var(--biru);margin-bottom:14px;">⚙️ Pengaturan Umum</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#f8fafc;border-radius:12px;margin-bottom:16px;border:1.5px solid #e8edf5;">
+      <div>
+        <div style="font-size:14px;font-weight:700;">⏰ Alpa Otomatis</div>
+        <div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Tandai alpa otomatis setiap hari di jam yang ditentukan</div>
+        <div style="font-size:11px;color:#9aabb8;margin-top:4px;">Otomatis skip hari Minggu &amp; tanggal merah</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;margin-left:16px;">
+        <input type="checkbox" id="toggleAlpaOtomatis" onchange="simpanToggleAlpa(this.checked)" style="opacity:0;width:0;height:0;">
+        <span id="sliderAlpa" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:28px;transition:0.3s;" onclick="document.getElementById('toggleAlpaOtomatis').click()">
+          <span id="sliderDot" style="position:absolute;height:20px;width:20px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:0.3s;display:block;"></span>
+        </span>
+      </label>
+    </div>
+    <div id="msgToggleAlpa" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:12px;"></div>
     <div class="fg" style="margin-bottom:14px;">
       <label>Tandai Alpa Otomatis Jam</label>
-      <input type="time" id="setJamAlpa" value="14:00">
+      <input type="time" id="setJamAlpa" value="10:00">
       <span style="font-size:11px;color:#9aabb8;">Siswa belum absen setelah jam ini = Alpa</span>
     </div>
   </div>
@@ -1070,6 +1084,16 @@ window.addEventListener('load', async () => {
   // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   setInterval(refreshStatistikSaja, 30 * 1000);
+
+  // Load jadwal dari server setelah TOKEN siap
+  try {
+    var rj = await apiGet('getJadwalAbsen');
+    if (rj.ok && rj.data && rj.data.jadwalPerHari) {
+      jadwalPerHari = rj.data.jadwalPerHari;
+      renderTabelJadwal();
+    }
+  } catch(e) {}
+  await loadToggleAlpa();
 });
 
 // ── JAM ────────────────────────────────────────────────
@@ -2214,7 +2238,7 @@ let jadwalPerHari = {
   Rabu:    {aktif:true,  masuk:'07:30', pulang:'13:00'},
   Kamis:   {aktif:true,  masuk:'07:30', pulang:'13:00'},
   Jumat:   {aktif:true,  masuk:'07:30', pulang:'11:00'},
-  Sabtu:   {aktif:false, masuk:'07:30', pulang:'12:00'},
+  Sabtu:   {aktif:true,  masuk:'07:30', pulang:'12:00'},
 };
 
 function loadJadwalInputs() {
@@ -2225,6 +2249,44 @@ function loadJadwalInputs() {
     if(jm) jm.value = window._jadwalData.jamMasukBatas    || '07:30';
     if(jp) jp.value = window._jadwalData.jamPulangMinimal || '12:00';
   }
+}
+
+
+function updateSliderAlpa(aktif) {
+  var chk    = document.getElementById('toggleAlpaOtomatis');
+  var slider = document.getElementById('sliderAlpa');
+  var dot    = document.getElementById('sliderDot');
+  if (chk)    chk.checked             = aktif;
+  if (slider) slider.style.background = aktif ? '#0a7e8c' : '#ccc';
+  if (dot)    dot.style.transform     = aktif ? 'translateX(24px)' : 'translateX(0px)';
+}
+async function simpanToggleAlpa(aktif) {
+  localStorage.setItem('alpa_otomatis', aktif ? 'true' : 'false');
+  updateSliderAlpa(aktif);
+  var msg = document.getElementById('msgToggleAlpa');
+  try {
+    var r = await apiPost({action:'setAlpaOtomatis', aktif: aktif ? 'true' : 'false'});
+    if (msg) {
+      msg.textContent  = r.ok ? (aktif ? '✅ Alpa otomatis diaktifkan' : '⭕ Alpa otomatis dimatikan') : '❌ Gagal';
+      msg.style.display = 'block';
+      msg.style.background = r.ok ? (aktif ? '#e8f6ef' : '#fff3e0') : '#fdecea';
+      msg.style.color = r.ok ? (aktif ? '#1a7a4a' : '#e65100') : '#c0392b';
+      setTimeout(function(){msg.style.display='none';}, 3000);
+    }
+  } catch(e) {}
+}
+async function loadToggleAlpa() {
+  var lokal = localStorage.getItem('alpa_otomatis');
+  if (lokal !== null) { var a=lokal==='true'; updateSliderAlpa(a); setTimeout(function(){updateSliderAlpa(a);},300); }
+  try {
+    var r2 = await apiGet('getAlpaOtomatis');
+    if (r2.ok) {
+      var aktif = r2.aktif !== false;
+      localStorage.setItem('alpa_otomatis', aktif ? 'true' : 'false');
+      updateSliderAlpa(aktif);
+      setTimeout(function(){updateSliderAlpa(aktif);}, 300);
+    }
+  } catch(e) {}
 }
 
 function renderTabelJadwal() {
