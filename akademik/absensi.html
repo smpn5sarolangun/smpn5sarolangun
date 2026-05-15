@@ -2285,12 +2285,14 @@ async function loadBulanan() {
   }).join('');
 
   const info = `${bulanNama[parseInt(bulan)]} ${tahun}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa | ${hariEfektif} hari efektif`;
-  document.getElementById('infoBulanan').textContent      = info;
-  document.getElementById('printBulananInfo').textContent = info;
-  document.getElementById('printInfoBulanan').textContent = info;
-  document.getElementById('printTglTtd').textContent      = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('printNamaKelas').textContent   = kelas || 'Semua Kelas';
-  document.getElementById('btnBarBulanan').style.display  = 'flex';
+  var _si = function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  _si('infoBulanan', info);
+  _si('printBulananInfo', info);
+  _si('printInfoBulanan', info);
+  _si('printTglTtd', new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}));
+  _si('printNamaKelas', kelas || 'Semua Kelas');
+  var elBar = document.getElementById('btnBarBulanan');
+  if (elBar) elBar.style.display = 'flex';
 }
 
 
@@ -2347,12 +2349,14 @@ async function loadBulananCustom() {
   const fD = new Date(dari).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
   const fS = new Date(sampai).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
   const info = `${fD} s.d. ${fS}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa`;
-  document.getElementById('infoBulanan').textContent      = info;
-  document.getElementById('printBulananInfo').textContent = info;
-  document.getElementById('printInfoBulanan').textContent = info;
-  document.getElementById('printTglTtd').textContent      = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('printNamaKelas').textContent   = kelas || 'Semua Kelas';
-  document.getElementById('btnBarBulanan').style.display  = 'flex';
+  var _si2 = function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  _si2('infoBulanan', info);
+  _si2('printBulananInfo', info);
+  _si2('printInfoBulanan', info);
+  _si2('printTglTtd', new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}));
+  _si2('printNamaKelas', kelas || 'Semua Kelas');
+  var elBar2 = document.getElementById('btnBarBulanan');
+  if (elBar2) elBar2.style.display = 'flex';
 }
 
 async function cetakBulanan() {
