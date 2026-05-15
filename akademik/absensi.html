@@ -1960,9 +1960,24 @@ function bukаModalDetail(status) {
       return;
     }
 
-    // Untuk belumMasuk - tampilkan form status
+    // Render sesuai status
     if (status === 'belumMasuk') {
       renderModalBelumMasuk(siswaList);
+    } else {
+      // Status lain: OnTime, Terlambat, Izin, Sakit, Alpa
+      if (!siswaList.length) {
+        isi.innerHTML = `<p style="text-align:center;color:var(--teks-sub);padding:32px;">Tidak ada siswa</p>`;
+        return;
+      }
+      isi.innerHTML = `
+        <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa</p>
+        ${siswaList.map((s,i) => `
+          <div class="modal-detail-item">
+            <div class="modal-detail-no">${i+1}</div>
+            <div class="modal-detail-nama">${s.nama}</div>
+            <div class="modal-detail-kelas">${s.kelas}</div>
+            <div class="modal-detail-jam">${s.info}</div>
+          </div>`).join('')}`;
     }
   });
 }
@@ -1996,7 +2011,8 @@ function renderModalBelumMasuk(siswaList) {
               </button>
             </div>
           </div>`).join('')}`;
-  if (status !== 'belumMasuk') {
+  // [removed orphan block]
+  if (false) { // placeholder removed
     isi.innerHTML = `
       <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa</p>
         ${siswaList.map((s,i) => `
