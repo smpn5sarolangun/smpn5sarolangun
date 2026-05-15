@@ -1080,6 +1080,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMb
 // ══════════════════════════════════════════════════════
 
 let TOKEN = '';
+var _alpaOtomatisAktif = null;
 let MODE_ABSEN = 'masuk'; // masuk / pulang
 let MODE_SCAN = 'normal'; // normal / quick
 let dataSiswa = [];
@@ -1478,20 +1479,26 @@ async function konfirmasiAbsen() {
     }
   }
 
-  // Mode Quick: UI dulu, server background
+  // ── MODE QUICK: update UI dulu, server di background ──
   if (MODE_SCAN === 'quick') {
-    const qJam = new Date().toTimeString().slice(0,5);
-    const qBatas = window._jadwalData ? window._jadwalData.jamMasukBatas : '07:30';
-    const qStatus = MODE_ABSEN === 'masuk' ? (qJam <= qBatas ? 'OnTime' : 'Terlambat') : 'Pulang';
+    const qJam    = new Date().toTimeString().slice(0, 5);
+    const qBatas  = window._jadwalData ? window._jadwalData.jamMasukBatas : '07:30';
+    const qStatus = MODE_ABSEN === 'masuk'
+      ? (qJam <= qBatas ? 'OnTime' : 'Terlambat')
+      : 'Pulang';
     playSukses();
     tambahKeTabeAbsenHariIni(siswaYangDipilih, {status: qStatus, jam: qJam});
     resetInputAbsen();
-    (async function() { try { await apiPost({
-    action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
-    nisn: siswaYangDipilih.nisn
-  }); } catch(e) {} })();
+    // Kirim ke server di background (tidak blokir antrian)
+    const qPayload = {
+      action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
+      nisn: siswaYangDipilih.nisn
+    };
+    apiPost(qPayload).catch(function() {});
     return;
   }
+
+  // ── MODE NORMAL: tunggu server ──
   const r = await apiPost({
     action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
     nisn: siswaYangDipilih.nisn
@@ -1895,16 +1902,68 @@ function bukаModalDetail(status) {
       return;
     }
 
-    isi.innerHTML = `
-      <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa</p>
-      ${siswaList.map((s,i) => `
-        <div class="modal-detail-item">
-          <div class="modal-detail-no">${i+1}</div>
-          <div class="modal-detail-nama">${s.nama}</div>
-          <div class="modal-detail-kelas">${s.kelas}</div>
-          <div class="modal-detail-jam">${s.info}</div>
-        </div>`).join('')}`;
+    if (status === 'belumMasuk') {
+      var html3 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk — klik nama untuk input</p>';
+      siswaList.forEach(function(s, i) {
+        var nn = s.nama.replace(/'/g, '&#39;');
+        html3 += '<div class="modal-detail-item" id="mdrow' + i + '" style="flex-direction:column;align-items:flex-start;">';
+        html3 += '<div style="display:flex;align-items:center;gap:8px;width:100%;cursor:pointer;" onclick="toggleMdForm(' + i + ')">';
+        html3 += '<div class="modal-detail-no">' + (i+1) + '</div>';
+        html3 += '<div class="modal-detail-nama" style="flex:1;">' + s.nama + '</div>';
+        html3 += '<div class="modal-detail-kelas">' + s.kelas + '</div></div>';
+        html3 += '<div id="mdform' + i + '" style="display:none;padding:8px 0 4px 36px;gap:8px;flex-wrap:wrap;">';
+        html3 += '<button onclick="pilihMdStatus(' + i + ',\'Izin\')" id="mdbtn' + i + 'Izin" style="padding:5px 12px;border:2px solid #1565c0;border-radius:8px;color:#1565c0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Izin</button>';
+        html3 += '<button onclick="pilihMdStatus(' + i + ',\'Sakit\')" id="mdbtn' + i + 'Sakit" style="padding:5px 12px;border:2px solid #c62828;border-radius:8px;color:#c62828;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Sakit</button>';
+        html3 += '<button onclick="pilihMdStatus(' + i + ',\'Alpa\')" id="mdbtn' + i + 'Alpa" style="padding:5px 12px;border:2px solid #e53935;border-radius:8px;color:#e53935;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Alpa</button>';
+        html3 += '<button onclick="simpanMdStatus(' + i + ',\'' + s.nisn + '\',\'' + nn + '\',\'' + s.kelas + '\')" id="mdsave' + i + '" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Simpan</button>';
+        html3 += '</div></div>';
+      });
+      isi.innerHTML = html3;
+    } else {
+      var html4 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">' + siswaList.length + ' siswa</p>';
+      siswaList.forEach(function(s, i) {
+        html4 += '<div class="modal-detail-item"><div class="modal-detail-no">' + (i+1) + '</div><div class="modal-detail-nama">' + s.nama + '</div><div class="modal-detail-kelas">' + s.kelas + '</div><div class="modal-detail-jam">' + s.info + '</div></div>';
+      });
+      isi.innerHTML = html4;
+    }
   });
+}
+
+var _mdStatus = {};
+function toggleMdForm(i) {
+  var f = document.getElementById('mdform' + i);
+  if (!f) return;
+  var op = f.style.display === 'none';
+  document.querySelectorAll('[id^="mdform"]').forEach(function(x) { x.style.display = 'none'; });
+  f.style.display = op ? 'flex' : 'none';
+}
+function pilihMdStatus(i, st) {
+  _mdStatus[i] = st;
+  ['Izin','Sakit','Alpa'].forEach(function(s) {
+    var b = document.getElementById('mdbtn' + i + s); if (!b) return;
+    var col = s==='Izin'?'#1565c0':s==='Sakit'?'#c62828':'#e53935';
+    b.style.background = s===st ? col : '#fff';
+    b.style.color = s===st ? '#fff' : col;
+  });
+  var sv = document.getElementById('mdsave' + i);
+  if (sv) sv.style.display = 'inline-block';
+}
+async function simpanMdStatus(i, nisn, nama, kelas) {
+  var st = _mdStatus[i]; if (!st) return;
+  var sv = document.getElementById('mdsave' + i);
+  if (sv) { sv.disabled = true; sv.textContent = '...'; }
+  var r = await apiPost({action:'absenManual', nisn:nisn, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:getTglHariIni()});
+  if (r.ok) {
+    playSukses();
+    var row = document.getElementById('mdrow' + i);
+    if (row) { row.style.opacity='0'; row.style.transition='all 0.3s'; setTimeout(function(){row.remove();}, 300); }
+    var el = document.getElementById('mdCountBM');
+    if (el) { var n = parseInt(el.textContent) - 1; el.textContent = n + ' siswa belum masuk — klik nama untuk input'; }
+    var elBM = document.getElementById('stBelumMasuk'); if (elBM) elBM.textContent = Math.max(0, parseInt(elBM.textContent||0) - 1);
+    var elSt = document.getElementById(st==='Izin'?'stIzin':st==='Sakit'?'stSakit':'stAlpa'); if (elSt) elSt.textContent = parseInt(elSt.textContent||0) + 1;
+  } else {
+    playGagal(); if (sv) { sv.disabled=false; sv.textContent='Simpan'; } alert(r.error||'Gagal');
+  }
 }
 
 function tutupModalDetail() {
