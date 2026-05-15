@@ -1488,7 +1488,7 @@ async function konfirmasiAbsen() {
       nisn: siswaYangDipilih.nisn,
       token: TOKEN
     };
-    (function() { apiPost(qPayload); })();
+    setTimeout(async function() { try { await apiPost(qPayload); } catch(e) {} }, 0);
     return;
   }
 
@@ -1615,15 +1615,16 @@ async function refreshDashboardDanTabel() {
 // Refresh hanya angka statistik, tidak timpa tabel absensi
 async function refreshStatistikSaja() {
   try {
-    const today = getTglHariIni(); // pakai fungsi yang sama
+    const today = getTglHariIni();
     const [rDash, rAbsen] = await Promise.all([
       apiGet('getDashboard'),
       apiGet('getAbsensiHari', {tanggal: today})
     ]);
     if (!rDash.ok) return;
     _updateDashboardUI(rDash.data);
+    // Hanya update cache, TIDAK timpa tabel
+    // (tabel bisa berisi data quick yang belum confirmed server)
     if (rAbsen.ok && rAbsen.data) {
-      renderTabelAbsenHariIni(rAbsen.data);
       simpanCacheAbsen(rAbsen.data);
     }
   } catch(e) {}
