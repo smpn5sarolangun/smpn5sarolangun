@@ -345,32 +345,11 @@ tr:hover td{background:#f8fafc;}
     .page:not(.active) { display: none !important; }
     .print-header { display: block !important; }
     .print-btn-bar { display: none !important; }
+    table { font-size: 10px; width: 100%; }
+    th, td { padding: 5px 8px !important; }
     .filter-bar { display: none !important; }
     .print-info { display: block !important; }
-    .print-h2 { display: block !important; }
-    .page-break { page-break-before: always !important; }
-    /* Tabel border hitam tegas */
-    table { 
-      font-size: 10px; width: 100%; 
-      border-collapse: collapse !important;
-      border: 1px solid #000 !important;
-    }
-    th, td { 
-      padding: 5px 8px !important; 
-      border: 1px solid #000 !important;
-    }
-    th { 
-      background: #e0e0e0 !important; 
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
   }
-  /* Halaman 2 - hanya tampil saat print */
-  .print-h2 { display: none !important; }
-  @media print {
-    .print-h2 { display: block !important; }
-  }
-
   .print-header {
     display: none;
     text-align: center;
@@ -429,42 +408,6 @@ tr:hover td{background:#f8fafc;}
   }
   .modal-detail-jam{font-size:12px;color:var(--teks-sub);}
 
-
-  /* Form status di modal belum masuk */
-  .status-btn-group { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
-  .status-btn {
-    padding:6px 14px; border:2px solid #dde3ee; border-radius:8px;
-    font-family:'Plus Jakarta Sans',sans-serif; font-size:12px; font-weight:700;
-    cursor:pointer; background:#fff; transition:all 0.15s;
-  }
-  .status-btn:hover { opacity:0.85; }
-  .status-btn.izin   { border-color:#1565c0; color:#1565c0; }
-  .status-btn.sakit  { border-color:#c62828; color:#c62828; }
-  .status-btn.alpa   { border-color:var(--merah); color:var(--merah); }
-  .status-btn.aktif.izin  { background:#1565c0; color:#fff; }
-  .status-btn.aktif.sakit { background:#c62828; color:#fff; }
-  .status-btn.aktif.alpa  { background:var(--merah); color:#fff; }
-  .modal-siswa-row { 
-    border-bottom:1px solid #f0f4f8; padding:10px 0;
-  }
-  .modal-siswa-row:last-child { border-bottom:none; }
-  .modal-siswa-header {
-    display:flex; align-items:center; gap:12px; cursor:pointer;
-  }
-  .modal-siswa-header:hover .modal-detail-nama { color:var(--teal); }
-  .simpan-status-btn {
-    margin-top:8px; padding:6px 16px;
-    background:var(--teal); color:#fff; border:none;
-    border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif;
-    font-size:12px; font-weight:700; cursor:pointer;
-    display:none;
-  }
-  .status-saved { 
-    font-size:11px; color:#1a7a4a; background:#e8f6ef;
-    padding:3px 10px; border-radius:6px; margin-left:8px;
-    display:none;
-  }
-
 </style>
 </head>
 <body>
@@ -505,7 +448,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();setTimeout(loadToggleAlpa, 100)">
+  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs()">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <div class="nav-item" onclick="bukaHalamanKartu()">
@@ -958,7 +901,7 @@ tr:hover td{background:#f8fafc;}
     <div style="overflow-x:auto;">
       <table id="tableBulanan">
         <thead><tr>
-          <th>No</th><th>Nama Siswa</th><th>Kelas</th><th>Hari Efektif</th>
+          <th>No</th><th>Nama Siswa</th><th>Kelas</th>
           <th>Hadir Tepat</th><th>Terlambat</th><th>Izin</th>
           <th>Sakit</th><th>Alpa</th><th>Total Hadir</th><th>%</th>
         </tr></thead>
@@ -967,52 +910,24 @@ tr:hover td{background:#f8fafc;}
     </div>
   </div>
 
-  <!-- Halaman 2: Daftar Libur + Tanda Tangan -->
-  <div class="print-h2" id="printHalaman2" style="page-break-before:always;">
-    <!-- Header halaman 2 -->
-    <div style="text-align:center;margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px;">
-      <h2 style="font-size:14px;font-weight:800;color:#000;margin:0 0 4px 0;">DAFTAR HARI LIBUR</h2>
-      <p style="font-size:11px;margin:0;">SMP Negeri 05 Sarolangun &nbsp;|&nbsp; Periode: <span id="printPeriodeH2"></span></p>
-    </div>
-
-    <!-- Tabel libur -->
-    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px;">
-      <thead>
-        <tr>
-          <th style="border:1px solid #000;padding:6px 10px;text-align:center;width:40px;background:#e0e0e0;">No</th>
-          <th style="border:1px solid #000;padding:6px 10px;text-align:left;background:#e0e0e0;">Tanggal</th>
-          <th style="border:1px solid #000;padding:6px 10px;text-align:left;background:#e0e0e0;">Keterangan</th>
-        </tr>
-      </thead>
-      <tbody id="printTabelLibur">
-        <tr><td colspan="3" style="border:1px solid #000;padding:8px;text-align:center;">Tidak ada hari libur dalam periode ini</td></tr>
-      </tbody>
-    </table>
-
-    <div style="display:flex;gap:40px;font-size:11px;margin-top:8px;">
-      <p style="margin:0;">Total hari libur: <strong id="printTotalLibur">0</strong> hari</p>
-      <p style="margin:0;">Total hari efektif: <strong id="printTotalEfektif">0</strong> hari</p>
-    </div>
-
-    <!-- Tanda tangan halaman 2 -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;font-size:11px;margin-top:48px;">
+  <!-- Tanda tangan untuk print -->
+  <div class="print-header" style="margin-top:32px;border:none;border-top:1px solid #ddd;padding-top:20px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;font-size:11px;">
       <div>
-        <p style="margin:0;">Mengetahui,</p>
-        <p style="font-weight:700;margin:4px 0;">Kepala Sekolah</p>
+        <p>Mengetahui,</p>
+        <p style="font-weight:700;margin-top:4px;">Kepala Sekolah</p>
         <div style="height:60px;"></div>
-        <p style="display:inline-block;min-width:180px;padding-top:4px;"><strong>Sukardiman, M.Pd.</strong></p>
+        <p style="display:inline-block;min-width:180px;">Sukardiman, M.Pd.</p>
       </div>
       <div>
-        <p style="margin:0;">Sarolangun, <span id="printTglTtd2"></span></p>
-        <p style="font-weight:700;margin:4px 0;">Wali Kelas <span id="printNamaKelas2"></span></p>
+        <p>Sarolangun, <span id="printTglTtd"></span></p>
+        <p style="font-weight:700;margin-top:4px;">Wali Kelas <span id="printNamaKelas"></span></p>
         <div style="height:60px;"></div>
-        <p class="ttd-walas2" style="display:inline-block;min-width:180px;padding-top:4px;">( __________________ )</p>
+        <p class="ttd-walas" style="display:inline-block;min-width:180px;">( __________________ )</p>
       </div>
     </div>
   </div>
 </div>
-
-
 
 <!-- ═══ PAGE: JADWAL ═══ -->
 <div class="page" id="page-jadwal">
@@ -1046,31 +961,13 @@ tr:hover td{background:#f8fafc;}
     </div>
   </div>
 
-  <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:20px;max-width:480px;">
+  <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);margin-bottom:20px;max-width:400px;">
     <h3 style="font-size:15px;font-weight:700;color:var(--biru);margin-bottom:14px;">⚙️ Pengaturan Umum</h3>
-
-    <!-- Toggle Alpa Otomatis -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#f8fafc;border-radius:12px;margin-bottom:16px;border:1.5px solid #e8edf5;">
-      <div>
-        <div style="font-size:14px;font-weight:700;">⏰ Alpa Otomatis</div>
-        <div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Tandai alpa otomatis setiap hari di jam yang ditentukan</div>
-        <div style="font-size:11px;color:#9aabb8;margin-top:4px;">Otomatis skip hari Minggu & tanggal merah</div>
-      </div>
-      <label style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;margin-left:16px;">
-        <input type="checkbox" id="toggleAlpaOtomatis" onchange="simpanToggleAlpa(this.checked)"
-          style="opacity:0;width:0;height:0;">
-        <span id="sliderAlpa" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:28px;transition:0.3s;">
-          <span style="position:absolute;content:'';height:20px;width:20px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:0.3s;display:block;" id="sliderDot"></span>
-        </span>
-      </label>
-    </div>
-
     <div class="fg" style="margin-bottom:14px;">
       <label>Tandai Alpa Otomatis Jam</label>
-      <input type="time" id="setJamAlpa" value="10:00">
+      <input type="time" id="setJamAlpa" value="14:00">
       <span style="font-size:11px;color:#9aabb8;">Siswa belum absen setelah jam ini = Alpa</span>
     </div>
-    <div id="msgToggleAlpa" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px;margin-top:8px;"></div>
   </div>
 
   <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -1125,7 +1022,13 @@ let scanStream = null;
 
 // ── INIT ──────────────────────────────────────────────
 window.addEventListener('load', async () => {
-  // Render tabel jadwal dulu dengan default
+  // Load jadwal tersimpan
+  try {
+    const rj = await apiGet('getJadwalAbsen');
+    if (rj.ok && rj.data && rj.data.jadwalPerHari) {
+      jadwalPerHari = rj.data.jadwalPerHari;
+    }
+  } catch(e) {}
   renderTabelJadwal();
   // Cek session
   TOKEN = sessionStorage.getItem('absensi_token');
@@ -1200,26 +1103,12 @@ function fmtTgl(tgl) {
 function fmtJam(jam) {
   if (!jam || jam === '—' || jam === '') return '—';
   var s = String(jam).trim();
-
-  // Handle format "Sat Dec 30 1899 06:11:00 GMT+0707..."
-  if (s.match(/^[A-Za-z]/) || s.includes('GMT') || s.includes('Indonesia')) {
+  if (/^[A-Za-z]/.test(s) || s.indexOf('GMT') >= 0) {
     var m = s.match(/(\d{1,2}):(\d{2}):\d{2}/);
-    if (m) return m[1].padStart(2,'0') + '.' + m[2];
-    return '—';
+    return m ? m[1].padStart(2,'0') + '.' + m[2] : '—';
   }
-
-  // Handle ISO format "1899-12-30T06:11:00.000Z"
-  if (s.includes('T') && s.includes(':')) {
-    var m2 = s.match(/T(\d{2}):(\d{2})/);
-    if (m2) return m2[1] + '.' + m2[2];
-  }
-
-  // Format normal HH:mm atau HH.mm
   var p = s.replace('.', ':').split(':');
-  if (p.length >= 2) {
-    return p[0].padStart(2,'0') + '.' + p[1].padStart(2,'0');
-  }
-
+  if (p.length >= 2) return p[0].padStart(2,'0') + '.' + p[1].padStart(2,'0');
   return s.slice(0,5);
 }
 
@@ -1477,61 +1366,9 @@ async function prosesAbsen() {
   }
 }
 
-
-// ── CEK DUPLIKAT ABSEN DI CACHE ─────────────────────────────────
-function cekSudahAbsenHariIni(nisn) {
-  try {
-    const nisnBersih = String(nisn||'').trim().replace(/\.0$/, '');
-    const nisnNoZero = nisnBersih.replace(/^0+/, '');
-    const today      = getTglHariIni();
-
-    // Cek 1: dari cache lokal
-    const cache = ambilCacheAbsen() || [];
-    const dariCache = cache.find(x => {
-      const xn = String(x.nisn||'').trim().replace(/\.0$/, '').replace(/^0+/, '');
-      return (xn === nisnBersih || xn === nisnNoZero) &&
-             x.tanggal === today && x.jamMasuk;
-    });
-    if (dariCache) return dariCache;
-
-    // Cek 2: dari tabel yang tampil di layar (lebih reliable)
-    const tbody = document.getElementById('tabelAbsenHariIni');
-    if (tbody) {
-      const rows = tbody.querySelectorAll('tr');
-      for (const row of rows) {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 3) {
-          const namaCel = cells[0].textContent.trim();
-          // Cek apakah nama siswa sudah ada di tabel
-          if (siswaYangDipilih && namaCel === siswaYangDipilih.nama) {
-            const jamCel = cells[2].textContent.trim();
-            if (jamCel && jamCel !== '—') {
-              return { jamMasuk: jamCel };
-            }
-          }
-        }
-      }
-    }
-    return null;
-  } catch(e) { return null; }
-}
-
 async function konfirmasiAbsen() {
   if (!siswaYangDipilih) return;
   document.getElementById('btnAbsen').disabled = true;
-
-  // ── CEK DUPLIKAT DI CACHE (instan, tanpa tunggu server) ──
-  if (MODE_ABSEN === 'masuk') {
-    const sudah = cekSudahAbsenHariIni(siswaYangDipilih.nisn);
-    if (sudah) {
-      playGagal();
-      tampilNotif('⚠️', siswaYangDipilih.nama + ' sudah absen masuk hari ini', 
-        'Jam ' + (sudah.jamMasuk || '—'), true);
-      document.getElementById('btnAbsen').disabled = false;
-      resetInputAbsen();
-      return;
-    }
-  }
 
   const r = await apiPost({
     action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
@@ -1544,10 +1381,8 @@ async function konfirmasiAbsen() {
     resetInputAbsen();
   } else {
     playGagal();
-    // Tampilkan pesan error dari server (termasuk pesan duplikat)
-    tampilNotif('⚠️', r.error || 'Gagal absen', '', true);
+    tampilNotif('❌', r.error || 'Gagal absen', '', true);
     document.getElementById('btnAbsen').disabled = false;
-    resetInputAbsen();
   }
 }
 
@@ -1614,13 +1449,12 @@ function renderTabelAbsenHariIni(data, dariCache) {
   const tbody = document.getElementById('tabelAbsenHariIni');
   if (!tbody) return;
   if (!data || !data.length) {
-    if (!dariCache) {
+    if (!dariCache) { // jangan timpa cache dengan kosong
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
-      // Jangan simpan kosong ke cache - biarkan cache lama tetap ada
     }
     return;
   }
-  // Simpan ke cache hanya jika data dari server (bukan dari cache)
+  // Simpan ke cache lokal
   if (!dariCache) simpanCacheAbsen(data);
 
   tbody.innerHTML = data.slice().reverse().map(r => `
@@ -1655,7 +1489,7 @@ async function refreshDashboardDanTabel() {
 // Refresh hanya angka statistik, tidak timpa tabel absensi
 async function refreshStatistikSaja() {
   try {
-    const today = getTglHariIni(); // pakai fungsi yang sama
+    const today = new Date().toISOString().split('T')[0];
     const [rDash, rAbsen] = await Promise.all([
       apiGet('getDashboard'),
       apiGet('getAbsensiHari', {tanggal: today})
@@ -1707,20 +1541,14 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   // Update cache - tambah item baru ke cache yang ada
   try {
     const existing = ambilCacheAbsen() || [];
-    const today2 = getTglHariIni();
-    const sudahAda = existing.find(x =>
-      String(x.nisn||'').replace(/^0+/,'') === String(nisn||'').replace(/^0+/,'') &&
-      x.tanggal === today2 && x.jamMasuk
-    );
-    if (!sudahAda) {
-      existing.push({
-        tanggal: today2, nisn, nama, kelas,
-        jamMasuk:  MODE_ABSEN==='masuk'  ? fmtJam(jam) : '',
-        jamPulang: MODE_ABSEN==='pulang' ? fmtJam(jam) : '',
-        status, ket: ''
-      });
-      simpanCacheAbsen(existing);
-    }
+    existing.push({
+      tanggal: new Date().toISOString().split('T')[0],
+      nisn, nama, kelas,
+      jamMasuk:  MODE_ABSEN==='masuk'  ? jam : '',
+      jamPulang: MODE_ABSEN==='pulang' ? jam : '',
+      status, ket: ''
+    });
+    simpanCacheAbsen(existing);
   } catch(e) {}
 }
 
@@ -1909,25 +1737,10 @@ function bukаModalDetail(status) {
   judul.style.color = info.color;
 
   // Ambil data dari sheet
+  isi.innerHTML = '<div style="text-align:center;padding:32px;color:var(--teks-sub);"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;"></div>Memuat...</div>';
   modal.classList.add('open');
-  const today = getTglHariIni();
 
-  // Tampilkan dari cache dulu (instan)
-  const cacheAbsen = ambilCacheAbsen() || [];
-  if (status === 'belumMasuk') {
-    const sudahNama = new Set(cacheAbsen.map(d => d.nama));
-    const sudahNisn = new Set(cacheAbsen.map(d => d.nisn).filter(Boolean));
-    const listLokal = dataSiswa.filter(s =>
-      !sudahNisn.has(s.nisn) && !sudahNama.has(s.nama)
-    );
-    if (listLokal.length) {
-      renderModalBelumMasuk(listLokal);
-    } else {
-      isi.innerHTML = '<div style="text-align:center;padding:32px;color:var(--teks-sub);"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;"></div>Memuat...</div>';
-    }
-  } else {
-    isi.innerHTML = '<div style="text-align:center;padding:32px;color:var(--teks-sub);"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;"></div>Memuat...</div>';
-  }
+  const today = new Date().toISOString().split('T')[0];
 
   apiGet('getAbsensiHari', {tanggal: today}).then(r => {
     if (!r.ok) { isi.innerHTML = '<p style="text-align:center;color:var(--teks-sub);padding:24px;">Gagal memuat data</p>'; return; }
@@ -1935,18 +1748,9 @@ function bukаModalDetail(status) {
     let siswaList = [];
 
     if (status === 'belumMasuk') {
-      // Ambil dari tabel yang sudah tampil (lebih cepat)
-      const sudahAbsen    = new Set(r.data.map(d => d.nisn).filter(Boolean));
+      const sudahAbsen = new Set(r.data.map(d => d.nisn).filter(Boolean));
       const sudahAbsenNama = new Set(r.data.map(d => d.nama));
-      // Gabung dengan data dari tabel layar
-      const tbody = document.getElementById('tabelAbsenHariIni');
-      if (tbody) {
-        tbody.querySelectorAll('tr').forEach(tr => {
-          const cells = tr.querySelectorAll('td');
-          if (cells.length >= 2) sudahAbsenNama.add(cells[0].textContent.trim());
-        });
-      }
-      siswaList = dataSiswa.filter(s =>
+      siswaList = dataSiswa.filter(s => 
         !sudahAbsen.has(s.nisn) && !sudahAbsenNama.has(s.nama)
       ).map(s => ({nama:s.nama, kelas:s.kelas, info:'Belum absen'}));
     } else if (status === 'belumPulang') {
@@ -1966,191 +1770,65 @@ function bukаModalDetail(status) {
       return;
     }
 
-    // Render sesuai status
     if (status === 'belumMasuk') {
-      renderModalBelumMasuk(siswaList);
+      var html3 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk</p>';
+      siswaList.forEach(function(s, i) {
+        var nn = s.nama.replace(/'/g, '&#39;');
+        html3 += '<div class="modal-detail-item" id="mdrow' + i + '" style="flex-direction:column;align-items:flex-start;">';
+        html3 += '<div style="display:flex;align-items:center;gap:8px;width:100%;cursor:pointer;" onclick="toggleMdForm(' + i + ')">';
+        html3 += '<div class="modal-detail-no">' + (i+1) + '</div>';
+        html3 += '<div class="modal-detail-nama" style="flex:1;">' + s.nama + '</div>';
+        html3 += '<div class="modal-detail-kelas">' + s.kelas + '</div></div>';
+        html3 += '<div id="mdform' + i + '" style="display:none;padding:8px 0 4px 36px;gap:8px;flex-wrap:wrap;">';
+        html3 += '<button onclick="pilihMdStatus(' + i + ',\'Izin\')" id="mdbtn' + i + 'Izin" style="padding:5px 12px;border:2px solid #1565c0;border-radius:8px;color:#1565c0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Izin</button>';
+        html3 += '<button onclick="pilihMdStatus(' + i + ',\'Sakit\')" id="mdbtn' + i + 'Sakit" style="padding:5px 12px;border:2px solid #c62828;border-radius:8px;color:#c62828;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Sakit</button>';
+        html3 += '<button onclick="pilihMdStatus(' + i + ',\'Alpa\')" id="mdbtn' + i + 'Alpa" style="padding:5px 12px;border:2px solid #e53935;border-radius:8px;color:#e53935;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Alpa</button>';
+        html3 += '<button onclick="simpanMdStatus(' + i + ',\'' + s.nisn + '\',\'' + nn + '\',\'' + s.kelas + '\')" id="mdsave' + i + '" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Simpan</button>';
+        html3 += '</div></div>';
+      });
+      isi.innerHTML = html3;
     } else {
-      // Status lain: OnTime, Terlambat, Izin, Sakit, Alpa
-      if (!siswaList.length) {
-        isi.innerHTML = `<p style="text-align:center;color:var(--teks-sub);padding:32px;">Tidak ada siswa</p>`;
-        return;
-      }
-      isi.innerHTML = `
-        <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa</p>
-        ${siswaList.map((s,i) => `
-          <div class="modal-detail-item">
-            <div class="modal-detail-no">${i+1}</div>
-            <div class="modal-detail-nama">${s.nama}</div>
-            <div class="modal-detail-kelas">${s.kelas}</div>
-            <div class="modal-detail-jam">${s.info}</div>
-          </div>`).join('')}`;
+      var html4 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">' + siswaList.length + ' siswa</p>';
+      siswaList.forEach(function(s, i) {
+        html4 += '<div class="modal-detail-item"><div class="modal-detail-no">' + (i+1) + '</div><div class="modal-detail-nama">' + s.nama + '</div><div class="modal-detail-kelas">' + s.kelas + '</div><div class="modal-detail-jam">' + s.info + '</div></div>';
+      });
+      isi.innerHTML = html4;
     }
   });
 }
-
-function renderModalBelumMasuk(siswaList) {
-  const isi = document.getElementById('modalDetailIsi');
-  if (!isi) return;
-  if (!siswaList.length) {
-    isi.innerHTML = '<p style="text-align:center;color:var(--teks-sub);padding:32px;">Semua siswa sudah absen! 🎉</p>';
-    return;
-  }
-  isi.innerHTML = `
-        <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa belum masuk — klik nama untuk input status</p>
-        ${siswaList.map((s,i) => `
-          <div class="modal-siswa-row" id="mrow_${i}">
-            <div class="modal-siswa-header" onclick="toggleFormStatus(${i})">
-              <div class="modal-detail-no">${i+1}</div>
-              <div class="modal-detail-nama">${s.nama}</div>
-              <div class="modal-detail-kelas">${s.kelas}</div>
-              <span class="status-saved" id="msaved_${i}">✓ Tersimpan</span>
-            </div>
-            <div id="mform_${i}" style="display:none;padding:8px 0 4px 36px;">
-              <div class="status-btn-group">
-                <button class="status-btn izin"  onclick="pilihStatus(${i},'Izin')">📝 Izin</button>
-                <button class="status-btn sakit" onclick="pilihStatus(${i},'Sakit')">🤒 Sakit</button>
-                <button class="status-btn alpa"  onclick="pilihStatus(${i},'Alpa')">❌ Alpa</button>
-              </div>
-              <button class="simpan-status-btn" id="mbtn_${i}"
-                onclick="simpanStatusModal(${i},'${s.nisn}','${s.nama.replace(/'/g,"\'")}','${s.kelas}')">
-                💾 Simpan
-              </button>
-            </div>
-          </div>`).join('')}`;
-  // [removed orphan block]
-  if (false) { // placeholder removed
-    isi.innerHTML = `
-      <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa</p>
-        ${siswaList.map((s,i) => `
-          <div class="modal-detail-item">
-            <div class="modal-detail-no">${i+1}</div>
-            <div class="modal-detail-nama">${s.nama}</div>
-            <div class="modal-detail-kelas">${s.kelas}</div>
-            <div class="modal-detail-jam">${s.info}</div>
-          </div>`).join('')}`;
-    }
-  });
-}
-
-
-// ── INPUT STATUS DARI MODAL BELUM MASUK ─────────────────────────
-var _selectedStatus = {}; // {index: status}
-
-function toggleFormStatus(i) {
-  const form = document.getElementById('mform_' + i);
-  if (!form) return;
-  const show = form.style.display === 'none';
-  // Tutup semua form lain
-  document.querySelectorAll('[id^="mform_"]').forEach(f => f.style.display = 'none');
-  form.style.display = show ? 'block' : 'none';
-}
-
-function pilihStatus(i, status) {
-  _selectedStatus[i] = status;
-  // Update tampilan tombol
-  const form = document.getElementById('mform_' + i);
-  if (!form) return;
-  form.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('aktif'));
-  const aktifBtn = form.querySelector('.status-btn.' + status.toLowerCase());
-  if (aktifBtn) aktifBtn.classList.add('aktif');
-  // Tampilkan tombol simpan
-  const btnSimpan = document.getElementById('mbtn_' + i);
-  if (btnSimpan) btnSimpan.style.display = 'inline-block';
-}
-
-async function simpanStatusModal(i, nisn, nama, kelas) {
-  const status = _selectedStatus[i];
-  if (!status) return;
-
-  const btn = document.getElementById('mbtn_' + i);
-  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
-
-  const today = getTglHariIni();
-  const r = await apiPost({
-    action: 'absenManual',
-    nisn, nama, kelas,
-    status,
-    keterangan: '',
-    tanggal: today
-  });
-
-  if (r.ok) {
-    playSukses();
-    // Sembunyikan form, tampilkan badge tersimpan
-    const form  = document.getElementById('mform_' + i);
-    const saved = document.getElementById('msaved_' + i);
-    const row   = document.getElementById('mrow_' + i);
-    // Hapus baris dari list langsung
-    if (row) {
-      row.style.transition = 'all 0.3s';
-      row.style.opacity    = '0';
-      row.style.maxHeight  = row.offsetHeight + 'px';
-      setTimeout(() => {
-        row.style.maxHeight  = '0';
-        row.style.padding    = '0';
-        row.style.overflow   = 'hidden';
-        setTimeout(() => row.remove(), 300);
-      }, 200);
-    }
-    // Update counter di header modal
-    const headerCount = document.querySelector('#modalDetailIsi > p');
-    if (headerCount) {
-      const current = parseInt(headerCount.textContent) - 1;
-      headerCount.textContent = current + ' siswa belum masuk — klik nama untuk input status';
-    }
-    // Update statistik dashboard
-    const elBelum = document.getElementById('stBelumMasuk');
-    if (elBelum) elBelum.textContent = Math.max(0, parseInt(elBelum.textContent||0) - 1);
-    if (status === 'Izin')  { const el=document.getElementById('stIzin');  if(el) el.textContent=parseInt(el.textContent||0)+1; }
-    if (status === 'Sakit') { const el=document.getElementById('stSakit'); if(el) el.textContent=parseInt(el.textContent||0)+1; }
-    if (status === 'Alpa')  { const el=document.getElementById('stAlpa');  if(el) el.textContent=parseInt(el.textContent||0)+1; }
-  } else {
-    playGagal();
-    if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan'; }
-    alert(r.error || 'Gagal menyimpan');
-  }
-}
-
 
 var _mdStatus = {};
 function toggleMdForm(i) {
-  var form = document.getElementById('mdform'+i);
-  if (!form) return;
-  var open = form.style.display !== 'flex';
-  document.querySelectorAll('[id^="mdform"]').forEach(function(f){f.style.display='none';});
-  form.style.display = open ? 'flex' : 'none';
+  var f = document.getElementById('mdform' + i); if (!f) return;
+  var op = f.style.display === 'none';
+  document.querySelectorAll('[id^="mdform"]').forEach(function(x) { x.style.display = 'none'; });
+  f.style.display = op ? 'flex' : 'none';
 }
 function pilihMdStatus(i, st) {
   _mdStatus[i] = st;
   ['Izin','Sakit','Alpa'].forEach(function(s) {
-    var b = document.getElementById('mdbtn'+i+s);
-    if (!b) return;
-    var color = s==='Izin'?'#1565c0':s==='Sakit'?'#c62828':'#e53935';
-    b.style.background = s===st ? color : '#fff';
-    b.style.color = s===st ? '#fff' : color;
+    var b = document.getElementById('mdbtn' + i + s); if (!b) return;
+    var col = s==='Izin'?'#1565c0':s==='Sakit'?'#c62828':'#e53935';
+    b.style.background = s===st ? col : '#fff';
+    b.style.color = s===st ? '#fff' : col;
   });
-  var sv = document.getElementById('mdsave'+i);
-  if (sv) sv.style.display = 'inline-block';
+  var sv = document.getElementById('mdsave' + i); if (sv) sv.style.display = 'inline-block';
 }
 async function simpanMdStatus(i, nisn, nama, kelas) {
-  var st = _mdStatus[i];
-  if (!st) return;
-  var sv = document.getElementById('mdsave'+i);
-  if (sv) { sv.disabled=true; sv.textContent='...'; }
+  var st = _mdStatus[i]; if (!st) return;
+  var sv = document.getElementById('mdsave' + i);
+  if (sv) { sv.disabled = true; sv.textContent = '...'; }
   var r = await apiPost({action:'absenManual', nisn:nisn, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:getTglHariIni()});
   if (r.ok) {
     playSukses();
-    var row = document.getElementById('mdrow'+i);
-    if (row) { row.style.opacity='0'; row.style.transition='all 0.3s'; setTimeout(function(){row.remove();},300); }
+    var row = document.getElementById('mdrow' + i);
+    if (row) { row.style.opacity='0'; row.style.transition='all 0.3s'; setTimeout(function(){row.remove();}, 300); }
     var el = document.getElementById('mdCountBM');
-    if (el) { var n=parseInt(el.textContent)-1; el.textContent=n+' siswa belum masuk'; }
-    var elBM=document.getElementById('stBelumMasuk'); if(elBM) elBM.textContent=Math.max(0,parseInt(elBM.textContent||0)-1);
-    var elSt=document.getElementById(st==='Izin'?'stIzin':st==='Sakit'?'stSakit':'stAlpa');
-    if(elSt) elSt.textContent=parseInt(elSt.textContent||0)+1;
+    if (el) { var n = parseInt(el.textContent) - 1; el.textContent = n + ' siswa belum masuk'; }
+    var elBM = document.getElementById('stBelumMasuk'); if (elBM) elBM.textContent = Math.max(0, parseInt(elBM.textContent||0) - 1);
+    var elSt = document.getElementById(st==='Izin'?'stIzin':st==='Sakit'?'stSakit':'stAlpa'); if (elSt) elSt.textContent = parseInt(elSt.textContent||0) + 1;
   } else {
-    playGagal();
-    if(sv){sv.disabled=false;sv.textContent='Simpan';}
-    alert(r.error||'Gagal');
+    playGagal(); if (sv) { sv.disabled=false; sv.textContent='Simpan'; } alert(r.error||'Gagal');
   }
 }
 
@@ -2398,194 +2076,132 @@ async function loadBulanan() {
   const kelas = document.getElementById('bulananKelas')?.value || '';
   const tbody = document.getElementById('tabelBulanan');
 
-  // Hitung dari/sampai dari bulan+tahun
-  const bln2     = String(bulan).padStart(2,'0');
-  const dari     = tahun + '-' + bln2 + '-01';
-  const lastDay  = new Date(parseInt(tahun), parseInt(bulan), 0).getDate();
-  const sampai   = tahun + '-' + bln2 + '-' + String(lastDay).padStart(2,'0');
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 10px;"></div>Memuat...</td></tr>';
 
-  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:32px;"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 10px;"></div>Memuat...</td></tr>';
-  document.getElementById('btnBarBulanan').style.display = 'none';
+  const r = await apiGet('getRekapBulananSiswa', {bulan, tahun});
 
-  // Kirim dari/sampai agar server bisa hitung hari efektif
-  const r = await apiGet('getRekapBulananSiswa', {bulan, tahun, dari, sampai, kelas});
-
+  // Server sudah kembalikan semua siswa (hadir + belum hadir)
+  // Cukup filter kelas di sini jika dipilih
   let data = (r.ok && r.data) ? r.data : [];
   if (kelas) data = data.filter(d => d.kelas === kelas);
 
-  // Log untuk debug
-  console.log('getRekapBulananSiswa response:', r.ok, 'data len:', data.length, 'hariEfektif:', r.hariEfektif);
-
-  // Simpan untuk cetak halaman 2
-  window._lastDaftarLibur = r.daftarLibur || [];
-  window._lastDari        = dari;
-  window._lastSampai      = sampai;
-  window._lastHariEfektif = r.hariEfektif || 0;
-
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data siswa</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data siswa</td></tr>';
     document.getElementById('btnBarBulanan').style.display = 'none';
     return;
   }
 
-  const hariEfektif = r.hariEfektif || 0;
-  console.log('loadBulanan OK - data:', data.length, 'hariEfektif:', hariEfektif);
-  const bulanNama   = ['','Januari','Februari','Maret','April','Mei','Juni',
+  // data langsung dari server - properti sudah benar (gabung siswa + absensi)
+
+  const bulanNama = ['','Januari','Februari','Maret','April','Mei','Juni',
     'Juli','Agustus','September','Oktober','November','Desember'];
 
   tbody.innerHTML = data.map((d,i) => {
-    const onTime    = parseInt(d.onTime    || 0) || 0;
-    const terlambat = parseInt(d.terlambat || 0) || 0;
-    const izin      = parseInt(d.izin      || 0) || 0;
-    const sakit     = parseInt(d.sakit     || 0) || 0;
-    const alpa      = parseInt(d.alpa      || 0) || 0;
-    const hadir     = onTime + terlambat;
-    const hEfektif  = parseInt(d.hariEfektif || hariEfektif || 0) || 0;
-    const pct       = hEfektif ? Math.round(hadir/hEfektif*100) : 0;
+    const totalHariKerja = d.onTime + d.terlambat + d.izin + d.sakit + d.alpa;
+    const pct = totalHariKerja ? Math.round(d.hadir/totalHariKerja*100) : 0;
     return `<tr>
       <td style="text-align:center;">${i+1}</td>
-      <td style="font-weight:600">${d.nama||'—'}</td>
-      <td style="text-align:center;"><span style="background:#e8f6f8;color:var(--teal);font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px;">${d.kelas||'—'}</span></td>
-      <td style="font-weight:700;text-align:center;">${hEfektif}</td>
-      <td style="color:var(--hijau);font-weight:700;text-align:center;">${onTime}</td>
-      <td style="color:#e65100;font-weight:700;text-align:center;">${terlambat}</td>
-      <td style="color:#1565c0;text-align:center;">${izin}</td>
-      <td style="color:#c62828;text-align:center;">${sakit}</td>
-      <td style="color:var(--merah);font-weight:700;text-align:center;">${alpa}</td>
-      <td style="font-weight:700;text-align:center;">${hadir}</td>
+      <td style="font-weight:600">${d.nama}</td>
+      <td><span style="background:#e8f6f8;color:var(--teal);font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px;">${d.kelas}</span></td>
+      <td style="color:var(--hijau);font-weight:700;text-align:center;">${d.onTime}</td>
+      <td style="color:#e65100;font-weight:700;text-align:center;">${d.terlambat}</td>
+      <td style="color:#1565c0;text-align:center;">${d.izin}</td>
+      <td style="color:#c62828;text-align:center;">${d.sakit}</td>
+      <td style="color:var(--merah);font-weight:700;text-align:center;">${d.alpa}</td>
+      <td style="font-weight:700;text-align:center;">${d.hadir}</td>
       <td style="font-weight:700;text-align:center;color:${pct>=75?'var(--hijau)':'var(--merah)'};">${pct}%</td>
     </tr>`;
   }).join('');
 
-  const info = `${bulanNama[parseInt(bulan)]} ${tahun}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa | ${hariEfektif} hari efektif`;
-  document.getElementById('infoBulanan').textContent      = info;
+  const info = `${bulanNama[parseInt(bulan)]} ${tahun}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa`;
+  document.getElementById('infoBulanan').textContent = info;
   document.getElementById('printBulananInfo').textContent = info;
   document.getElementById('printInfoBulanan').textContent = info;
-  document.getElementById('printTglTtd').textContent      = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('printNamaKelas').textContent   = kelas || 'Semua Kelas';
-  document.getElementById('btnBarBulanan').style.display  = 'flex';
+  document.getElementById('printTglTtd').textContent = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  const kelasLabel = document.getElementById('bulananKelasCustom')?.value 
+                     || document.getElementById('bulananKelas')?.value || '';
+  document.getElementById('printNamaKelas').textContent = kelasLabel || 'Semua Kelas';
+  document.getElementById('btnBarBulanan').style.display = 'flex';
 }
-
 
 async function loadBulananCustom() {
   const dari   = document.getElementById('bulananDari')?.value;
   const sampai = document.getElementById('bulananSampai')?.value;
   const kelas  = document.getElementById('bulananKelasCustom')?.value || '';
   if (!dari || !sampai) { alert('Pilih rentang tanggal terlebih dahulu.'); return; }
-
   const tbody = document.getElementById('tabelBulanan');
-  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 10px;"></div>Memuat...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#9aabb8;">Memuat data...</td></tr>';
   document.getElementById('btnBarBulanan').style.display = 'none';
 
-  const r = await apiGet('getRekapBulananSiswa', {dari, sampai, kelas});
-  if (!r.ok || !r.data) {
+  const r = await apiGet('getRekap', { dari, sampai, kelas });
+  let dataAbsen = (r.ok && r.data) ? r.data : [];
+
+  // Gabung dengan data siswa — siswa tanpa absensi tetap tampil
+  let semuaSiswaFilter = kelas ? dataSiswa.filter(s=>s.kelas===kelas) : dataSiswa;
+  let dataGabung = semuaSiswaFilter.map(s => {
+    const absen = dataAbsen.find(d => d.nisn === s.nisn || d.nama === s.nama);
+    return absen || { nisn:s.nisn, nama:s.nama, kelas:s.kelas, onTime:0, terlambat:0, izin:0, sakit:0, alpa:0, hadir:0 };
+  });
+  dataAbsen.forEach(d => {
+    if (!dataGabung.find(g => g.nisn===d.nisn || g.nama===d.nama)) dataGabung.push(d);
+  });
+  let data = dataGabung.sort((a,b)=>a.kelas.localeCompare(b.kelas)||a.nama.localeCompare(b.nama));
+
+  if (!data.length) {
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data</td></tr>';
     return;
   }
 
-  const data          = r.data;
-  const hariEfektif   = r.hariEfektif || 0;
-  const daftarLibur   = r.daftarLibur || [];
-
-  // Simpan untuk cetak halaman 2
-  window._lastDaftarLibur = daftarLibur;
-  window._lastDari        = dari;
-  window._lastSampai      = sampai;
-  window._lastHariEfektif = hariEfektif;
-
-  tbody.innerHTML = data.length ? data.map((d,i) => {
-    const onTime      = parseInt(d.onTime      || 0) || 0;
-    const terlambat   = parseInt(d.terlambat   || 0) || 0;
-    const izin        = parseInt(d.izin        || 0) || 0;
-    const sakit       = parseInt(d.sakit       || 0) || 0;
-    const alpa        = parseInt(d.alpa        || 0) || 0;
-    const hadir       = onTime + terlambat;
-    const hEfektif    = parseInt(d.hariEfektif || hariEfektif || 0) || 0;
-    const pct         = hEfektif ? Math.round(hadir/hEfektif*100) : 0;
+  tbody.innerHTML = data.map((d,i) => {
+    const totalHariKerja = d.onTime + d.terlambat + d.izin + d.sakit + d.alpa;
+    const pct = totalHariKerja ? Math.round(d.hadir/totalHariKerja*100) : 0;
     return `<tr>
       <td style="text-align:center;">${i+1}</td>
-      <td style="font-weight:600">${d.nama||'—'}</td>
-      <td style="text-align:center;"><span style="background:#e8f6f8;color:var(--teal);font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px;">${d.kelas||'—'}</span></td>
-      <td style="font-weight:700;text-align:center;">${hEfektif}</td>
-      <td style="color:var(--hijau);font-weight:700;text-align:center;">${onTime}</td>
-      <td style="color:#e65100;font-weight:700;text-align:center;">${terlambat}</td>
-      <td style="color:#1565c0;text-align:center;">${izin}</td>
-      <td style="color:#c62828;text-align:center;">${sakit}</td>
-      <td style="color:var(--merah);font-weight:700;text-align:center;">${alpa}</td>
-      <td style="font-weight:700;text-align:center;">${hadir}</td>
+      <td style="font-weight:600">${d.nama}</td>
+      <td><span style="background:#e8f6f8;color:var(--teal);font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px;">${d.kelas}</span></td>
+      <td style="color:var(--hijau);font-weight:700;text-align:center;">${d.onTime}</td>
+      <td style="color:#e65100;font-weight:700;text-align:center;">${d.terlambat}</td>
+      <td style="color:#1565c0;text-align:center;">${d.izin}</td>
+      <td style="color:#c62828;text-align:center;">${d.sakit}</td>
+      <td style="color:var(--merah);font-weight:700;text-align:center;">${d.alpa}</td>
+      <td style="font-weight:700;text-align:center;">${d.hadir}</td>
       <td style="font-weight:700;text-align:center;color:${pct>=75?'var(--hijau)':'var(--merah)'};">${pct}%</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="11" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data siswa</td></tr>';
+  }).join('');
 
-  const fD = new Date(dari).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  const fS = new Date(sampai).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  const info = `${fD} s.d. ${fS}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa`;
-  document.getElementById('infoBulanan').textContent      = info;
+  const fmtTgl = iso => new Date(iso).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+  const info = `${fmtTgl(dari)} s.d. ${fmtTgl(sampai)}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa`;
+  document.getElementById('infoBulanan').textContent = info;
   document.getElementById('printBulananInfo').textContent = info;
   document.getElementById('printInfoBulanan').textContent = info;
-  document.getElementById('printTglTtd').textContent      = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('printNamaKelas').textContent   = kelas || 'Semua Kelas';
-  document.getElementById('btnBarBulanan').style.display  = 'flex';
+  document.getElementById('printTglTtd').textContent = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  const kelasLabel = document.getElementById('bulananKelasCustom')?.value 
+                     || document.getElementById('bulananKelas')?.value || '';
+  document.getElementById('printNamaKelas').textContent = kelasLabel || 'Semua Kelas';
+  document.getElementById('btnBarBulanan').style.display = 'flex';
 }
 
 async function cetakBulanan() {
-  const kelas     = document.getElementById('bulananKelasCustom')?.value || '';
-  const libur     = window._lastDaftarLibur || [];
-  const dari      = window._lastDari        || '';
-  const sampai    = window._lastSampai      || '';
-  const hEfektif  = window._lastHariEfektif || 0;
-
-  // Isi wali kelas
-  try {
-    const r = await apiGet('getWalas');
-    if (r.ok && r.data) {
-      const walas = kelas ? r.data.find(w => w.kelas === kelas) : null;
-      const nama  = walas ? walas.nama : '____________________';
-      document.querySelectorAll('.ttd-walas, .ttd-walas2').forEach(el => {
-        el.textContent = nama;
-      });
-      const elK2 = document.getElementById('printNamaKelas2');
-      if (elK2) elK2.textContent = kelas || 'Semua Kelas';
-    }
-  } catch(e) {}
-
-  // Isi halaman 2
-  const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-  const BULAN = ['Januari','Februari','Maret','April','Mei','Juni',
-                 'Juli','Agustus','September','Oktober','November','Desember'];
-
-  function tglPanjang(iso) {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    return HARI[d.getDay()] + ', ' + d.getDate() + ' ' + BULAN[d.getMonth()] + ' ' + d.getFullYear();
+  // Cek apakah data sudah dimuat
+  const tbody = document.getElementById('tabelBulanan');
+  if (!tbody || !tbody.querySelector('tr td')) {
+    alert('Klik Tampilkan dulu untuk memuat data sebelum mencetak.');
+    return;
   }
-
-  const elPeriode = document.getElementById('printPeriodeH2');
-  if (elPeriode) elPeriode.textContent = tglPanjang(dari) + ' s.d. ' + tglPanjang(sampai);
-
-  const elTgl2 = document.getElementById('printTglTtd2');
-  if (elTgl2) elTgl2.textContent = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-
-  const elTotalLibur = document.getElementById('printTotalLibur');
-  if (elTotalLibur) elTotalLibur.textContent = libur.length;
-
-  const elTotalEfektif = document.getElementById('printTotalEfektif');
-  if (elTotalEfektif) elTotalEfektif.textContent = hEfektif;
-
-  const tbody = document.getElementById('printTabelLibur');
-  if (tbody) {
-    if (libur.length) {
-      tbody.innerHTML = libur.map((l,i) => `
-        <tr>
-          <td style="border:1px solid #000;padding:5px 8px;text-align:center;">${i+1}</td>
-          <td style="border:1px solid #000;padding:5px 8px;">${tglPanjang(l.tanggal)}</td>
-          <td style="border:1px solid #000;padding:5px 8px;">${l.keterangan||'—'}</td>
-        </tr>`).join('');
-    } else {
-      tbody.innerHTML = '<tr><td colspan="3" style="border:1px solid #000;padding:8px;text-align:center;color:#888;">Tidak ada hari libur dalam periode ini</td></tr>';
-    }
+  const kelas = document.getElementById('bulananKelas')?.value || '';
+  if (kelas) {
+    try {
+      const r = await apiGet('getWalas');
+      if (r.ok && r.data) {
+        const walas = r.data.find(w => w.kelas === kelas);
+        if (walas) {
+          document.querySelectorAll('.ttd-walas').forEach(el => {
+            el.textContent = walas.nama;
+          });
+        }
+      }
+    } catch(e) {}
   }
-
   window.print();
 }
 
@@ -2598,64 +2214,8 @@ let jadwalPerHari = {
   Rabu:    {aktif:true,  masuk:'07:30', pulang:'13:00'},
   Kamis:   {aktif:true,  masuk:'07:30', pulang:'13:00'},
   Jumat:   {aktif:true,  masuk:'07:30', pulang:'11:00'},
-  Sabtu:   {aktif:true,  masuk:'07:30', pulang:'12:00'},
+  Sabtu:   {aktif:false, masuk:'07:30', pulang:'12:00'},
 };
-
-
-// ── TOGGLE ALPA OTOMATIS ─────────────────────────────────────────
-async function loadToggleAlpa() {
-  // Tampilkan dari localStorage dulu (instan)
-  const lokal = localStorage.getItem('alpa_otomatis');
-  if (lokal !== null) {
-    const aktifLokal = lokal === 'true';
-    updateSliderAlpa(aktifLokal);
-    setTimeout(() => updateSliderAlpa(aktifLokal), 200);
-  }
-  // Sync dari server (sumber kebenaran)
-  try {
-    const r = await apiGet('getAlpaOtomatis');
-    if (r.ok) {
-      const aktif = r.aktif !== false;
-      // Update localStorage agar sync
-      localStorage.setItem('alpa_otomatis', aktif ? 'true' : 'false');
-      updateSliderAlpa(aktif);
-      setTimeout(() => updateSliderAlpa(aktif), 200);
-    }
-  } catch(e) {
-    // Server gagal - pakai nilai lokal saja
-  }
-}
-
-function updateSliderAlpa(aktif) {
-  const chk    = document.getElementById('toggleAlpaOtomatis');
-  const slider = document.getElementById('sliderAlpa');
-  const dot    = document.getElementById('sliderDot');
-  if (chk)    chk.checked             = aktif;
-  if (slider) slider.style.background = aktif ? '#0a7e8c' : '#ccc';
-  if (dot)    dot.style.transform     = aktif ? 'translateX(24px)' : 'translateX(0px)';
-}
-
-async function simpanToggleAlpa(aktif) {
-  updateSliderAlpa(aktif);
-  // Simpan ke localStorage dulu (instan, tidak hilang)
-  localStorage.setItem('alpa_otomatis', aktif ? 'true' : 'false');
-
-  const msg = document.getElementById('msgToggleAlpa');
-  try {
-    const r = await apiPost({action: 'setAlpaOtomatis', aktif: aktif ? 'true' : 'false'});
-    if (msg) {
-      msg.textContent  = r.ok
-        ? (aktif ? '✅ Alpa otomatis diaktifkan' : '⭕ Alpa otomatis dimatikan')
-        : '❌ Gagal menyimpan ke server';
-      msg.style.display    = 'block';
-      msg.style.background = r.ok ? (aktif ? '#e8f6ef' : '#fff3e0') : '#fdecea';
-      msg.style.color      = r.ok ? (aktif ? '#1a7a4a' : '#e65100') : '#c0392b';
-      setTimeout(() => msg.style.display = 'none', 3000);
-    }
-  } catch(e) {
-    if (msg) { msg.textContent = '⚠️ Tersimpan lokal, server error'; msg.style.display = 'block'; }
-  }
-}
 
 function loadJadwalInputs() {
   if (window._jadwalData) {
@@ -2697,15 +2257,11 @@ function renderTabelJadwal() {
 }
 
 function toggleRowJadwal(hari) {
-  // Update state dulu sebelum render
-  const chk = document.getElementById('aktif_'+hari);
-  if (chk) jadwalPerHari[hari].aktif = chk.checked;
-  // Update input jam juga
-  const msk = document.getElementById('masuk_'+hari);
-  const plg = document.getElementById('pulang_'+hari);
-  if (msk) jadwalPerHari[hari].masuk  = msk.value || jadwalPerHari[hari].masuk;
-  if (plg) jadwalPerHari[hari].pulang = plg.value || jadwalPerHari[hari].pulang;
-  // Render ulang tabel
+  const aktif = jadwalPerHari[hari].aktif;
+  document.getElementById('masuk_'+hari).disabled  = !aktif;
+  document.getElementById('pulang_'+hari).disabled = !aktif;
+  document.getElementById('masuk_'+hari).style.opacity  = aktif ? '1' : '0.4';
+  document.getElementById('pulang_'+hari).style.opacity = aktif ? '1' : '0.4';
   renderTabelJadwal();
 }
 
