@@ -1082,7 +1082,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMb
 let TOKEN = '';
 var _alpaOtomatisAktif = null;
 let MODE_ABSEN = 'masuk'; // masuk / pulang
-let MODE_SCAN = 'normal'; // normal / quick
+let MODE_SCAN = 'quick'; // normal / quick
 let dataSiswa = [];
 let dataKelas = [];
 let siswaYangDipilih = null;
@@ -1430,31 +1430,24 @@ function cekSudahAbsenHariIni(nisn) {
     const nisnBersih = String(nisn||'').trim().replace(/\.0$/, '');
     const nisnNoZero = nisnBersih.replace(/^0+/, '');
     const today      = getTglHariIni();
+    const namaSiswa  = siswaYangDipilih ? siswaYangDipilih.nama : '';
 
-    // Cek 1: dari cache lokal
+    // Cek 1: dari cache - semua status (bukan hanya yang punya jamMasuk)
     const cache = ambilCacheAbsen() || [];
     const dariCache = cache.find(x => {
       const xn = String(x.nisn||'').trim().replace(/\.0$/, '').replace(/^0+/, '');
-      return (xn === nisnBersih || xn === nisnNoZero) &&
-             x.tanggal === today && x.jamMasuk;
+      return (xn === nisnBersih || xn === nisnNoZero || x.nama === namaSiswa) &&
+             x.tanggal === today;
     });
     if (dariCache) return dariCache;
 
-    // Cek 2: dari tabel yang tampil di layar (lebih reliable)
+    // Cek 2: dari tabel absensi hari ini
     const tbody = document.getElementById('tabelAbsenHariIni');
-    if (tbody) {
-      const rows = tbody.querySelectorAll('tr');
-      for (const row of rows) {
+    if (tbody && namaSiswa) {
+      for (const row of tbody.querySelectorAll('tr')) {
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 3) {
-          const namaCel = cells[0].textContent.trim();
-          // Cek apakah nama siswa sudah ada di tabel
-          if (siswaYangDipilih && namaCel === siswaYangDipilih.nama) {
-            const jamCel = cells[2].textContent.trim();
-            if (jamCel && jamCel !== '—') {
-              return { jamMasuk: jamCel };
-            }
-          }
+        if (cells.length >= 3 && cells[0].textContent.trim() === namaSiswa) {
+          return { jamMasuk: cells[2].textContent.trim() || '—' };
         }
       }
     }
@@ -1492,9 +1485,10 @@ async function konfirmasiAbsen() {
     // Kirim ke server di background (tidak blokir antrian)
     const qPayload = {
       action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
-      nisn: siswaYangDipilih.nisn
+      nisn: siswaYangDipilih.nisn,
+      token: TOKEN
     };
-    apiPost(qPayload).catch(function() {});
+    (function() { apiPost(qPayload); })();
     return;
   }
 
@@ -1952,7 +1946,13 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   var st = _mdStatus[i]; if (!st) return;
   var sv = document.getElementById('mdsave' + i);
   if (sv) { sv.disabled = true; sv.textContent = '...'; }
-  var r = await apiPost({action:'absenManual', nisn:nisn, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:getTglHariIni()});
+  // Pastikan NISN valid - cari dari dataSiswa jika kosong/undefined
+  var nisnFinal = (nisn && nisn !== 'undefined') ? nisn : '';
+  if (!nisnFinal && nama) {
+    var found = dataSiswa.find(function(s) { return s.nama === nama; });
+    if (found) nisnFinal = found.nisn || '';
+  }
+  var r = await apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:getTglHariIni()});
   if (r.ok) {
     playSukses();
     var row = document.getElementById('mdrow' + i);
@@ -2416,19 +2416,14 @@ let jadwalPerHari = {
 
 // ── TOGGLE ALPA OTOMATIS ─────────────────────────────────────────
 async function loadToggleAlpa() {
+  // Baca dari localStorage - tidak perlu fetch server setiap load
   var lokal = localStorage.getItem('alpa_otomatis');
-  if (lokal !== null) {
-    _alpaOtomatisAktif = (lokal === 'true');
-    updateSliderAlpa(_alpaOtomatisAktif);
-  }
-  try {
-    const r = await apiGet('getAlpaOtomatis');
-    if (r.ok) {
-      _alpaOtomatisAktif = (r.aktif !== false);
-      localStorage.setItem('alpa_otomatis', _alpaOtomatisAktif ? 'true' : 'false');
-      updateSliderAlpa(_alpaOtomatisAktif);
-    }
-  } catch(e) {}
+  // Default ON jika belum pernah diset
+  var aktif = lokal === null ? true : lokal === 'true';
+  _alpaOtomatisAktif = aktif;
+  // Apply ke slider dengan delay untuk pastikan DOM sudah ready
+  setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 50);
+  setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 300);
 }
 
 function updateSliderAlpa(aktif) {
@@ -2441,23 +2436,25 @@ function updateSliderAlpa(aktif) {
 }
 
 async function simpanToggleAlpa(aktif) {
+  // Simpan ke localStorage dan variabel global (instan)
   _alpaOtomatisAktif = aktif;
   localStorage.setItem('alpa_otomatis', aktif ? 'true' : 'false');
   updateSliderAlpa(aktif);
+  // Kirim ke server di background
   const msg = document.getElementById('msgToggleAlpa');
   try {
     const r = await apiPost({action: 'setAlpaOtomatis', aktif: aktif ? 'true' : 'false'});
     if (msg) {
-      msg.textContent = r.ok 
+      msg.textContent = r.ok
         ? (aktif ? '✅ Alpa otomatis diaktifkan' : '⭕ Alpa otomatis dimatikan')
-        : '❌ Gagal menyimpan';
-      msg.style.display   = 'block';
+        : '❌ Gagal simpan ke server';
+      msg.style.display = 'block';
       msg.style.background = r.ok ? (aktif ? '#e8f6ef' : '#fff3e0') : '#fdecea';
-      msg.style.color      = r.ok ? (aktif ? '#1a7a4a' : '#e65100') : '#c0392b';
-      setTimeout(() => msg.style.display = 'none', 3000);
+      msg.style.color = r.ok ? (aktif ? '#1a7a4a' : '#e65100') : '#c0392b';
+      setTimeout(function() { msg.style.display = 'none'; }, 3000);
     }
   } catch(e) {
-    if (msg) { msg.textContent = '❌ Error: ' + e.message; msg.style.display = 'block'; }
+    if (msg) { msg.textContent = '⚠️ Tersimpan lokal'; msg.style.display = 'block'; setTimeout(function(){msg.style.display='none';},2000); }
   }
 }
 
