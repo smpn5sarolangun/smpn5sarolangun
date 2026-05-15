@@ -1164,10 +1164,22 @@ function fmtTgl(tgl) {
 }
 
 function fmtJam(jam) {
-  if (!jam || jam === '—') return '—';
-  // Ambil HH:mm saja, ganti : dengan .
-  var s = String(jam).trim().slice(0,5);
-  return s.replace(':', '.');
+  if (!jam || jam === '—' || jam === '') return '—';
+  var s = String(jam).trim();
+  // Handle "Sat Dec 30 1899 20:42:00 GMT+0707 (Western Indonesia Time)"
+  if (/^[A-Za-z]/.test(s) || s.indexOf('GMT') >= 0 || s.indexOf('Indonesia') >= 0) {
+    var m = s.match(/(\d{1,2}):(\d{2}):\d{2}/);
+    return m ? m[1].padStart(2,'0') + '.' + m[2] : '—';
+  }
+  // Handle ISO "1899-12-30T20:42:00.000Z"
+  if (s.indexOf('T') >= 0 && s.indexOf(':') >= 0) {
+    var m2 = s.match(/T(\d{2}):(\d{2})/);
+    if (m2) return m2[1] + '.' + m2[2];
+  }
+  // Format normal HH:mm atau HH.mm
+  var p = s.replace('.', ':').split(':');
+  if (p.length >= 2) return p[0].padStart(2,'0') + '.' + p[1].padStart(2,'0');
+  return s.slice(0,5);
 }
 
 function startClock() {
