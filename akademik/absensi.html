@@ -499,11 +499,11 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();setTimeout(function(){if(_alpaOtomatisAktif!==null)updateSliderAlpa(_alpaOtomatisAktif);loadToggleAlpa();},100)">
-    <span class="nav-icon">⏰</span> Atur Jadwal
-  </div>
   <div class="nav-item" onclick="showPage('rekapBulanan');initRekapBulanan()">
     <span class="nav-icon">📋</span> Rekap Bulanan
+  </div>
+  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();setTimeout(function(){if(_alpaOtomatisAktif!==null)updateSliderAlpa(_alpaOtomatisAktif);loadToggleAlpa();},100)">
+    <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <div class="nav-item" onclick="bukaHalamanKartu()">
     <span class="nav-icon">🪪</span> Cetak Kartu
@@ -2209,20 +2209,31 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
 
 // ── REKAP BULANAN ────────────────────────────────────────────────
 function initRekapBulanan() {
-  // Set bulan dan tahun sekarang sebagai default
   var now = new Date();
   document.getElementById('rbBulan').value = now.getMonth() + 1;
   document.getElementById('rbTahun').value = now.getFullYear();
-  // Isi dropdown kelas
-  var sel = document.getElementById('rbKelas');
-  if (sel.options.length <= 1) {
-    var kelas = [...new Set(dataSiswa.map(function(s){return s.kelas;}).filter(Boolean))].sort();
+  // Isi dropdown kelas - tunggu dataSiswa siap
+  function isiKelas() {
+    var sel = document.getElementById('rbKelas');
+    if (!sel) return;
+    // Hapus pilihan lama kecuali "Semua Kelas"
+    while (sel.options.length > 1) sel.remove(1);
+    var src = dataSiswa.length ? dataSiswa : [];
+    var kelas = [];
+    src.forEach(function(s){ if(s.kelas && kelas.indexOf(s.kelas)<0) kelas.push(s.kelas); });
+    kelas.sort();
     kelas.forEach(function(k) {
       var opt = document.createElement('option');
       opt.value = k; opt.textContent = k;
       sel.appendChild(opt);
     });
+    // Juga isi dropdown kelas di filter bar
+    var selBar = document.getElementById('rbKelas');
+    if (selBar && kelas.length === 0 && dataSiswa.length === 0) {
+      setTimeout(isiKelas, 500); // retry kalau dataSiswa belum siap
+    }
   }
+  isiKelas();
 }
 
 async function loadRekapBulanan() {
@@ -2525,12 +2536,14 @@ async function loadRekap() {
   const r = await apiGet('getRekap', {dari, sampai, kelas});
   if (!r.ok || !r.data || !r.data.length) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data</td></tr>';
+    document.getElementById('btnBarRekap').style.display = 'flex';
     return;
   }
   let data = r.data;
   if (status) data = data.filter(d => (d.status||'') === status);
   if (!data.length) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data untuk filter ini</td></tr>';
+    document.getElementById('btnBarRekap').style.display = 'flex';
     return;
   }
   tbody.innerHTML = data.map((d,i) => `
@@ -2605,6 +2618,7 @@ async function loadBulanan() {
   window._lastDari        = dari;
   window._lastSampai      = sampai;
   window._lastHariEfektif = r.hariEfektif || 0;
+  window._lastRekapData   = r.data || [];
 
   if (!data.length) {
     tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:24px;color:#9aabb8;">Tidak ada data siswa</td></tr>';
