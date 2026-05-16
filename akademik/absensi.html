@@ -354,16 +354,27 @@ tr:hover td{background:#f8fafc;}
       font-size: 10px; width: 100%; 
       border-collapse: collapse !important;
       border: 1px solid #000 !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
     }
     th, td { 
       padding: 5px 8px !important; 
       border: 1px solid #000 !important;
+      border-radius: 0 !important;
     }
     th { 
       background: #e0e0e0 !important; 
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
+    /* Override container yang menyembunyikan sudut tabel */
+    #tableBulanan, .card, [style*="border-radius"], [style*="overflow:hidden"],
+    [style*="overflow: hidden"] {
+      border-radius: 0 !important;
+      overflow: visible !important;
+    }
+    .print-header { display: block !important; }
+    #printTtdH1 { display: block !important; }
   }
   /* Halaman 2 - hanya tampil saat print */
   .print-h2 { display: none !important; }
@@ -456,7 +467,7 @@ tr:hover td{background:#f8fafc;}
   <div class="sidebar-hari" id="sidebarHari">SENIN</div>
 
   <div class="sidebar-section">Menu</div>
-  <div class="nav-item active" onclick="showPage('dashboard');refreshDashboardDanTabel()">
+  <div class="nav-item active" onclick="showPage('dashboard');refreshDashboardDanTabel();setTimeout(fokusNisn,300)">
     <span class="nav-icon">🏠</span> Dashboard
   </div>
 
@@ -469,7 +480,7 @@ tr:hover td{background:#f8fafc;}
   <div class="nav-item" onclick="showPage('bulanan')">
     <span class="nav-icon">📅</span> Laporan Bulanan
   </div>
-  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();setTimeout(loadToggleAlpa, 100)">
+  <div class="nav-item" onclick="showPage('jadwal');renderTabelJadwal();loadJadwalInputs();setTimeout(function(){if(_alpaOtomatisAktif!==null)updateSliderAlpa(_alpaOtomatisAktif);loadToggleAlpa();},100)">
     <span class="nav-icon">⏰</span> Atur Jadwal
   </div>
   <div class="nav-item" onclick="bukaHalamanKartu()">
@@ -564,10 +575,10 @@ tr:hover td{background:#f8fafc;}
 
       <!-- Input Manual NISN -->
       <div class="nisn-input">
-        <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..."
+        <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..." autofocus
           maxlength="15" style="text-align:center;letter-spacing:2px;"
           onkeypress="if(event.key==='Enter')prosesAbsen()"
-          oninput="if(this.dataset.manual)return;clearTimeout(window._nisnTimer);if(this.value.length===10){prosesAbsen();}else{window._nisnTimer=setTimeout(()=>{if(this.value.length>=8)prosesAbsen();},300);}">
+          oninput="if(window._sedangProses)return;clearTimeout(window._nisnTimer);if(this.value.length===10){window._sedangProses=true;prosesAbsen();}else{window._nisnTimer=setTimeout(()=>{if(this.value.length>=8&&!window._sedangProses){window._sedangProses=true;prosesAbsen();}},300);}">
       </div>
 
       <!-- Preview Siswa -->
@@ -585,13 +596,7 @@ tr:hover td{background:#f8fafc;}
       </button>
 
       <!-- Tombol mode manual -->
-      <div style="margin-top:10px;text-align:center;">
-        <button onclick="togglePanelManual()"
-          style="background:none;border:none;color:var(--teks-sub);font-size:12px;cursor:pointer;
-          font-family:'Plus Jakarta Sans',sans-serif;text-decoration:underline;">
-          ✏️ Input manual (Izin/Sakit/Alpa)
-        </button>
-      </div>
+      
 
       <!-- Panel manual - tersembunyi -->
       <div id="panelManual" style="display:none;margin-top:12px;background:var(--abu);border-radius:12px;padding:16px;">
@@ -678,13 +683,13 @@ tr:hover td{background:#f8fafc;}
     <div class="stat-mini bg-blmpulang" onclick="filterTabel('belumPulang')">
       <div class="sn" id="stBelumPulang">0</div><div class="sl">Belum Pulang</div><div class="sd">Detail Siswa</div>
     </div>
-    <div class="stat-mini bg-izin">
+    <div class="stat-mini bg-izin" onclick="filterTabel('Izin')" style="cursor:pointer;">
       <div class="sn" id="stIzin">0</div><div class="sl">Izin</div><div class="sd">Detail Siswa</div>
     </div>
-    <div class="stat-mini" style="background:linear-gradient(135deg,#00897b,#00695c);box-shadow:0 4px 12px rgba(0,137,123,0.3);">
+    <div class="stat-mini" onclick="filterTabel('Sakit')" style="background:linear-gradient(135deg,#00897b,#00695c);box-shadow:0 4px 12px rgba(0,137,123,0.3);cursor:pointer;">
       <div class="sn" id="stSakit">0</div><div class="sl">Sakit</div><div class="sd">Detail Siswa</div>
     </div>
-    <div class="stat-mini bg-alpa" style="grid-column:span 3;">
+    <div class="stat-mini bg-alpa" onclick="filterTabel('Alpa')" style="grid-column:span 3;cursor:pointer;">
       <div class="sn" id="stAlpa">0</div><div class="sl">Alpa</div><div class="sd">Detail Siswa</div>
     </div>
   </div>
@@ -931,6 +936,24 @@ tr:hover td{background:#f8fafc;}
     </div>
   </div>
 
+  <!-- Tanda Tangan Halaman 1 -->
+  <div class="print-header" id="printTtdH1" style="display:none;margin-top:32px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;font-size:11px;">
+      <div>
+        <p style="margin:0;">Mengetahui,</p>
+        <p style="font-weight:700;margin:4px 0;">Kepala Sekolah</p>
+        <div style="height:60px;"></div>
+        <p style="display:inline-block;min-width:180px;padding-top:4px;"><strong>Sukardiman, M.Pd.</strong></p>
+      </div>
+      <div>
+        <p style="margin:0;">Sarolangun, <span id="printTglTtd"></span></p>
+        <p style="font-weight:700;margin:4px 0;">Wali Kelas <span id="printNamaKelas"></span></p>
+        <div style="height:60px;"></div>
+        <p class="ttd-walas" style="display:inline-block;min-width:180px;padding-top:4px;">( __________________ )</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Halaman 2: Daftar Libur + Tanda Tangan -->
   <div class="print-h2" id="printHalaman2" style="page-break-before:always;">
     <!-- Header halaman 2 -->
@@ -1080,8 +1103,9 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMb
 // ══════════════════════════════════════════════════════
 
 let TOKEN = '';
+var _alpaOtomatisAktif = null;
 let MODE_ABSEN = 'masuk'; // masuk / pulang
-let MODE_SCAN = 'normal'; // normal / quick
+let MODE_SCAN = 'quick'; // normal / quick
 let dataSiswa = [];
 let dataKelas = [];
 let siswaYangDipilih = null;
@@ -1130,7 +1154,12 @@ window.addEventListener('load', async () => {
 
   // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
+  await loadToggleAlpa(); // load status toggle alpa
+  fokusNisn(); // auto fokus ke field NISN
   setInterval(refreshStatistikSaja, 30 * 1000);
+  // Restore mode scan dari localStorage
+  var savedMode = localStorage.getItem('mode_scan') || 'quick';
+  setMode(savedMode);
 });
 
 // ── JAM ────────────────────────────────────────────────
@@ -1162,10 +1191,22 @@ function fmtTgl(tgl) {
 }
 
 function fmtJam(jam) {
-  if (!jam || jam === '—') return '—';
-  // Ambil HH:mm saja, ganti : dengan .
-  var s = String(jam).trim().slice(0,5);
-  return s.replace(':', '.');
+  if (!jam || jam === '—' || jam === '') return '—';
+  var s = String(jam).trim();
+  // Handle "Sat Dec 30 1899 20:42:00 GMT+0707 (Western Indonesia Time)"
+  if (/^[A-Za-z]/.test(s) || s.indexOf('GMT') >= 0 || s.indexOf('Indonesia') >= 0) {
+    var m = s.match(/(\d{1,2}):(\d{2}):\d{2}/);
+    return m ? m[1].padStart(2,'0') + '.' + m[2] : '—';
+  }
+  // Handle ISO "1899-12-30T20:42:00.000Z"
+  if (s.indexOf('T') >= 0 && s.indexOf(':') >= 0) {
+    var m2 = s.match(/T(\d{2}):(\d{2})/);
+    if (m2) return m2[1] + '.' + m2[2];
+  }
+  // Format normal HH:mm atau HH.mm
+  var p = s.replace('.', ':').split(':');
+  if (p.length >= 2) return p[0].padStart(2,'0') + '.' + p[1].padStart(2,'0');
+  return s.slice(0,5);
 }
 
 function startClock() {
@@ -1286,8 +1327,8 @@ async function loadDashboard() {
         <tr>
           <td style="font-weight:600">${row.nama}</td>
           <td>${row.kelas}</td>
-          <td>${row.jamMasuk||'—'}</td>
-          <td>${row.jamPulang||'—'}</td>
+          <td>${fmtJam(row.jamMasuk)||'—'}</td>
+          <td>${fmtJam(row.jamPulang)||'—'}</td>
           <td><span class="badge badge-${row.status.toLowerCase().replace(' ','')}">${row.status}</span></td>
         </tr>`).join('');
     }
@@ -1340,6 +1381,7 @@ function toggleMasukPulang(mode) {
 
 function setMode(m) {
   MODE_SCAN = m;
+  localStorage.setItem('mode_scan', m);
   document.getElementById('modeNormal').classList.toggle('active', m==='normal');
   document.getElementById('modeQuick').classList.toggle('active', m==='quick');
 }
@@ -1392,25 +1434,36 @@ function stopScan() {
 }
 
 // ── PROSES ABSEN ────────────────────────────────────────
-async function prosesAbsen() {
+async async function prosesAbsen() {
   const nisn = document.getElementById('nisnInput').value.trim();
   if (!nisn) return;
 
-  // Cari data siswa dulu
-  const r = await apiGet('cariSiswa', {nisn});
-  if (!r.ok || !r.data) {
-    tampilNotif('❌', 'Siswa tidak ditemukan', `NISN: ${nisn}`, true);
-    return;
+  // Cari dari dataSiswa lokal dulu (instan, tidak fetch server)
+  const nisnBersih = nisn.replace(/\.0$/, '').replace(/^0+/, '');
+  var siswa = dataSiswa.find(function(s) {
+    var sn = String(s.nisn||'').replace(/\.0$/, '').replace(/^0+/, '');
+    return sn === nisnBersih || s.nisn === nisn;
+  });
+
+  if (!siswa) {
+    // Fallback ke server jika tidak ada di lokal
+    const r = await apiGet('cariSiswa', {nisn});
+    if (!r.ok || !r.data) {
+      tampilNotif('❌', 'Siswa tidak ditemukan', 'NISN: ' + nisn, true);
+      window._sedangProses = false;
+      return;
+    }
+    siswa = r.data;
   }
 
-  siswaYangDipilih = r.data;
+  siswaYangDipilih = siswa;
   const preview = document.getElementById('siswaPreview');
-  document.getElementById('siswaNama').textContent = r.data.nama;
-  document.getElementById('siswaKelas').textContent = `Kelas ${r.data.kelas}`;
-  document.getElementById('siswaNisn').textContent = `NISN: ${r.data.nisn}`;
+  document.getElementById('siswaNama').textContent  = siswa.nama;
+  document.getElementById('siswaKelas').textContent = 'Kelas ' + siswa.kelas;
+  document.getElementById('siswaNisn').textContent  = 'NISN: ' + siswa.nisn;
 
-  if (r.data.fotoUrl) {
-    document.getElementById('siswaFoto').innerHTML = `<img src="${r.data.fotoUrl}" alt="Foto">`;
+  if (siswa.fotoUrl) {
+    document.getElementById('siswaFoto').innerHTML = '<img src="' + siswa.fotoUrl + '" alt="Foto">';
   }
 
   preview.classList.add('show');
@@ -1429,31 +1482,24 @@ function cekSudahAbsenHariIni(nisn) {
     const nisnBersih = String(nisn||'').trim().replace(/\.0$/, '');
     const nisnNoZero = nisnBersih.replace(/^0+/, '');
     const today      = getTglHariIni();
+    const namaSiswa  = siswaYangDipilih ? siswaYangDipilih.nama : '';
 
-    // Cek 1: dari cache lokal
+    // Cek 1: dari cache - semua status (bukan hanya yang punya jamMasuk)
     const cache = ambilCacheAbsen() || [];
     const dariCache = cache.find(x => {
       const xn = String(x.nisn||'').trim().replace(/\.0$/, '').replace(/^0+/, '');
-      return (xn === nisnBersih || xn === nisnNoZero) &&
-             x.tanggal === today && x.jamMasuk;
+      return (xn === nisnBersih || xn === nisnNoZero || x.nama === namaSiswa) &&
+             x.tanggal === today;
     });
     if (dariCache) return dariCache;
 
-    // Cek 2: dari tabel yang tampil di layar (lebih reliable)
+    // Cek 2: dari tabel absensi hari ini
     const tbody = document.getElementById('tabelAbsenHariIni');
-    if (tbody) {
-      const rows = tbody.querySelectorAll('tr');
-      for (const row of rows) {
+    if (tbody && namaSiswa) {
+      for (const row of tbody.querySelectorAll('tr')) {
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 3) {
-          const namaCel = cells[0].textContent.trim();
-          // Cek apakah nama siswa sudah ada di tabel
-          if (siswaYangDipilih && namaCel === siswaYangDipilih.nama) {
-            const jamCel = cells[2].textContent.trim();
-            if (jamCel && jamCel !== '—') {
-              return { jamMasuk: jamCel };
-            }
-          }
+        if (cells.length >= 3 && cells[0].textContent.trim() === namaSiswa) {
+          return { jamMasuk: cells[2].textContent.trim() || '—' };
         }
       }
     }
@@ -1478,6 +1524,28 @@ async function konfirmasiAbsen() {
     }
   }
 
+  // ── MODE QUICK: update UI dulu, server di background ──
+  if (MODE_SCAN === 'quick') {
+    const qJam    = new Date().toTimeString().slice(0, 5);
+    const qBatas  = window._jadwalData ? window._jadwalData.jamMasukBatas : '07:30';
+    const qStatus = MODE_ABSEN === 'masuk'
+      ? (qJam <= qBatas ? 'OnTime' : 'Terlambat')
+      : 'Pulang';
+    // Simpan semua data SEBELUM reset (penting!)
+    const qNisn   = siswaYangDipilih.nisn;
+    const qAction = MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang';
+    const qToken  = TOKEN;
+    playSukses();
+    tambahKeTabeAbsenHariIni(siswaYangDipilih, {status: qStatus, jam: qJam});
+    resetInputAbsen(); // siswaYangDipilih jadi null setelah ini
+    // Kirim ke server di background dengan data yang sudah disimpan
+    setTimeout(async function() {
+      try { await apiPost({action: qAction, nisn: qNisn, token: qToken}); } catch(e) {}
+    }, 0);
+    return;
+  }
+
+  // ── MODE NORMAL: tunggu server ──
   const r = await apiPost({
     action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
     nisn: siswaYangDipilih.nisn
@@ -1600,15 +1668,16 @@ async function refreshDashboardDanTabel() {
 // Refresh hanya angka statistik, tidak timpa tabel absensi
 async function refreshStatistikSaja() {
   try {
-    const today = getTglHariIni(); // pakai fungsi yang sama
+    const today = getTglHariIni();
     const [rDash, rAbsen] = await Promise.all([
       apiGet('getDashboard'),
       apiGet('getAbsensiHari', {tanggal: today})
     ]);
     if (!rDash.ok) return;
     _updateDashboardUI(rDash.data);
+    // Hanya update cache, TIDAK timpa tabel
+    // (tabel bisa berisi data quick yang belum confirmed server)
     if (rAbsen.ok && rAbsen.data) {
-      renderTabelAbsenHariIni(rAbsen.data);
       simpanCacheAbsen(rAbsen.data);
     }
   } catch(e) {}
@@ -1663,6 +1732,13 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   } catch(e) {}
 }
 
+function fokusNisn() {
+  setTimeout(function() {
+    var el = document.getElementById('nisnInput');
+    if (el) el.focus();
+  }, 100);
+}
+
 function resetInputAbsen() {
   document.getElementById('nisnInput').value = '';
   document.getElementById('cariNama').value = '';
@@ -1670,6 +1746,9 @@ function resetInputAbsen() {
   document.getElementById('siswaPreview').classList.remove('show');
   document.getElementById('btnAbsen').disabled = true;
   siswaYangDipilih = null;
+  fokusNisn();  // Delay reset flag agar sisa karakter barcode reader diabaikan
+  setTimeout(function() { window._sedangProses = false; }, 500);
+  fokusNisn();
 }
 
 
@@ -1785,11 +1864,9 @@ function pilihSiswaDariCari(nisn, nama, kelas) {
   document.getElementById('cariHasil').classList.remove('show');
   document.getElementById('cariNama').value = nama;
 
-  // Isi NISN - tandai manual agar oninput tidak trigger
-  var _ne = document.getElementById('nisnInput');
-  _ne.dataset.manual = '1';
-  _ne.value = nisn;
-  setTimeout(function(){ delete _ne.dataset.manual; }, 300);
+  // Isi NISN - set flag dulu agar oninput tidak trigger prosesAbsen
+  window._sedangProses = true;
+  document.getElementById('nisnInput').value = nisn;
 
   // Tampilkan preview
   const s = dataSiswa.find(x => x.nisn === nisn) || {nisn, nama, kelas};
@@ -1837,63 +1914,129 @@ function bukаModalDetail(status) {
   const judul = document.getElementById('modalDetailJudul');
 
   const labelMap = {
-    OnTime:      {label:'✅ Hadir On-Time',       color:'var(--hijau)'},
-    Terlambat:   {label:'⏰ Terlambat',            color:'#e65100'},
-    belumMasuk:  {label:'⏳ Belum Masuk',          color:'#f57f17'},
-    belumPulang: {label:'🏠 Belum Pulang',         color:'#7d3c98'},
-    Izin:        {label:'📝 Izin',                 color:'#1565c0'},
-    Sakit:       {label:'🤒 Sakit',                color:'#c62828'},
-    Alpa:        {label:'❌ Alpa',                  color:'var(--merah)'},
+    OnTime:      {label:'\u2705 Hadir On-Time',  color:'var(--hijau)'},
+    Terlambat:   {label:'\u23f0 Terlambat',       color:'#e65100'},
+    belumMasuk:  {label:'\u23f3 Belum Masuk',     color:'#f57f17'},
+    belumPulang: {label:'\U0001f3e0 Belum Pulang',color:'#7d3c98'},
+    Izin:        {label:'\U0001f4dd Izin',         color:'#1565c0'},
+    Sakit:       {label:'\U0001f912 Sakit',        color:'#c62828'},
+    Alpa:        {label:'\u274c Alpa',             color:'var(--merah)'},
   };
 
   const info = labelMap[status] || {label: status, color:'var(--teks)'};
   judul.textContent = info.label;
   judul.style.color = info.color;
-
-  // Ambil data dari sheet
-  isi.innerHTML = '<div style="text-align:center;padding:32px;color:var(--teks-sub);"><div style="width:28px;height:28px;border:3px solid #f0f4f8;border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;"></div>Memuat...</div>';
   modal.classList.add('open');
 
-  const today = new Date().toISOString().split('T')[0];
+  // Baca langsung dari tabel DOM - instan, tidak fetch server
+  const tbody = document.getElementById('tabelAbsenHariIni');
+  const rows  = tbody ? Array.from(tbody.querySelectorAll('tr')) : [];
 
-  apiGet('getAbsensiHari', {tanggal: today}).then(r => {
-    if (!r.ok) { isi.innerHTML = '<p style="text-align:center;color:var(--teks-sub);padding:24px;">Gagal memuat data</p>'; return; }
+  const dataDOM = rows.map(function(row) {
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 5) return null;
+    return {
+      nama:      cells[0].textContent.trim(),
+      kelas:     cells[1].textContent.trim(),
+      jamMasuk:  cells[2].textContent.trim(),
+      jamPulang: cells[3].textContent.trim(),
+      status:    cells[4].textContent.trim()
+    };
+  }).filter(Boolean);
 
-    let siswaList = [];
+  var siswaList = [];
 
-    if (status === 'belumMasuk') {
-      const sudahAbsen = new Set(r.data.map(d => d.nisn).filter(Boolean));
-      const sudahAbsenNama = new Set(r.data.map(d => d.nama));
-      siswaList = dataSiswa.filter(s => 
-        !sudahAbsen.has(s.nisn) && !sudahAbsenNama.has(s.nama)
-      ).map(s => ({nama:s.nama, kelas:s.kelas, info:'Belum absen'}));
-    } else if (status === 'belumPulang') {
-      siswaList = r.data.filter(d => 
-        ['OnTime','Terlambat'].includes(d.status) && !d.jamPulang
-      ).map(d => ({nama:d.nama, kelas:d.kelas, info:'Masuk '+d.jamMasuk}));
-    } else {
-      siswaList = r.data.filter(d => d.status === status)
-        .map(d => ({
-          nama:d.nama, kelas:d.kelas,
-          info: d.jamMasuk ? 'Masuk '+fmtJam(d.jamMasuk) : (d.jamPulang ? 'Pulang '+fmtJam(d.jamPulang) : d.ket||'')
-        }));
-    }
+  if (status === 'belumMasuk') {
+    const sudahNama = new Set(dataDOM.map(function(d){ return d.nama; }));
+    siswaList = dataSiswa
+      .filter(function(s){ return !sudahNama.has(s.nama); })
+      .map(function(s){ return {nisn: s.nisn, nama: s.nama, kelas: s.kelas, info: 'Belum absen'}; });
 
-    if (!siswaList.length) {
-      isi.innerHTML = `<p style="text-align:center;color:var(--teks-sub);padding:32px;">Tidak ada siswa</p>`;
-      return;
-    }
+  } else if (status === 'belumPulang') {
+    siswaList = dataDOM
+      .filter(function(d){ return ['OnTime','Terlambat'].includes(d.status) && (!d.jamPulang || d.jamPulang === '\u2014'); })
+      .map(function(d){ return {nama: d.nama, kelas: d.kelas, info: 'Masuk ' + d.jamMasuk}; });
 
-    isi.innerHTML = `
-      <p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">${siswaList.length} siswa</p>
-      ${siswaList.map((s,i) => `
-        <div class="modal-detail-item">
-          <div class="modal-detail-no">${i+1}</div>
-          <div class="modal-detail-nama">${s.nama}</div>
-          <div class="modal-detail-kelas">${s.kelas}</div>
-          <div class="modal-detail-jam">${s.info}</div>
-        </div>`).join('')}`;
+  } else {
+    siswaList = dataDOM
+      .filter(function(d){ return d.status === status; })
+      .map(function(d){ return {nama: d.nama, kelas: d.kelas, info: d.jamMasuk && d.jamMasuk !== '\u2014' ? 'Masuk ' + d.jamMasuk : ''}; });
+  }
+
+  if (!siswaList.length) {
+    isi.innerHTML = '<p style="text-align:center;color:var(--teks-sub);padding:32px;">Tidak ada siswa</p>';
+    return;
+  }
+
+  if (status === 'belumMasuk') {
+    var html3 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk \u2014 klik nama untuk input</p>';
+    siswaList.forEach(function(s, i) {
+      var nn = s.nama.replace(/"/g, '&quot;');
+      var nisnVal = (s.nisn && s.nisn !== 'undefined') ? s.nisn : '';
+      var row = '<div class="modal-detail-item" id="mdrow'+i+'" style="flex-direction:column;align-items:flex-start;">';
+      row += '<div style="display:flex;align-items:center;gap:8px;width:100%;cursor:pointer;" onclick="toggleMdForm('+i+')">';
+      row += '<div class="modal-detail-no">'+(i+1)+'</div>';
+      row += '<div class="modal-detail-nama" style="flex:1;">'+s.nama+'</div>';
+      row += '<div class="modal-detail-kelas">'+s.kelas+'</div></div>';
+      row += '<div id="mdform'+i+'" style="display:none;padding:8px 0 4px 36px;gap:8px;flex-wrap:wrap;">';
+      row += '<button onclick="pilihMdStatus('+i+',\'Izin\')" id="mdbtn'+i+'Izin" style="padding:5px 12px;border:2px solid #1565c0;border-radius:8px;color:#1565c0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Izin</button>';
+      row += '<button onclick="pilihMdStatus('+i+',\'Sakit\')" id="mdbtn'+i+'Sakit" style="padding:5px 12px;border:2px solid #c62828;border-radius:8px;color:#c62828;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Sakit</button>';
+      row += '<button onclick="pilihMdStatus('+i+',\'Alpa\')" id="mdbtn'+i+'Alpa" style="padding:5px 12px;border:2px solid #e53935;border-radius:8px;color:#e53935;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Alpa</button>';
+      row += '<button onclick="simpanMdStatus('+i+',\"'+nisnVal+'\",\"'+nn+'\",\"'+s.kelas+'\")" id="mdsave'+i+'" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Simpan</button>';
+      row += '</div></div>';
+      html3 += row;
+    });
+    isi.innerHTML = html3;
+  } else {
+    var html4 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">'+siswaList.length+' siswa</p>';
+    siswaList.forEach(function(s, i) {
+      html4 += '<div class="modal-detail-item"><div class="modal-detail-no">'+(i+1)+'</div><div class="modal-detail-nama">'+s.nama+'</div><div class="modal-detail-kelas">'+s.kelas+'</div><div class="modal-detail-jam">'+s.info+'</div></div>';
+    });
+    isi.innerHTML = html4;
+  }
+}
+
+var _mdStatus = {};
+function toggleMdForm(i) {
+  var f = document.getElementById('mdform' + i);
+  if (!f) return;
+  var op = f.style.display === 'none';
+  document.querySelectorAll('[id^="mdform"]').forEach(function(x) { x.style.display = 'none'; });
+  f.style.display = op ? 'flex' : 'none';
+}
+function pilihMdStatus(i, st) {
+  _mdStatus[i] = st;
+  ['Izin','Sakit','Alpa'].forEach(function(s) {
+    var b = document.getElementById('mdbtn' + i + s); if (!b) return;
+    var col = s==='Izin'?'#1565c0':s==='Sakit'?'#c62828':'#e53935';
+    b.style.background = s===st ? col : '#fff';
+    b.style.color = s===st ? '#fff' : col;
   });
+  var sv = document.getElementById('mdsave' + i);
+  if (sv) sv.style.display = 'inline-block';
+}
+async function simpanMdStatus(i, nisn, nama, kelas) {
+  var st = _mdStatus[i]; if (!st) return;
+  var sv = document.getElementById('mdsave' + i);
+  if (sv) { sv.disabled = true; sv.textContent = '...'; }
+  // Pastikan NISN valid - cari dari dataSiswa jika kosong/undefined
+  var nisnFinal = (nisn && nisn !== 'undefined') ? nisn : '';
+  if (!nisnFinal && nama) {
+    var found = dataSiswa.find(function(s) { return s.nama === nama; });
+    if (found) nisnFinal = found.nisn || '';
+  }
+  var r = await apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:getTglHariIni()});
+  if (r.ok) {
+    playSukses();
+    var row = document.getElementById('mdrow' + i);
+    if (row) { row.style.opacity='0'; row.style.transition='all 0.3s'; setTimeout(function(){row.remove();}, 300); }
+    var el = document.getElementById('mdCountBM');
+    if (el) { var n = parseInt(el.textContent) - 1; el.textContent = n + ' siswa belum masuk — klik nama untuk input'; }
+    var elBM = document.getElementById('stBelumMasuk'); if (elBM) elBM.textContent = Math.max(0, parseInt(elBM.textContent||0) - 1);
+    var elSt = document.getElementById(st==='Izin'?'stIzin':st==='Sakit'?'stSakit':'stAlpa'); if (elSt) elSt.textContent = parseInt(elSt.textContent||0) + 1;
+  } else {
+    playGagal(); if (sv) { sv.disabled=false; sv.textContent='Simpan'; } alert(r.error||'Gagal');
+  }
 }
 
 function tutupModalDetail() {
@@ -2200,12 +2343,14 @@ async function loadBulanan() {
   }).join('');
 
   const info = `${bulanNama[parseInt(bulan)]} ${tahun}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa | ${hariEfektif} hari efektif`;
-  document.getElementById('infoBulanan').textContent      = info;
-  document.getElementById('printBulananInfo').textContent = info;
-  document.getElementById('printInfoBulanan').textContent = info;
-  document.getElementById('printTglTtd').textContent      = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('printNamaKelas').textContent   = kelas || 'Semua Kelas';
-  document.getElementById('btnBarBulanan').style.display  = 'flex';
+  var _si = function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  _si('infoBulanan', info);
+  _si('printBulananInfo', info);
+  _si('printInfoBulanan', info);
+  _si('printTglTtd', new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}));
+  _si('printNamaKelas', kelas || 'Semua Kelas');
+  var elBar = document.getElementById('btnBarBulanan');
+  if (elBar) elBar.style.display = 'flex';
 }
 
 
@@ -2262,12 +2407,14 @@ async function loadBulananCustom() {
   const fD = new Date(dari).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
   const fS = new Date(sampai).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
   const info = `${fD} s.d. ${fS}${kelas?' | Kelas '+kelas:' | Semua Kelas'} | ${data.length} siswa`;
-  document.getElementById('infoBulanan').textContent      = info;
-  document.getElementById('printBulananInfo').textContent = info;
-  document.getElementById('printInfoBulanan').textContent = info;
-  document.getElementById('printTglTtd').textContent      = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('printNamaKelas').textContent   = kelas || 'Semua Kelas';
-  document.getElementById('btnBarBulanan').style.display  = 'flex';
+  var _si2 = function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  _si2('infoBulanan', info);
+  _si2('printBulananInfo', info);
+  _si2('printInfoBulanan', info);
+  _si2('printTglTtd', new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}));
+  _si2('printNamaKelas', kelas || 'Semua Kelas');
+  var elBar2 = document.getElementById('btnBarBulanan');
+  if (elBar2) elBar2.style.display = 'flex';
 }
 
 async function cetakBulanan() {
@@ -2328,6 +2475,13 @@ async function cetakBulanan() {
     }
   }
 
+  // Isi tanda tangan halaman 1
+  const tglCetak = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  const elTtd1 = document.getElementById('printTglTtd');
+  if (elTtd1) elTtd1.textContent = tglCetak;
+  const elKls1 = document.getElementById('printNamaKelas');
+  if (elKls1) elKls1.textContent = kelas || 'Semua Kelas';
+
   window.print();
 }
 
@@ -2346,17 +2500,14 @@ let jadwalPerHari = {
 
 // ── TOGGLE ALPA OTOMATIS ─────────────────────────────────────────
 async function loadToggleAlpa() {
-  try {
-    const r = await apiGet('getAlpaOtomatis');
-    if (r.ok) {
-      const aktif = r.aktif !== false;
-      const chk = document.getElementById('toggleAlpaOtomatis');
-      if (chk) {
-        chk.checked = aktif;
-        updateSliderAlpa(aktif);
-      }
-    }
-  } catch(e) {}
+  // Baca dari localStorage - tidak perlu fetch server setiap load
+  var lokal = localStorage.getItem('alpa_otomatis');
+  // Default ON jika belum pernah diset
+  var aktif = lokal === null ? true : lokal === 'true';
+  _alpaOtomatisAktif = aktif;
+  // Apply ke slider dengan delay untuk pastikan DOM sudah ready
+  setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 50);
+  setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 300);
 }
 
 function updateSliderAlpa(aktif) {
@@ -2369,21 +2520,25 @@ function updateSliderAlpa(aktif) {
 }
 
 async function simpanToggleAlpa(aktif) {
+  // Simpan ke localStorage dan variabel global (instan)
+  _alpaOtomatisAktif = aktif;
+  localStorage.setItem('alpa_otomatis', aktif ? 'true' : 'false');
   updateSliderAlpa(aktif);
+  // Kirim ke server di background
   const msg = document.getElementById('msgToggleAlpa');
   try {
     const r = await apiPost({action: 'setAlpaOtomatis', aktif: aktif ? 'true' : 'false'});
     if (msg) {
-      msg.textContent = r.ok 
+      msg.textContent = r.ok
         ? (aktif ? '✅ Alpa otomatis diaktifkan' : '⭕ Alpa otomatis dimatikan')
-        : '❌ Gagal menyimpan';
-      msg.style.display   = 'block';
+        : '❌ Gagal simpan ke server';
+      msg.style.display = 'block';
       msg.style.background = r.ok ? (aktif ? '#e8f6ef' : '#fff3e0') : '#fdecea';
-      msg.style.color      = r.ok ? (aktif ? '#1a7a4a' : '#e65100') : '#c0392b';
-      setTimeout(() => msg.style.display = 'none', 3000);
+      msg.style.color = r.ok ? (aktif ? '#1a7a4a' : '#e65100') : '#c0392b';
+      setTimeout(function() { msg.style.display = 'none'; }, 3000);
     }
   } catch(e) {
-    if (msg) { msg.textContent = '❌ Error: ' + e.message; msg.style.display = 'block'; }
+    if (msg) { msg.textContent = '⚠️ Tersimpan lokal'; msg.style.display = 'block'; setTimeout(function(){msg.style.display='none';},2000); }
   }
 }
 
