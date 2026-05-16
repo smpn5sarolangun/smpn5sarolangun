@@ -338,8 +338,12 @@ tr:hover td{background:#f8fafc;}
   /* ── PRINT F4 ── */
   @media print {
     @page {
-      size: 215mm 330mm; /* F4 */
+      size: 215mm 330mm; /* F4 portrait default */
       margin: 10mm 12mm;
+    }
+    @page landscape {
+      size: 330mm 215mm landscape;
+      margin: 8mm 10mm;
     }
     body { background: #fff !important; font-size: 11px; }
     .topbar, .sidebar, .notif-absen, .no-print { display: none !important; }
@@ -449,6 +453,14 @@ tr:hover td{background:#f8fafc;}
 
 
   /* Rekap Bulanan - landscape print */
+  @media print {
+    .rb-landscape-area {
+      page: landscape;
+    }
+    body.print-rb {
+      size: landscape;
+    }
+  }
   @media print {
     #page-rekapBulanan .print-header { display: block !important; }
   }
@@ -847,7 +859,7 @@ tr:hover td{background:#f8fafc;}
   </div>
 
   <!-- Area cetak -->
-  <div id="printAreaRB">
+  <div id="printAreaRB" class="rb-landscape-area">
     <!-- Header cetak -->
     <div class="print-header" style="text-align:center;margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px;">
       <div style="font-size:15px;font-weight:800;">REKAP KEHADIRAN SISWA</div>
@@ -1258,6 +1270,8 @@ window.addEventListener('load', async () => {
   // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   fokusNisn();
+  // Pre-isi kelas untuk Rekap Bulanan setelah dataSiswa terisi
+  initRekapBulananKelas();
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
   await loadToggleAlpa(); // load status toggle alpa
@@ -2208,10 +2222,25 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
 
 
 // ── REKAP BULANAN ────────────────────────────────────────────────
+
+function initRekapBulananKelas() {
+  var sel = document.getElementById('rbKelas');
+  if (!sel) return;
+  while (sel.options.length > 1) sel.remove(1);
+  var kelas = [];
+  dataSiswa.forEach(function(s){ if(s.kelas && kelas.indexOf(s.kelas)<0) kelas.push(s.kelas); });
+  kelas.sort().forEach(function(k) {
+    var opt = document.createElement('option');
+    opt.value = k; opt.textContent = k;
+    sel.appendChild(opt);
+  });
+}
+
 function initRekapBulanan() {
   var now = new Date();
   document.getElementById('rbBulan').value = now.getMonth() + 1;
   document.getElementById('rbTahun').value = now.getFullYear();
+  initRekapBulananKelas();
   // Isi dropdown kelas - tunggu dataSiswa siap
   function isiKelas() {
     var sel = document.getElementById('rbKelas');
@@ -2335,7 +2364,14 @@ async function loadRekapBulanan() {
   window._rbKelas = kelas;
 }
 
+
+async function cetakRekap() {
+  window.print();
+}
+
 async function cetakRekapBulanan() {
+  document.body.classList.add('print-rb');
+  setTimeout(function() { document.body.classList.remove('print-rb'); }, 2000);
   var kelas = window._rbKelas || '';
   try {
     var r = await apiGet('getWalas');
@@ -2842,6 +2878,12 @@ async function cetakBulanan() {
   if (elTtd1) elTtd1.textContent = tglCetak;
   const elKls1 = document.getElementById('printNamaKelas');
   if (elKls1) elKls1.textContent = kelas || 'Semua Kelas';
+
+  // Render tabel dengan break per kelas jika semua kelas
+  if (!kelas && window._lastRekapData && window._lastRekapData.length) {
+    var tblEl = document.getElementById('tabelBulanan');
+    if (tblEl) tblEl.innerHTML = renderTabelBulananDenganBreak(window._lastRekapData, window._lastHariEfektif||0);
+  }
 
   window.print();
 }
