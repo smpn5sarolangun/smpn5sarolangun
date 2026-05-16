@@ -1977,7 +1977,8 @@ function bukаModalDetail(status) {
   }
 
   if (status === 'belumMasuk') {
-    var html3 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk \u2014 klik nama untuk input</p>';
+    var html3 = '<input type="text" id="mdSearch" placeholder="🔍 Cari nama..." oninput="filterMdList(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;margin-bottom:10px;box-sizing:border-box;outline:none;">';
+    html3 += '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk \u2014 klik nama untuk input</p>';
     siswaList.forEach(function(s, i) {
       var nn = s.nama.replace(/"/g, '&quot;');
       var nisnVal = (s.nisn && s.nisn !== 'undefined') ? s.nisn : '';
@@ -2005,6 +2006,22 @@ function bukаModalDetail(status) {
 }
 
 var _mdStatus = {};
+
+function filterMdList(q) {
+  var query = q.toLowerCase().trim();
+  var rows = document.querySelectorAll('[id^="mdrow"]');
+  var visible = 0;
+  rows.forEach(function(row) {
+    var nama = row.querySelector('.modal-detail-nama');
+    if (!nama) return;
+    var match = !query || nama.textContent.toLowerCase().includes(query);
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  var el = document.getElementById('mdCountBM');
+  if (el) el.textContent = visible + ' siswa belum masuk — klik nama untuk input';
+}
+
 function toggleMdForm(i) {
   var f = document.getElementById('mdform' + i);
   if (!f) return;
