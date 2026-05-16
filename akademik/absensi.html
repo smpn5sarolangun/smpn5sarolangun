@@ -467,7 +467,7 @@ tr:hover td{background:#f8fafc;}
   <div class="sidebar-hari" id="sidebarHari">SENIN</div>
 
   <div class="sidebar-section">Menu</div>
-  <div class="nav-item active" onclick="showPage('dashboard');refreshDashboardDanTabel();setTimeout(fokusNisn,300)">
+  <div class="nav-item active" onclick="showPage('dashboard');refreshDashboardDanTabel()">
     <span class="nav-icon">🏠</span> Dashboard
   </div>
 
@@ -575,10 +575,10 @@ tr:hover td{background:#f8fafc;}
 
       <!-- Input Manual NISN -->
       <div class="nisn-input">
-        <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..." autofocus
+        <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..."
           maxlength="15" style="text-align:center;letter-spacing:2px;"
           onkeypress="if(event.key==='Enter')prosesAbsen()"
-          oninput="if(window._sedangProses)return;clearTimeout(window._nisnTimer);if(this.value.length===10){window._sedangProses=true;prosesAbsen();}else{window._nisnTimer=setTimeout(()=>{if(this.value.length>=8&&!window._sedangProses){window._sedangProses=true;prosesAbsen();}},300);}">
+          oninput="if(this.value.length>=8)clearTimeout(window._nisnTimer);window._nisnTimer=setTimeout(()=>{if(this.value.length>=8)prosesAbsen();},600)">
       </div>
 
       <!-- Preview Siswa -->
@@ -1155,7 +1155,6 @@ window.addEventListener('load', async () => {
   // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   await loadToggleAlpa(); // load status toggle alpa
-  fokusNisn(); // auto fokus ke field NISN
   setInterval(refreshStatistikSaja, 30 * 1000);
   // Restore mode scan dari localStorage
   var savedMode = localStorage.getItem('mode_scan') || 'quick';
@@ -1434,36 +1433,25 @@ function stopScan() {
 }
 
 // ── PROSES ABSEN ────────────────────────────────────────
-async async function prosesAbsen() {
+async function prosesAbsen() {
   const nisn = document.getElementById('nisnInput').value.trim();
   if (!nisn) return;
 
-  // Cari dari dataSiswa lokal dulu (instan, tidak fetch server)
-  const nisnBersih = nisn.replace(/\.0$/, '').replace(/^0+/, '');
-  var siswa = dataSiswa.find(function(s) {
-    var sn = String(s.nisn||'').replace(/\.0$/, '').replace(/^0+/, '');
-    return sn === nisnBersih || s.nisn === nisn;
-  });
-
-  if (!siswa) {
-    // Fallback ke server jika tidak ada di lokal
-    const r = await apiGet('cariSiswa', {nisn});
-    if (!r.ok || !r.data) {
-      tampilNotif('❌', 'Siswa tidak ditemukan', 'NISN: ' + nisn, true);
-      window._sedangProses = false;
-      return;
-    }
-    siswa = r.data;
+  // Cari data siswa dulu
+  const r = await apiGet('cariSiswa', {nisn});
+  if (!r.ok || !r.data) {
+    tampilNotif('❌', 'Siswa tidak ditemukan', `NISN: ${nisn}`, true);
+    return;
   }
 
-  siswaYangDipilih = siswa;
+  siswaYangDipilih = r.data;
   const preview = document.getElementById('siswaPreview');
-  document.getElementById('siswaNama').textContent  = siswa.nama;
-  document.getElementById('siswaKelas').textContent = 'Kelas ' + siswa.kelas;
-  document.getElementById('siswaNisn').textContent  = 'NISN: ' + siswa.nisn;
+  document.getElementById('siswaNama').textContent = r.data.nama;
+  document.getElementById('siswaKelas').textContent = `Kelas ${r.data.kelas}`;
+  document.getElementById('siswaNisn').textContent = `NISN: ${r.data.nisn}`;
 
-  if (siswa.fotoUrl) {
-    document.getElementById('siswaFoto').innerHTML = '<img src="' + siswa.fotoUrl + '" alt="Foto">';
+  if (r.data.fotoUrl) {
+    document.getElementById('siswaFoto').innerHTML = `<img src="${r.data.fotoUrl}" alt="Foto">`;
   }
 
   preview.classList.add('show');
@@ -1732,13 +1720,6 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   } catch(e) {}
 }
 
-function fokusNisn() {
-  setTimeout(function() {
-    var el = document.getElementById('nisnInput');
-    if (el) el.focus();
-  }, 100);
-}
-
 function resetInputAbsen() {
   document.getElementById('nisnInput').value = '';
   document.getElementById('cariNama').value = '';
@@ -1746,9 +1727,6 @@ function resetInputAbsen() {
   document.getElementById('siswaPreview').classList.remove('show');
   document.getElementById('btnAbsen').disabled = true;
   siswaYangDipilih = null;
-  fokusNisn();  // Delay reset flag agar sisa karakter barcode reader diabaikan
-  setTimeout(function() { window._sedangProses = false; }, 500);
-  fokusNisn();
 }
 
 
@@ -1864,8 +1842,7 @@ function pilihSiswaDariCari(nisn, nama, kelas) {
   document.getElementById('cariHasil').classList.remove('show');
   document.getElementById('cariNama').value = nama;
 
-  // Isi NISN - set flag dulu agar oninput tidak trigger prosesAbsen
-  window._sedangProses = true;
+  // Isi NISN dan proses
   document.getElementById('nisnInput').value = nisn;
 
   // Tampilkan preview
