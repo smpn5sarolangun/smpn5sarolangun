@@ -1032,7 +1032,7 @@ tr:hover td{background:#f8fafc;}
   <div class="print-info" id="printInfoBulanan"></div>
 
   <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.06);overflow:hidden;">
-    <div style="overflow-x:auto;">
+    <div id="containerBulanan" style="overflow-x:auto;">
       <table id="tableBulanan">
         <thead><tr>
           <th>No</th><th>Nama Siswa</th><th>Kelas</th><th>Hari Efektif</th>
@@ -2927,8 +2927,8 @@ async function cetakBulanan() {
 
   // Render tabel dengan break per kelas jika semua kelas
   if (!kelas && window._lastRekapData && window._lastRekapData.length) {
-    var tblEl = document.getElementById('tabelBulanan');
-    if (tblEl) tblEl.innerHTML = renderTabelBulananDenganBreak(window._lastRekapData, window._lastHariEfektif||0);
+    var container = document.getElementById('containerBulanan');
+    if (container) container.innerHTML = renderTabelBulananDenganBreak(window._lastRekapData, window._lastHariEfektif||0);
   }
 
   window.print();
