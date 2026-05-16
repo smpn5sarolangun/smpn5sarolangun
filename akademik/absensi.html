@@ -469,12 +469,12 @@ tr:hover td{background:#f8fafc;}
   .rb-table th { background:#d0d0d0; font-weight:700; }
   .rb-table td.nama-col { text-align:left; min-width:120px; }
   .rb-table td.libur { background:#d0d0d0 !important; }
-  .rb-table td.minggu { background:#e8e8e8 !important; }
+  .rb-table td.minggu { background:#b3d9f7 !important; }
   @media print {
     .rb-table th, .rb-table td { border:1px solid #000 !important; background:#fff !important; color:#000 !important; }
     .rb-table th { background:#d0d0d0 !important; }
     .rb-table td.libur { background:#d0d0d0 !important; }
-    .rb-table td.minggu { background:#e8e8e8 !important; }
+    .rb-table td.minggu { background:#b3d9f7 !important; }
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -2791,8 +2791,7 @@ async function loadBulananCustom() {
 }
 
 
-function renderTabelBulananDenganBreak(data, hariEfektif) {
-  // Group by kelas
+function renderTabelBulananDenganBreak(data, hariEfektif, walasData) {
   var kelasList = [];
   var grouped = {};
   data.forEach(function(d) {
@@ -2801,13 +2800,27 @@ function renderTabelBulananDenganBreak(data, hariEfektif) {
   });
   kelasList.sort();
 
+  var tglCetak = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
   var html = '';
+
   kelasList.forEach(function(kelas, ki) {
     var siswaKelas = grouped[kelas];
-    html += (ki > 0 ? '<div class="print-kelas-break"></div>' : '');
-    html += '<div class="print-kelas-header">Kelas ' + kelas + '</div>';
+    var walas = walasData ? (walasData.find(function(w){return w.kelas===kelas;})||{}) : {};
+    var namaWalas = walas.nama || '____________________';
+
+    if (ki > 0) html += '<div class="print-kelas-break"></div>';
+
+    // Header sekolah per kelas
+    html += '<div style="text-align:center;margin-bottom:8px;border-bottom:2px solid #000;padding-bottom:6px;">';
+    html += '<div style="font-size:13px;font-weight:800;">LAPORAN BULANAN KEHADIRAN SISWA</div>';
+    html += '<div style="font-size:11px;">SMP Negeri 05 Sarolangun</div>';
+    html += '<div style="font-size:11px;">Kelas ' + kelas + ' &nbsp;|&nbsp; <span id="printInfoKls' + ki + '"></span></div>';
+    html += '</div>';
+
+    // Tabel data
     html += '<table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:8px;">';
-    html += '<thead><tr><th style="border:1px solid #000;padding:4px;text-align:center;">No</th>';
+    html += '<thead><tr>';
+    html += '<th style="border:1px solid #000;padding:4px;text-align:center;">No</th>';
     html += '<th style="border:1px solid #000;padding:4px;">Nama Siswa</th>';
     html += '<th style="border:1px solid #000;padding:4px;text-align:center;">Hari Efektif</th>';
     html += '<th style="border:1px solid #000;padding:4px;text-align:center;">Hadir Tepat</th>';
@@ -2816,13 +2829,16 @@ function renderTabelBulananDenganBreak(data, hariEfektif) {
     html += '<th style="border:1px solid #000;padding:4px;text-align:center;">Sakit</th>';
     html += '<th style="border:1px solid #000;padding:4px;text-align:center;">Alpa</th>';
     html += '<th style="border:1px solid #000;padding:4px;text-align:center;">Total Hadir</th>';
-    html += '<th style="border:1px solid #000;padding:4px;text-align:center;">%</th></tr></thead><tbody>';
+    html += '<th style="border:1px solid #000;padding:4px;text-align:center;">%</th>';
+    html += '</tr></thead><tbody>';
+
     siswaKelas.forEach(function(d, i) {
       var ot=parseInt(d.onTime||0)||0, tl=parseInt(d.terlambat||0)||0;
       var iz=parseInt(d.izin||0)||0, sk=parseInt(d.sakit||0)||0, al=parseInt(d.alpa||0)||0;
       var hd=ot+tl, he=parseInt(d.hariEfektif||hariEfektif||0)||0;
       var pct=he?Math.round(hd/he*100):0;
-      html += '<tr><td style="border:1px solid #000;padding:4px;text-align:center;">'+(i+1)+'</td>';
+      html += '<tr>';
+      html += '<td style="border:1px solid #000;padding:4px;text-align:center;">'+(i+1)+'</td>';
       html += '<td style="border:1px solid #000;padding:4px;">'+(d.nama||'-')+'</td>';
       html += '<td style="border:1px solid #000;padding:4px;text-align:center;">'+he+'</td>';
       html += '<td style="border:1px solid #000;padding:4px;text-align:center;">'+ot+'</td>';
@@ -2831,9 +2847,19 @@ function renderTabelBulananDenganBreak(data, hariEfektif) {
       html += '<td style="border:1px solid #000;padding:4px;text-align:center;">'+sk+'</td>';
       html += '<td style="border:1px solid #000;padding:4px;text-align:center;">'+al+'</td>';
       html += '<td style="border:1px solid #000;padding:4px;text-align:center;">'+hd+'</td>';
-      html += '<td style="border:1px solid #000;padding:4px;text-align:center;color:'+(pct>=75?'green':'red')+';">'+pct+'%</td></tr>';
+      html += '<td style="border:1px solid #000;padding:4px;text-align:center;color:'+(pct>=75?'green':'red')+';">'+pct+'%</td>';
+      html += '</tr>';
     });
     html += '</tbody></table>';
+
+    // Tanda tangan per kelas
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;font-size:10px;margin-top:24px;">';
+    html += '<div><p style="margin:0;">Mengetahui,</p><p style="font-weight:700;margin:4px 0;">Kepala Sekolah</p>';
+    html += '<div style="height:50px;"></div><p><strong>Sukardiman, M.Pd.</strong></p></div>';
+    html += '<div><p style="margin:0;">Sarolangun, ' + tglCetak + '</p>';
+    html += '<p style="font-weight:700;margin:4px 0;">Wali Kelas ' + kelas + '</p>';
+    html += '<div style="height:50px;"></div><p>' + namaWalas + '</p></div>';
+    html += '</div>';
   });
   return html;
 }
@@ -2903,10 +2929,20 @@ async function cetakBulanan() {
   const elKls1 = document.getElementById('printNamaKelas');
   if (elKls1) elKls1.textContent = kelas || 'Semua Kelas';
 
-  // Render tabel dengan break per kelas jika semua kelas
-  if (!kelas && window._lastRekapData && window._lastRekapData.length) {
+  // Render tabel dengan break per kelas
+  if (window._lastRekapData && window._lastRekapData.length) {
     var container = document.getElementById('containerBulanan');
-    if (container) container.innerHTML = renderTabelBulananDenganBreak(window._lastRekapData, window._lastHariEfektif||0);
+    if (container) {
+      var walasData = [];
+      try { var rw = await apiGet('getWalas'); if(rw.ok) walasData = rw.data||[]; } catch(e) {}
+      // Isi info per kelas
+      var infoTeks = (window._lastDari||'') + (window._lastSampai?' s.d. '+window._lastSampai:'');
+      container.innerHTML = renderTabelBulananDenganBreak(window._lastRekapData, window._lastHariEfektif||0, walasData);
+      // Isi span info per kelas
+      container.querySelectorAll('[id^="printInfoKls"]').forEach(function(el) {
+        el.textContent = infoTeks;
+      });
+    }
   }
 
   window.print();
