@@ -576,9 +576,10 @@ tr:hover td{background:#f8fafc;}
       <!-- Input Manual NISN -->
       <div class="nisn-input">
         <input type="text" id="nisnInput" placeholder="Atau ketik / scan NISN..."
-          maxlength="15" style="text-align:center;letter-spacing:2px;"
-          onkeypress="if(event.key==='Enter')prosesAbsen()"
-          oninput="if(this.value.length>=8)clearTimeout(window._nisnTimer);window._nisnTimer=setTimeout(()=>{if(this.value.length>=8)prosesAbsen();},600)">
+          maxlength="10" style="text-align:center;letter-spacing:2px;"
+          autofocus
+          onkeypress="if(event.key==='Enter'&&this.value.length>0)prosesAbsenNisn(this.value)"
+          oninput="if(this.dataset.skip)return;if(this.value.length===10){var v=this.value;this.value='';prosesAbsenNisn(v);}">
       </div>
 
       <!-- Preview Siswa -->
@@ -1112,6 +1113,21 @@ let siswaYangDipilih = null;
 let scanStream = null;
 
 // ── INIT ──────────────────────────────────────────────
+
+function fokusNisn() {
+  setTimeout(function() {
+    var el = document.getElementById('nisnInput');
+    if (el) el.focus();
+  }, 50);
+}
+
+// Auto fokus ke field NISN saat klik di mana saja
+// kecuali modal, dropdown, button, input lain
+document.addEventListener('click', function(e) {
+  var skip = e.target.closest('.modal, .dropdown, button, a, input, select, textarea, .nav-item, .mode-btn, .stat-mini, .modal-detail-item');
+  if (!skip) fokusNisn();
+});
+
 window.addEventListener('load', async () => {
   // Render tabel jadwal dulu dengan default
   renderTabelJadwal();
@@ -1154,6 +1170,7 @@ window.addEventListener('load', async () => {
 
   // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
+  fokusNisn();
   await loadToggleAlpa(); // load status toggle alpa
   setInterval(refreshStatistikSaja, 30 * 1000);
   // Restore mode scan dari localStorage
@@ -1436,28 +1453,39 @@ function stopScan() {
 async function prosesAbsen() {
   const nisn = document.getElementById('nisnInput').value.trim();
   if (!nisn) return;
+  const v = nisn;
+  document.getElementById('nisnInput').value = '';
+  prosesAbsenNisn(v);
+}
 
-  // Cari data siswa dulu
-  const r = await apiGet('cariSiswa', {nisn});
-  if (!r.ok || !r.data) {
-    tampilNotif('❌', 'Siswa tidak ditemukan', `NISN: ${nisn}`, true);
-    return;
+async function prosesAbsenNisn(nisn) {
+  if (!nisn) return;
+  const nisnBersih = String(nisn).trim().replace(/[.]0$/, '').replace(/^0+/, '');
+  var siswa = dataSiswa.find(function(s) {
+    var sn = String(s.nisn||'').replace(/[.]0$/, '').replace(/^0+/, '');
+    return sn === nisnBersih || String(s.nisn) === nisn;
+  });
+  if (!siswa) {
+    const r = await apiGet('cariSiswa', {nisn: nisn});
+    if (!r.ok || !r.data) {
+      tampilNotif('❌', 'Siswa tidak ditemukan', 'NISN: ' + nisn, true);
+      fokusNisn();
+      return;
+    }
+    siswa = r.data;
   }
-
-  siswaYangDipilih = r.data;
-  const preview = document.getElementById('siswaPreview');
-  document.getElementById('siswaNama').textContent = r.data.nama;
-  document.getElementById('siswaKelas').textContent = `Kelas ${r.data.kelas}`;
-  document.getElementById('siswaNisn').textContent = `NISN: ${r.data.nisn}`;
-
-  if (r.data.fotoUrl) {
-    document.getElementById('siswaFoto').innerHTML = `<img src="${r.data.fotoUrl}" alt="Foto">`;
+  siswaYangDipilih = siswa;
+  document.getElementById('siswaNama').textContent  = siswa.nama;
+  document.getElementById('siswaKelas').textContent = 'Kelas ' + siswa.kelas;
+  document.getElementById('siswaNisn').textContent  = 'NISN: ' + siswa.nisn;
+  if (siswa.fotoUrl) {
+    document.getElementById('siswaFoto').innerHTML = '<img src="' + siswa.fotoUrl + '" alt="Foto">';
+  } else {
+    const inisial = siswa.nama.split(' ').slice(0,2).map(function(w){return w[0];}).join('').toUpperCase();
+    document.getElementById('siswaFoto').innerHTML = '<div class="avatar" style="background:#0a7e8c;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#fff;">' + inisial + '</div>';
   }
-
-  preview.classList.add('show');
+  document.getElementById('siswaPreview').classList.add('show');
   document.getElementById('btnAbsen').disabled = false;
-
-  // Mode Quick → langsung absen tanpa konfirmasi
   if (MODE_SCAN === 'quick') {
     await konfirmasiAbsen();
   }
@@ -1726,7 +1754,7 @@ function resetInputAbsen() {
   document.getElementById('cariHasil').classList.remove('show');
   document.getElementById('siswaPreview').classList.remove('show');
   document.getElementById('btnAbsen').disabled = true;
-  siswaYangDipilih = null;
+  siswaYangDipilih = null;  fokusNisn();
 }
 
 
@@ -1842,8 +1870,11 @@ function pilihSiswaDariCari(nisn, nama, kelas) {
   document.getElementById('cariHasil').classList.remove('show');
   document.getElementById('cariNama').value = nama;
 
-  // Isi NISN dan proses
-  document.getElementById('nisnInput').value = nisn;
+  // Set NISN tanpa trigger oninput
+  var _ne = document.getElementById('nisnInput');
+  _ne.dataset.skip = '1';
+  _ne.value = nisn;
+  setTimeout(function(){ delete _ne.dataset.skip; }, 200);
 
   // Tampilkan preview
   const s = dataSiswa.find(x => x.nisn === nisn) || {nisn, nama, kelas};
@@ -1891,13 +1922,13 @@ function bukаModalDetail(status) {
   const judul = document.getElementById('modalDetailJudul');
 
   const labelMap = {
-    OnTime:      {label:'\u2705 Hadir On-Time',  color:'var(--hijau)'},
-    Terlambat:   {label:'\u23f0 Terlambat',       color:'#e65100'},
-    belumMasuk:  {label:'\u23f3 Belum Masuk',     color:'#f57f17'},
-    belumPulang: {label:'\U0001f3e0 Belum Pulang',color:'#7d3c98'},
-    Izin:        {label:'\U0001f4dd Izin',         color:'#1565c0'},
-    Sakit:       {label:'\U0001f912 Sakit',        color:'#c62828'},
-    Alpa:        {label:'\u274c Alpa',             color:'var(--merah)'},
+    OnTime:      {label:'✅ Hadir On-Time',  color:'var(--hijau)'},
+    Terlambat:   {label:'⏰ Terlambat',       color:'#e65100'},
+    belumMasuk:  {label:'⏳ Belum Masuk',     color:'#f57f17'},
+    belumPulang: {label:'🏠 Belum Pulang',color:'#7d3c98'},
+    Izin:        {label:'📝 Izin',         color:'#1565c0'},
+    Sakit:       {label:'🤒 Sakit',        color:'#c62828'},
+    Alpa:        {label:'❌ Alpa',             color:'var(--merah)'},
   };
 
   const info = labelMap[status] || {label: status, color:'var(--teks)'};
@@ -1931,13 +1962,13 @@ function bukаModalDetail(status) {
 
   } else if (status === 'belumPulang') {
     siswaList = dataDOM
-      .filter(function(d){ return ['OnTime','Terlambat'].includes(d.status) && (!d.jamPulang || d.jamPulang === '\u2014'); })
+      .filter(function(d){ return ['OnTime','Terlambat'].includes(d.status) && (!d.jamPulang || d.jamPulang === '—'); })
       .map(function(d){ return {nama: d.nama, kelas: d.kelas, info: 'Masuk ' + d.jamMasuk}; });
 
   } else {
     siswaList = dataDOM
       .filter(function(d){ return d.status === status; })
-      .map(function(d){ return {nama: d.nama, kelas: d.kelas, info: d.jamMasuk && d.jamMasuk !== '\u2014' ? 'Masuk ' + d.jamMasuk : ''}; });
+      .map(function(d){ return {nama: d.nama, kelas: d.kelas, info: d.jamMasuk && d.jamMasuk !== '—' ? 'Masuk ' + d.jamMasuk : ''}; });
   }
 
   if (!siswaList.length) {
@@ -1959,7 +1990,7 @@ function bukаModalDetail(status) {
       row += '<button onclick="pilihMdStatus('+i+',\'Izin\')" id="mdbtn'+i+'Izin" style="padding:5px 12px;border:2px solid #1565c0;border-radius:8px;color:#1565c0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Izin</button>';
       row += '<button onclick="pilihMdStatus('+i+',\'Sakit\')" id="mdbtn'+i+'Sakit" style="padding:5px 12px;border:2px solid #c62828;border-radius:8px;color:#c62828;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Sakit</button>';
       row += '<button onclick="pilihMdStatus('+i+',\'Alpa\')" id="mdbtn'+i+'Alpa" style="padding:5px 12px;border:2px solid #e53935;border-radius:8px;color:#e53935;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Alpa</button>';
-      row += '<button onclick="simpanMdStatus('+i+',\"'+nisnVal+'\",\"'+nn+'\",\"'+s.kelas+'\")" id="mdsave'+i+'" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Simpan</button>';
+      row += '<button onclick="simpanMdStatus('+i+',\''+nisnVal+'\',\''+nn+'\',\''+s.kelas+'\')" id="mdsave'+i+'" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Simpan</button>';
       row += '</div></div>';
       html3 += row;
     });
