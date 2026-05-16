@@ -345,7 +345,7 @@ tr:hover td{background:#f8fafc;}
       size: 330mm 215mm landscape;
       margin: 8mm 10mm;
     }
-    body { background: #fff !important; font-size: 11px; }
+    body { background: #fff !important; font-size: 11px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .topbar, .sidebar, .notif-absen, .no-print { display: none !important; }
     .main { margin-left: 0 !important; margin-top: 0 !important; padding: 0 !important; }
     .page { display: block !important; }
@@ -464,12 +464,20 @@ tr:hover td{background:#f8fafc;}
   @media print {
     #page-rekapBulanan .print-header { display: block !important; }
   }
-  .rb-table { border-collapse:collapse; font-size:9px; }
-  .rb-table th, .rb-table td { border:1px solid #000; padding:3px 4px; text-align:center; white-space:nowrap; }
-  .rb-table th { background:#e0e0e0; }
+  .rb-table { border-collapse:collapse; font-size:9px; background:#fff; color:#000; }
+  .rb-table th, .rb-table td { border:1px solid #000; padding:3px 4px; text-align:center; white-space:nowrap; background:#fff; color:#000; }
+  .rb-table th { background:#d0d0d0; font-weight:700; }
   .rb-table td.nama-col { text-align:left; min-width:120px; }
-  .rb-table td.libur { background:#e0e0e0; }
-  .rb-table td.minggu { background:#f0f0f0; }
+  .rb-table td.libur { background:#d0d0d0 !important; }
+  .rb-table td.minggu { background:#e8e8e8 !important; }
+  @media print {
+    .rb-table th, .rb-table td { border:1px solid #000 !important; background:#fff !important; color:#000 !important; }
+    .rb-table th { background:#d0d0d0 !important; }
+    .rb-table td.libur { background:#d0d0d0 !important; }
+    .rb-table td.minggu { background:#e8e8e8 !important; }
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 
 </style>
 </head>
@@ -2385,7 +2393,7 @@ async function cetakRekapBulanan() {
   if (!origStyle) {
     var st = document.createElement('style');
     st.id = 'rbLandscapeStyle';
-    st.textContent = '@media print { @page { size: 330mm 215mm landscape !important; margin: 8mm 10mm !important; } }';
+    st.textContent = '@page { size: 330mm 215mm landscape !important; margin: 8mm 10mm !important; }';
     document.head.appendChild(st);
   }
   window.print();
@@ -2984,6 +2992,7 @@ function loadJadwalInputs() {
     const ja = document.getElementById('setJamAlpa');
     if(jm) jm.value = window._jadwalData.jamMasukBatas    || '07:30';
     if(jp) jp.value = window._jadwalData.jamPulangMinimal || '12:00';
+    if(ja) ja.value = window._jadwalData.jamAlpa           || '10:00';
   }
 }
 
