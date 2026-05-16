@@ -1661,6 +1661,7 @@ function renderTabelAbsenHariIni(data, dariCache) {
   // Update counter total absen
   var elTotal = document.getElementById('totalAbsenHariIni');
   if (elTotal && data && data.length) elTotal.textContent = data.length;
+  updateBelumPulangDariDOM();
 }
 
 // ── Update tabel absensi langsung setelah scan ──────────────────
@@ -1775,6 +1776,7 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
     var count = Array.from(rows).filter(function(r){ return r.querySelectorAll('td').length >= 3; }).length;
     if (count > 0) elTotal.textContent = count;
   }
+  updateBelumPulangDariDOM();
 }
 
 function resetInputAbsen() {
@@ -1883,14 +1885,14 @@ function cariSiswaNama(q) {
     return;
   }
 
-  hasil.innerHTML = found.map(s => `
-    <div class="cari-item" onclick="pilihSiswaDariCari('${s.nisn}','${s.nama.replace(/'/g,"\'")}','${s.kelas}')">
-      <div>
-        <div class="ci-nama">${s.nama}</div>
-        <div class="ci-info">Kelas ${s.kelas} &nbsp;|&nbsp; NISN: ${s.nisn||'—'}</div>
-      </div>
-      <span style="font-size:11px;background:#e8f6f8;color:var(--teal);padding:2px 8px;border-radius:5px;font-weight:600;">${s.kelas}</span>
-    </div>`).join('');
+  hasil.innerHTML = found.map(function(s) {
+    var nn = s.nama.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+    return '<div class="cari-item" onclick="pilihSiswaDariCari(\'' + s.nisn + '\',\'' + nn + '\',\'' + s.kelas + '\')">' +
+      '<div><div class="ci-nama">' + s.nama + '</div>' +
+      '<div class="ci-info">Kelas ' + s.kelas + ' &nbsp;|&nbsp; NISN: ' + (s.nisn||'—') + '</div></div>' +
+      '<span style="font-size:11px;background:#e8f6f8;color:var(--teal);padding:2px 8px;border-radius:5px;font-weight:600;">' + s.kelas + '</span>' +
+      '</div>';
+  }).join('');
   hasil.classList.add('show');
 }
 
@@ -2583,6 +2585,28 @@ async function loadToggleAlpa() {
   // Apply ke slider dengan delay untuk pastikan DOM sudah ready
   setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 50);
   setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 300);
+}
+
+
+function updateBelumPulangDariDOM() {
+  var tbody = document.getElementById('tabelAbsenHariIni');
+  if (!tbody) return;
+  var rows = tbody.querySelectorAll('tr');
+  var belumPulang = 0;
+  rows.forEach(function(row) {
+    var cells = row.querySelectorAll('td');
+    if (cells.length < 5) return;
+    var jamMasuk  = cells[2].textContent.trim();
+    var jamPulang = cells[3].textContent.trim();
+    var status    = cells[4].textContent.trim();
+    // Belum pulang = sudah masuk (ada jam masuk) tapi jam pulang kosong
+    if (jamMasuk && jamMasuk !== '—' && (!jamPulang || jamPulang === '—') &&
+        (status === 'OnTime' || status === 'Terlambat')) {
+      belumPulang++;
+    }
+  });
+  var el = document.getElementById('stBelumPulang');
+  if (el) el.textContent = belumPulang;
 }
 
 function updateSliderAlpa(aktif) {
