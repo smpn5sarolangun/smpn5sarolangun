@@ -1167,6 +1167,8 @@ window.addEventListener('load', async () => {
   // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   fokusNisn();
+  // Load semua data absensi hari ini (tidak blokir scan)
+  loadTabelAbsenHariIni();
   await loadToggleAlpa(); // load status toggle alpa
   setInterval(refreshStatistikSaja, 30 * 1000);
   // Restore mode scan dari localStorage
@@ -1678,6 +1680,15 @@ async function refreshDashboardDanTabel() {
 }
 
 // Refresh hanya angka statistik, tidak timpa tabel absensi
+
+async function loadTabelAbsenHariIni() {
+  const today = getTglHariIni();
+  const r = await apiGet('getAbsensiHari', {tanggal: today});
+  if (!r.ok || !r.data) return;
+  renderTabelAbsenHariIni(r.data);
+  simpanCacheAbsen(r.data);
+}
+
 async function refreshStatistikSaja() {
   try {
     const today = getTglHariIni();
@@ -1687,9 +1698,9 @@ async function refreshStatistikSaja() {
     ]);
     if (!rDash.ok) return;
     _updateDashboardUI(rDash.data);
-    // Hanya update cache, TIDAK timpa tabel
-    // (tabel bisa berisi data quick yang belum confirmed server)
+    // Update tabel dengan data lengkap dari server
     if (rAbsen.ok && rAbsen.data) {
+      renderTabelAbsenHariIni(rAbsen.data);
       simpanCacheAbsen(rAbsen.data);
     }
   } catch(e) {}
