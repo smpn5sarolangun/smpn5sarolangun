@@ -2233,15 +2233,15 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
 
 var _kelasCached = [];
 function initRekapBulananKelas() {
-  // Cache kelas dari dataSiswa
   _kelasCached = [];
   dataSiswa.forEach(function(s){ if(s.kelas && _kelasCached.indexOf(s.kelas)<0) _kelasCached.push(s.kelas); });
   _kelasCached.sort();
+  isiDropdownKelas('rbKelas'); // isi saat data siap
 }
 function isiDropdownKelas(selId) {
   var sel = document.getElementById(selId);
   if (!sel) return;
-  while (sel.options.length > 1) sel.remove(1);
+  if (sel.options.length > 1) return; // sudah terisi, skip
   _kelasCached.forEach(function(k) {
     var opt = document.createElement('option');
     opt.value = k; opt.textContent = k;
@@ -2253,12 +2253,7 @@ function initRekapBulanan() {
   var now = new Date();
   document.getElementById('rbBulan').value = now.getMonth() + 1;
   document.getElementById('rbTahun').value = now.getFullYear();
-  // Jika _kelasCached belum siap, tunggu sebentar
-  if (_kelasCached && _kelasCached.length) {
-    isiDropdownKelas('rbKelas');
-  } else {
-    setTimeout(function() { isiDropdownKelas('rbKelas'); }, 500);
-  }
+  isiDropdownKelas('rbKelas');
 }
 
 async function loadRekapBulanan() {
