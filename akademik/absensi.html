@@ -554,17 +554,8 @@ tr:hover td{background:#f8fafc;}
       </div>
 
       <!-- Scan Barcode -->
-      <div class="scan-area" id="scanArea" onclick="startScan()">
-        <video id="scanPreview" autoplay muted playsinline></video>
-        <div class="scan-overlay" id="scanOverlay">
-          <div class="scan-line" id="scanLine" style="display:none;"></div>
-          <div id="scanIdle" style="text-align:center;">
-            <div class="scan-icon">📷</div>
-            <div class="scan-hint">Klik untuk scan barcode kartu pelajar</div>
-          </div>
-        </div>
-      </div>
-      <button style="width:100%;padding:8px;margin-bottom:12px;background:#f0f4f8;border:1px solid #dde3ee;border-radius:8px;cursor:pointer;font-size:12px;color:var(--teks-sub);font-family:'Plus Jakarta Sans',sans-serif;" onclick="stopScan()">✕ Tutup Kamera</button>
+      
+      
 
       <!-- Cari siswa by nama -->
       <div class="cari-wrap">
@@ -655,6 +646,11 @@ tr:hover td{background:#f8fafc;}
       <div class="tabel-header">
         <h3>📝 Absensi Hari Ini</h3>
         <button onclick="refreshDashboardDanTabel()" style="background:none;border:none;cursor:pointer;color:var(--teal);font-size:13px;font-weight:600;">🔄 Refresh</button>
+      </div>
+      <div style="padding:0 0 8px 0;">
+        <input type="text" id="searchAbsenHariIni" placeholder="🔍 Cari nama siswa..." autocomplete="off"
+          oninput="filterTabelAbsen(this.value)"
+          style="width:100%;padding:8px 12px;border:1.5px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;box-sizing:border-box;outline:none;">
       </div>
       <div style="overflow-x:auto;max-height:320px;overflow-y:auto;">
         <table>
@@ -1977,7 +1973,7 @@ function bukаModalDetail(status) {
   }
 
   if (status === 'belumMasuk') {
-    var html3 = '<input type="text" id="mdSearch" placeholder="🔍 Cari nama..." oninput="filterMdList(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;margin-bottom:10px;box-sizing:border-box;outline:none;">';
+    var html3 = '<input type="text" id="mdSearch" placeholder="🔍 Cari nama..." autocomplete="off" oninput="filterMdList(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;margin-bottom:10px;box-sizing:border-box;outline:none;">';
     html3 += '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk \u2014 klik nama untuk input</p>';
     siswaList.forEach(function(s, i) {
       var nn = s.nama.replace(/"/g, '&quot;');
@@ -1997,15 +1993,30 @@ function bukаModalDetail(status) {
     });
     isi.innerHTML = html3;
   } else {
-    var html4 = '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;">'+siswaList.length+' siswa</p>';
+    var html4 = '<input type="text" placeholder="🔍 Cari nama..." autocomplete="off" oninput="filterMdList(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;margin-bottom:10px;box-sizing:border-box;outline:none;">';
+    html4 += '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">'+siswaList.length+' siswa</p>';
     siswaList.forEach(function(s, i) {
-      html4 += '<div class="modal-detail-item"><div class="modal-detail-no">'+(i+1)+'</div><div class="modal-detail-nama">'+s.nama+'</div><div class="modal-detail-kelas">'+s.kelas+'</div><div class="modal-detail-jam">'+s.info+'</div></div>';
+      html4 += '<div class="modal-detail-item" id="mdrow'+i+'"><div class="modal-detail-no">'+(i+1)+'</div><div class="modal-detail-nama">'+s.nama+'</div><div class="modal-detail-kelas">'+s.kelas+'</div><div class="modal-detail-jam">'+s.info+'</div></div>';
     });
     isi.innerHTML = html4;
   }
 }
 
 var _mdStatus = {};
+
+
+function filterTabelAbsen(q) {
+  var query = q.toLowerCase().trim();
+  var tbody = document.getElementById('tabelAbsenHariIni');
+  if (!tbody) return;
+  var rows = tbody.querySelectorAll('tr');
+  rows.forEach(function(row) {
+    var cells = row.querySelectorAll('td');
+    if (cells.length < 2) return;
+    var nama = cells[0].textContent.toLowerCase();
+    row.style.display = (!query || nama.includes(query)) ? '' : 'none';
+  });
+}
 
 function filterMdList(q) {
   var query = q.toLowerCase().trim();
@@ -2054,6 +2065,9 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   playSukses();
   var row = document.getElementById('mdrow' + i);
   if (row) { row.style.opacity='0'; row.style.transition='all 0.3s'; setTimeout(function(){row.remove();}, 300); }
+  // Clear search box setelah simpan
+  var srch = document.getElementById('mdSearch');
+  if (srch) { srch.value = ''; filterMdList(''); }
   var el = document.getElementById('mdCountBM');
   if (el) { var n = parseInt(el.textContent) - 1; el.textContent = n + ' siswa belum masuk — klik nama untuk input'; }
   var elBM = document.getElementById('stBelumMasuk');
