@@ -644,7 +644,7 @@ tr:hover td{background:#f8fafc;}
     <!-- Tabel Absensi Terbaru -->
     <div class="tabel-area">
       <div class="tabel-header">
-        <h3>📝 Absensi Hari Ini</h3>
+        <h3>📝 Absensi Hari Ini <span id="totalAbsenHariIni" style="font-size:13px;font-weight:600;color:var(--teal);background:#e8f6f8;padding:2px 10px;border-radius:20px;margin-left:6px;">0</span></h3>
         <button onclick="refreshDashboardDanTabel()" style="background:none;border:none;cursor:pointer;color:var(--teal);font-size:13px;font-weight:600;">🔄 Refresh</button>
       </div>
       <div style="padding:0 0 8px 0;">
@@ -1658,6 +1658,9 @@ function renderTabelAbsenHariIni(data, dariCache) {
       <td>${fmtJam(r.jamPulang)}</td>
       <td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','')}">${r.status}</span></td>
     </tr>`).join('');
+  // Update counter total absen
+  var elTotal = document.getElementById('totalAbsenHariIni');
+  if (elTotal && data && data.length) elTotal.textContent = data.length;
 }
 
 // ── Update tabel absensi langsung setelah scan ──────────────────
@@ -1686,7 +1689,13 @@ async function loadTabelAbsenHariIni() {
   const r = await apiGet('getAbsensiHari', {tanggal: today});
   if (!r.ok || !r.data) return;
   renderTabelAbsenHariIni(r.data);
-  simpanCacheAbsen(r.data);
+  // Merge cache - jaga data quick yang belum confirmed server
+  const cacheAda = ambilCacheAbsen() || [];
+  const serverNisn = new Set(r.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
+  const quickData = cacheAda.filter(function(x){
+    return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
+  });
+  simpanCacheAbsen(r.data.concat(quickData));
 }
 
 async function refreshStatistikSaja() {
@@ -1701,7 +1710,13 @@ async function refreshStatistikSaja() {
     // Update tabel dengan data lengkap dari server
     if (rAbsen.ok && rAbsen.data) {
       renderTabelAbsenHariIni(rAbsen.data);
-      simpanCacheAbsen(rAbsen.data);
+      // Merge cache - gabung data server dengan data quick yang belum confirmed
+      const cacheAda = ambilCacheAbsen() || [];
+      const serverNisn = new Set(rAbsen.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
+      const quickData = cacheAda.filter(function(x){
+        return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
+      });
+      simpanCacheAbsen(rAbsen.data.concat(quickData));
     }
   } catch(e) {}
 }
