@@ -2370,8 +2370,6 @@ async function cetakRekap() {
 }
 
 async function cetakRekapBulanan() {
-  document.body.classList.add('print-rb');
-  setTimeout(function() { document.body.classList.remove('print-rb'); }, 2000);
   var kelas = window._rbKelas || '';
   try {
     var r = await apiGet('getWalas');
@@ -2382,7 +2380,19 @@ async function cetakRekapBulanan() {
       });
     }
   } catch(e) {}
+  // Cetak landscape - inject style khusus
+  var origStyle = document.getElementById('rbLandscapeStyle');
+  if (!origStyle) {
+    var st = document.createElement('style');
+    st.id = 'rbLandscapeStyle';
+    st.textContent = '@media print { @page { size: 330mm 215mm landscape !important; margin: 8mm 10mm !important; } }';
+    document.head.appendChild(st);
+  }
   window.print();
+  setTimeout(function() {
+    var el = document.getElementById('rbLandscapeStyle');
+    if (el) el.remove();
+  }, 1000);
 }
 
 function tutupModalDetail() {
@@ -3036,7 +3046,8 @@ async function simpanJadwal() {
     jadwalPerHari: jadwalPerHari,
     jamMasukBatas:    jHariIni.masuk,
     jamPulangMinimal: jHariIni.pulang,
-    hariAktif: HARI_LIST.filter(h => jadwalPerHari[h].aktif)
+    hariAktif: HARI_LIST.filter(h => jadwalPerHari[h].aktif),
+    jamAlpa: document.getElementById('setJamAlpa')?.value || '10:00'
   });
 
   const msg = document.getElementById('jadwalMsg');
