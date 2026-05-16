@@ -1278,8 +1278,7 @@ window.addEventListener('load', async () => {
   // Fetch server di background (update data terbaru)
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   fokusNisn();
-  // Pre-isi kelas untuk Rekap Bulanan setelah dataSiswa terisi
-  initRekapBulananKelas();
+  initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
   await loadToggleAlpa(); // load status toggle alpa
@@ -1392,6 +1391,7 @@ function _updateDashboardUI(d) {
     upd('jadwalMasuk',  d.jadwal.jamMasukBatas);
     upd('jadwalPulang', d.jadwal.jamPulangMinimal);
     window._jadwalData = d.jadwal;
+    loadJadwalInputs(); // update input jam dari server
   }
   const s = d.statistik;
   upd('stOnTime',      s.onTime);
@@ -2231,13 +2231,18 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
 
 // ── REKAP BULANAN ────────────────────────────────────────────────
 
+var _kelasCached = [];
 function initRekapBulananKelas() {
-  var sel = document.getElementById('rbKelas');
+  // Cache kelas dari dataSiswa
+  _kelasCached = [];
+  dataSiswa.forEach(function(s){ if(s.kelas && _kelasCached.indexOf(s.kelas)<0) _kelasCached.push(s.kelas); });
+  _kelasCached.sort();
+}
+function isiDropdownKelas(selId) {
+  var sel = document.getElementById(selId);
   if (!sel) return;
   while (sel.options.length > 1) sel.remove(1);
-  var kelas = [];
-  dataSiswa.forEach(function(s){ if(s.kelas && kelas.indexOf(s.kelas)<0) kelas.push(s.kelas); });
-  kelas.sort().forEach(function(k) {
+  _kelasCached.forEach(function(k) {
     var opt = document.createElement('option');
     opt.value = k; opt.textContent = k;
     sel.appendChild(opt);
@@ -2248,8 +2253,8 @@ function initRekapBulanan() {
   var now = new Date();
   document.getElementById('rbBulan').value = now.getMonth() + 1;
   document.getElementById('rbTahun').value = now.getFullYear();
-  initRekapBulananKelas();
-  // Isi dropdown kelas - tunggu dataSiswa siap
+  isiDropdownKelas('rbKelas');
+  // Isi dropdown kelas dari cache
   function isiKelas() {
     var sel = document.getElementById('rbKelas');
     if (!sel) return;
@@ -2388,19 +2393,42 @@ async function cetakRekapBulanan() {
       });
     }
   } catch(e) {}
-  // Cetak landscape - inject style khusus
-  var origStyle = document.getElementById('rbLandscapeStyle');
-  if (!origStyle) {
-    var st = document.createElement('style');
-    st.id = 'rbLandscapeStyle';
-    st.textContent = '@page { size: 330mm 215mm landscape !important; margin: 8mm 10mm !important; }';
-    document.head.appendChild(st);
-  }
-  window.print();
-  setTimeout(function() {
-    var el = document.getElementById('rbLandscapeStyle');
-    if (el) el.remove();
-  }, 1000);
+  // Cetak landscape - buka window baru
+  var tabelHtml = document.getElementById('tabelRB')?.innerHTML || '';
+  var infoHtml  = document.getElementById('rbPrintInfo')?.textContent || '';
+  var tglHtml   = document.getElementById('rbPrintTgl')?.textContent || '';
+  var kelasHtml = document.getElementById('rbPrintKelas')?.textContent || '';
+  var waliHtml  = document.querySelector('.ttd-walas-rb')?.textContent || '____________________';
+
+  var win = window.open('', '_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
+  win.document.write('<title>Rekap Bulanan</title>');
+  win.document.write('<style>');
+  win.document.write('@page { size: 330mm 215mm landscape; margin: 8mm 10mm; }');
+  win.document.write('body { font-family: Arial, sans-serif; font-size: 9px; color: #000; }');
+  win.document.write('table { border-collapse: collapse; width: 100%; }');
+  win.document.write('th, td { border: 1px solid #000; padding: 3px 4px; text-align: center; white-space: nowrap; }');
+  win.document.write('th { background: #d0d0d0; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }');
+  win.document.write('.nama-col { text-align: left; min-width: 120px; }');
+  win.document.write('.libur { background: #d0d0d0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }');
+  win.document.write('.minggu { background: #e8e8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }');
+  win.document.write('.page-break { page-break-before: always; }');
+  win.document.write('.header { text-align: center; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 8px; }');
+  win.document.write('</style></head><body>');
+  win.document.write('<div class="header">');
+  win.document.write('<div style="font-size:13px;font-weight:800;">REKAP KEHADIRAN SISWA</div>');
+  win.document.write('<div style="font-size:11px;">SMP Negeri 05 Sarolangun</div>');
+  win.document.write('<div style="font-size:11px;">' + infoHtml + '</div>');
+  win.document.write('</div>');
+  win.document.write(tabelHtml);
+  win.document.write('<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;font-size:10px;margin-top:24px;">');
+  win.document.write('<div><p>Mengetahui,</p><p style="font-weight:700;">Kepala Sekolah</p><div style="height:50px;"></div><p><strong>Sukardiman, M.Pd.</strong></p></div>');
+  win.document.write('<div><p>Sarolangun, ' + tglHtml + '</p><p style="font-weight:700;">Wali Kelas ' + kelasHtml + '</p><div style="height:50px;"></div><p>' + waliHtml + '</p></div>');
+  win.document.write('</div>');
+  win.document.write('</body></html>');
+  win.document.close();
+  win.focus();
+  setTimeout(function() { win.print(); }, 500);
 }
 
 function tutupModalDetail() {
@@ -3067,6 +3095,11 @@ async function simpanJadwal() {
   if (r.ok) {
     document.getElementById('jadwalMasuk').textContent  = jHariIni.masuk;
     document.getElementById('jadwalPulang').textContent = jHariIni.pulang;
+    // Update _jadwalData lokal
+    if (!window._jadwalData) window._jadwalData = {};
+    window._jadwalData.jamAlpa = document.getElementById('setJamAlpa')?.value || '10:00';
+    window._jadwalData.jamMasukBatas = jHariIni.masuk;
+    window._jadwalData.jamPulangMinimal = jHariIni.pulang;
   }
   setTimeout(() => msg.style.display='none', 3000);
 }
