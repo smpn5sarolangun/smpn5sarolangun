@@ -1434,7 +1434,7 @@ function stopScan() {
 }
 
 // ── PROSES ABSEN ────────────────────────────────────────
-async async function prosesAbsen() {
+async function prosesAbsen() {
   const nisn = document.getElementById('nisnInput').value.trim();
   if (!nisn) return;
 
@@ -1864,9 +1864,10 @@ function pilihSiswaDariCari(nisn, nama, kelas) {
   document.getElementById('cariHasil').classList.remove('show');
   document.getElementById('cariNama').value = nama;
 
-  // Isi NISN - set flag dulu agar oninput tidak trigger prosesAbsen
+  // Isi NISN - set flag sementara agar oninput tidak trigger prosesAbsen
   window._sedangProses = true;
   document.getElementById('nisnInput').value = nisn;
+  setTimeout(function(){ window._sedangProses = false; }, 50);
 
   // Tampilkan preview
   const s = dataSiswa.find(x => x.nisn === nisn) || {nisn, nama, kelas};
