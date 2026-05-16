@@ -1768,6 +1768,13 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
     });
     simpanCacheAbsen(existing);
   } catch(e) {}
+  // Update counter total absen
+  var elTotal = document.getElementById('totalAbsenHariIni');
+  if (elTotal) {
+    var rows = document.getElementById('tabelAbsenHariIni')?.querySelectorAll('tr') || [];
+    var count = Array.from(rows).filter(function(r){ return r.querySelectorAll('td').length >= 3; }).length;
+    if (count > 0) elTotal.textContent = count;
+  }
 }
 
 function resetInputAbsen() {
