@@ -1747,7 +1747,7 @@ function resetInputAbsen() {
   document.getElementById('btnAbsen').disabled = true;
   siswaYangDipilih = null;
   fokusNisn();  // Delay reset flag agar sisa karakter barcode reader diabaikan
-  setTimeout(function() { window._sedangProses = false; }, 500);
+  setTimeout(function() { window._sedangProses = false; }, 200);
   fokusNisn();
 }
 
