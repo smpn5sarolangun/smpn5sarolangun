@@ -2253,29 +2253,12 @@ function initRekapBulanan() {
   var now = new Date();
   document.getElementById('rbBulan').value = now.getMonth() + 1;
   document.getElementById('rbTahun').value = now.getFullYear();
-  isiDropdownKelas('rbKelas');
-  // Isi dropdown kelas dari cache
-  function isiKelas() {
-    var sel = document.getElementById('rbKelas');
-    if (!sel) return;
-    // Hapus pilihan lama kecuali "Semua Kelas"
-    while (sel.options.length > 1) sel.remove(1);
-    var src = dataSiswa.length ? dataSiswa : [];
-    var kelas = [];
-    src.forEach(function(s){ if(s.kelas && kelas.indexOf(s.kelas)<0) kelas.push(s.kelas); });
-    kelas.sort();
-    kelas.forEach(function(k) {
-      var opt = document.createElement('option');
-      opt.value = k; opt.textContent = k;
-      sel.appendChild(opt);
-    });
-    // Juga isi dropdown kelas di filter bar
-    var selBar = document.getElementById('rbKelas');
-    if (selBar && kelas.length === 0 && dataSiswa.length === 0) {
-      setTimeout(isiKelas, 500); // retry kalau dataSiswa belum siap
-    }
+  // Jika _kelasCached belum siap, tunggu sebentar
+  if (_kelasCached && _kelasCached.length) {
+    isiDropdownKelas('rbKelas');
+  } else {
+    setTimeout(function() { isiDropdownKelas('rbKelas'); }, 500);
   }
-  isiKelas();
 }
 
 async function loadRekapBulanan() {
