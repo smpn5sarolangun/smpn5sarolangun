@@ -388,7 +388,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
       </div>
       <div>
         <div style="font-size:11px;font-weight:700;letter-spacing:2px;opacity:0.6;text-transform:uppercase;margin-bottom:8px;">Sambutan Kepala Sekolah</div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:30px;color:#fff;margin:10px 0 18px;">Selamat Datang di SMP Negeri 05 Sarolangun</h2>
+        <h2 style="font-family:'Playfair Display',serif;font-size:30px;color:#fff;margin:10px 0 18px;">Selamat Datang di SMPN 05 Sarolangun</h2>
         <blockquote style="font-size:17px;font-style:italic;color:rgba(255,255,255,0.9);line-height:1.8;border-left:4px solid var(--emas);padding-left:22px;margin-bottom:18px;font-family:'Playfair Display',serif;">"Pendidikan bukan hanya tentang nilai di atas kertas, tetapi tentang membentuk karakter, mengasah budi pekerti, dan mempersiapkan generasi yang siap menghadapi tantangan zaman."</blockquote>
         <p style="font-size:14px;color:rgba(255,255,255,0.8);line-height:1.8;">Selamat datang di website resmi SMP Negeri 05 Sarolangun. Kami berkomitmen untuk terus meningkatkan kualitas pendidikan demi mewujudkan siswa yang cerdas, beriman, dan berkarakter mulia.</p>
         <div style="margin-top:16px;font-weight:700;color:#fff;">Sukardiman, M.Pd.</div>
@@ -536,46 +536,61 @@ function sliderNext(){ sliderGo(sliderIdx+1); resetSliderTimer(); }
 function sliderPrev(){ sliderGo(sliderIdx-1); resetSliderTimer(); }
 function resetSliderTimer(){
   if(sliderTimer) clearInterval(sliderTimer);
-  sliderTimer = setInterval(sliderNext, 10000);
+  sliderTimer = setInterval(sliderNext, 7000);
 }
 
 async function muatSlider(){
   const track = document.getElementById('sliderTrack');
   const dots  = document.getElementById('sliderDots');
   try {
+    // Cek cache slider
+    const cached = localStorage.getItem('cache_slider');
+    // Tampilkan cache dulu jika ada
+    if (cached) renderSlider(JSON.parse(cached));
+    // Selalu fetch di background
     const r = await fetch(`${PPDB_URL_I}?action=getSlider`);
     const d = await r.json();
+    localStorage.setItem('cache_slider', JSON.stringify(d));
+    localStorage.setItem('cache_slider_time', Date.now().toString());
+    if (true) {
     if(!d.ok || !d.data || !d.data.length) {
-      // Tidak ada foto sheets — pakai slideDefault saja
-      sliderTotal = 1;
+      if (!cached) { sliderTotal = 1; }
       resetSliderTimer();
       return;
     }
+    renderSlider(d);
+    }
+  } catch(e) {
+    sliderTotal = sliderTotal || 1;
+  }
+  resetSliderTimer();
+}
 
-    // Hapus slideDefault, ganti dengan foto dari Sheets
-    track.innerHTML = '';
-    dots.innerHTML  = '';
-
-    d.data.forEach((item, i) => {
-      const slide = document.createElement('div');
-      slide.className = 'slider-slide';
-      slide.innerHTML = `<img src="${item.url}" alt="${item.caption||'SMP Negeri 05 Sarolangun'}" style="width:100%;height:100%;object-fit:cover;object-position:center 60%;" onerror="this.style.display='none'">
-        <div class="slide-overlay"></div>`;
-      track.appendChild(slide);
-
-      const dot = document.createElement('div');
-      dot.className = 'slider-dot' + (i===0 ? ' active' : '');
-      dot.onclick = () => { sliderGo(i); resetSliderTimer(); };
-      dots.appendChild(dot);
-    });
-
-    sliderTotal = d.data.length;
-    sliderIdx   = 0;
-    track.style.transform = 'translateX(0%)';
-
-    // Swipe support mobile
-    let x0 = null;
-    const el = document.getElementById('heroSlider');
+function renderSlider(d) {
+  if(!d.ok || !d.data || !d.data.length) { sliderTotal = 1; return; }
+  const track = document.getElementById('sliderTrack');
+  const dots  = document.getElementById('sliderDots');
+  track.innerHTML = '';
+  dots.innerHTML  = '';
+  d.data.forEach((item, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'slider-slide';
+    slide.innerHTML = `<img src="${item.url}" alt="${item.caption||'SMP Negeri 05 Sarolangun'}" style="width:100%;height:100%;object-fit:cover;object-position:center 60%;" onerror="this.style.display='none'">
+      <div class="slide-overlay"></div>`;
+    track.appendChild(slide);
+    const dot = document.createElement('div');
+    dot.className = 'slider-dot' + (i===0 ? ' active' : '');
+    dot.onclick = () => { sliderGo(i); resetSliderTimer(); };
+    dots.appendChild(dot);
+  });
+  sliderTotal = d.data.length;
+  sliderIdx   = 0;
+  track.style.transform = 'translateX(0%)';
+  // Swipe support mobile
+  let x0 = null;
+  const el = document.getElementById('heroSlider');
+  if (!el._swipe) {
+    el._swipe = true;
     el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, {passive:true});
     el.addEventListener('touchend', e => {
       if(x0===null) return;
@@ -583,17 +598,16 @@ async function muatSlider(){
       if(Math.abs(dx) > 40) { dx < 0 ? sliderNext() : sliderPrev(); }
       x0 = null;
     }, {passive:true});
-
-  } catch(e) {
-    // Gagal fetch — pakai slideDefault
-    sliderTotal = 1;
   }
-  resetSliderTimer();
 }
 
 muatSlider();
 
 async function muatBerandaBerita() {
+  // Cek cache berita
+  const cachedB = localStorage.getItem('cache_berita');
+  // Tampilkan cache berita dulu jika ada
+  if (cachedB) renderBerita(JSON.parse(cachedB));
   try {
     const r = await fetch(`${PPDB_URL_I}?action=getBerita&max=3`);
     const d = await r.json();
