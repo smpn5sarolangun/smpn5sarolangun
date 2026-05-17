@@ -346,6 +346,9 @@ tr:hover td{background:#f8fafc;}
       margin: 8mm 10mm;
     }
     body { background: #fff !important; font-size: 11px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .rb-table td.minggu { background:#b3d9f7 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .rb-table td.libur { background:#d0d0d0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .rb-table th { background:#d0d0d0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .topbar, .sidebar, .notif-absen, .no-print { display: none !important; }
     .main { margin-left: 0 !important; margin-top: 0 !important; padding: 0 !important; }
     .page { display: block !important; }
@@ -2389,7 +2392,7 @@ async function cetakRekapBulanan() {
   win.document.write('th { background: #d0d0d0; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }');
   win.document.write('.nama-col { text-align: left; min-width: 120px; }');
   win.document.write('.libur { background: #d0d0d0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }');
-  win.document.write('.minggu { background: #e8e8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }');
+  win.document.write('.minggu { background: #b3d9f7 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }');
   win.document.write('.page-break { page-break-before: always; }');
   win.document.write('.header { text-align: center; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 8px; }');
   win.document.write('</style></head><body>');
