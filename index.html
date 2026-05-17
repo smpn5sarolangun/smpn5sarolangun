@@ -9,7 +9,7 @@
 <style>
 :root{--biru:#0d3b6e;--biru-mid:#1a5ca8;--biru-light:#2979d4;--hijau:#1a7a4a;--hijau-light:#22a060;--emas:#f0a500;--abu:#f5f7fa;--teks:#1e2a3a;--teks-sub:#5a6a7e;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--teks);background:#fff;}
+html{scroll-behavior:smooth;}body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--teks);background:#fff;}
 /* ── NAVBAR ── */
   nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97);backdrop-filter:blur(10px);box-shadow:0 2px 20px rgba(0,0,0,0.3);}
   .nav-inner{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:64px;}
@@ -441,8 +441,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
 
       <!-- TUJUAN -->
       <div class="vm-card tujuan">
-        <span class="vm-icon">🏆</span>
-        <div class="vm-title">Tujuan Pendidikan</div>
+        <div class="vm-title"><span class="vm-icon">🏆</span> Tujuan Pendidikan</div>
         <div class="vm-tujuan-inner">
           <div class="vm-tujuan-group">
             <div class="vm-tujuan-group-title">Jangka Panjang</div>
@@ -484,7 +483,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
           <p style="font-size:12px;line-height:1.7;opacity:0.7;margin:0;">Jalan Diponegoro No. 1, Desa Bukit Talang Mas<br>Kecamatan Singkut, Kabupaten Sarolangun, Jambi 37482</p>
         </div>
       </div>
-    </div></div>
+    </div>
     <div class="footer-col">
       <h4>Menu</h4>
       <a href="index.html">Beranda</a><a href="profil.html">Profil</a>
@@ -608,6 +607,9 @@ function defaultCard() {
   return `<div class="berita-card"><div class="berita-img">🏫</div><div class="berita-body"><div class="berita-cat">Selamat Datang</div><div class="berita-judul">Website Resmi SMP Negeri 05 Sarolangun</div><div class="berita-excerpt">Website resmi SMPN 05 Sarolangun telah hadir. Informasi terbaru segera tersedia di sini.</div></div><div class="berita-footer"><span class="berita-author">Admin</span><a href="berita.html" class="berita-link">Selengkapnya →</a></div></div>`;
 }
 muatBerandaBerita();
+// Scroll ke atas saat halaman dimuat/reload
+if(history.scrollRestoration) history.scrollRestoration='manual';
+window.scrollTo(0,0);
 function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}
 </script>
 </body>
