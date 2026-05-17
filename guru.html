@@ -60,10 +60,9 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .guru-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-bottom:52px;}
 .guru-card{background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,0.07);overflow:hidden;transition:all 0.3s;border-bottom:3px solid var(--biru-mid);}
 .guru-card:hover{transform:translateY(-5px);box-shadow:0 12px 32px rgba(0,0,0,0.12);}
-.guru-foto{height:210px;background:linear-gradient(135deg,#eef2f8,#dde5f5);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
-.guru-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;}
+.guru-foto{height:200px;background:linear-gradient(135deg,#eef2f8,#dde5f5);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.guru-foto img{width:100%;height:100%;object-fit:cover;object-position:top;}
 .guru-foto .no-foto{font-size:72px;opacity:0.18;}
-.no-foto-inisial{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:2px;}
 .guru-body{padding:16px;}
 .guru-nama{font-size:14px;font-weight:700;color:var(--teks);margin-bottom:5px;line-height:1.4;}
 .guru-jabatan{font-size:11px;font-weight:600;color:var(--biru-mid);background:rgba(26,92,168,0.08);padding:3px 9px;border-radius:5px;display:inline-block;margin-bottom:5px;}
@@ -246,57 +245,34 @@ let allGuru = [], allTendik = [];
 
 async function loadGuru() {
   try {
-    // Cek cache dulu
-    const cached = localStorage.getItem('cache_guru');
-    const cachedTime = localStorage.getItem('cache_guru_time');
-    const cacheAge = cachedTime ? (Date.now() - parseInt(cachedTime)) / 1000 : 999;
-    // Tampilkan cache dulu (24 jam)
-    if (cached) prosesGuru(JSON.parse(cached));
-    // Selalu fetch di background untuk update terbaru
     const r = await fetch(`${SCRIPT_URL}?action=getDaftarGuru`);
     const d = await r.json();
     if (!d.ok || !d.data) throw new Error('Gagal');
-    localStorage.setItem('cache_guru', JSON.stringify(d));
-    localStorage.setItem('cache_guru_time', Date.now().toString());
-    prosesGuru(d);
 
-    if (!cached || cacheAge >= 300) prosesGuru(d);
+    allGuru   = d.data.filter(g => g.kategori.toLowerCase() === 'guru');
+    allTendik = d.data.filter(g => g.kategori.toLowerCase() !== 'guru');
+
+    renderGuru(allGuru);
+    renderTendik(allTendik);
+
+    document.getElementById('statGuru').textContent  = allGuru.length;
+    document.getElementById('statStaf').textContent  = allTendik.length;
+    document.getElementById('statTotal').textContent = d.data.length;
   } catch(e) {
-    if (!localStorage.getItem('cache_guru')) {
-      document.getElementById('guruGrid').innerHTML   = '<div class="empty-state">Data belum tersedia.</div>';
-      document.getElementById('tendikGrid').innerHTML = '<div class="empty-state">Data belum tersedia.</div>';
-    }
+    document.getElementById('guruGrid').innerHTML   = '<div class="empty-state">Data belum tersedia.</div>';
+    document.getElementById('tendikGrid').innerHTML = '<div class="empty-state">Data belum tersedia.</div>';
   }
-}
-
-function prosesGuru(d) {
-  allGuru   = d.data.filter(g => g.kategori.toLowerCase() === 'guru');
-  allTendik = d.data.filter(g => g.kategori.toLowerCase() !== 'guru');
-  renderGuru(allGuru);
-  renderTendik(allTendik);
-  document.getElementById('statGuru').textContent  = allGuru.length;
-  document.getElementById('statStaf').textContent  = allTendik.length;
-  document.getElementById('statTotal').textContent = d.data.length;
-}
-
-function inisialWarna(nama) {
-  const colors = ['#0d3b6e','#1a5ca8','#1a7a4a','#7d3c98','#b7410e','#c0392b','#117a65','#1a5276'];
-  const idx = nama.charCodeAt(0) % colors.length;
-  const inisial = nama.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-  return { bg: colors[idx], inisial };
 }
 
 function buatCard(g, isTendik) {
   const cls = isTendik ? 'guru-card tendik-card' : 'guru-card';
-  const { bg, inisial } = inisialWarna(g.nama);
-  const fotoHtml = g.foto
-    ? `<img src="${g.foto}" alt="${g.nama}" onload="this.style.opacity=1" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" style="opacity:0;transition:opacity 0.3s;">
-       <div class="no-foto-inisial" style="display:none;background:${bg};">${inisial}</div>`
-    : `<div class="no-foto-inisial" style="background:${bg};">${inisial}</div>`;
-
   return `
     <div class="${cls}">
-      <div class="guru-foto">${fotoHtml}</div>
+      <div class="guru-foto">
+        ${g.foto
+          ? `<img src="${g.foto}" alt="${g.nama}" onerror="this.parentElement.innerHTML='<span class=\"no-foto\">👤</span>'">`
+          : '<span class="no-foto">👤</span>'}
+      </div>
       <div class="guru-body">
         <div class="guru-nama">${g.nama}</div>
         <div class="guru-jabatan">${g.jabatan || (isTendik ? 'Staf' : 'Guru')}</div>
