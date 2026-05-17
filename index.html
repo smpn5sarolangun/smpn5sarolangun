@@ -318,9 +318,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
   <button class="slider-arrow prev" onclick="sliderPrev()">&#8249;</button>
   <button class="slider-arrow next" onclick="sliderNext()">&#8250;</button>
   <div class="slider-dots" id="sliderDots"></div>
-  <div id="sliderLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.7);">
-    <div style="text-align:center;"><div style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 10px;"></div>Memuat foto...</div>
-  </div>
+
 </div>
 
 <!-- HERO -->
@@ -372,8 +370,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
     </div>
     <div class="berita-grid" id="berandaBerita">
       <div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--teks-sub);">
-        <div style="width:32px;height:32px;border:3px solid #f0f4f8;border-top-color:var(--biru-mid);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;"></div>
-        <p>Memuat berita...</p>
+  
       </div>
     </div>
     <div style="text-align:center;margin-top:24px;">
@@ -543,15 +540,13 @@ function resetSliderTimer(){
 }
 
 async function muatSlider(){
-  const loading=document.getElementById('sliderLoading');
   const track=document.getElementById('sliderTrack');
   const dots=document.getElementById('sliderDots');
   try{
     const r=await fetch(`${PPDB_URL_I}?action=getSlider`);
     const d=await r.json();
     if(!d.ok||!d.data||!d.data.length){
-      if(loading)loading.innerHTML='<span style="opacity:0.5;font-size:14px;">Belum ada foto slider</span>';
-      return;
+        return;
     }
     track.innerHTML='';
     dots.innerHTML='';
@@ -568,7 +563,6 @@ async function muatSlider(){
       dots.appendChild(dot);
     });
     sliderTotal=d.data.length;
-    if(loading)loading.style.display='none';
     // Hapus slide default jika ada
     const def=document.getElementById('slideDefault');
     if(def)def.remove();
@@ -582,7 +576,6 @@ async function muatSlider(){
       if(Math.abs(dx)>40){dx<0?sliderNext():sliderPrev();}
       x0=null;
     },{passive:true});
-  }catch(e){if(loading)loading.innerHTML='<span style="opacity:0.4;font-size:13px;">Gagal memuat foto</span>';}
   resetSliderTimer();
 }
 muatSlider();
