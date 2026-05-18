@@ -218,6 +218,17 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
 }
 @media(max-width:900px){.hero-inner{grid-template-columns:1fr;}.stats-row{grid-template-columns:repeat(2,1fr)}.berita-grid{grid-template-columns:1fr}.sambutan-wrap{flex-direction:column;text-align:center;}.footer-inner{grid-template-columns:1fr 1fr;}}
 @media(max-width:600px){.stats-row{grid-template-columns:repeat(2,1fr)}.footer-inner{grid-template-columns:1fr;}}
+
+/* TICKER */
+.ticker-wrap{background:var(--biru);border-bottom:1px solid rgba(255,255,255,0.1);height:32px;overflow:hidden;position:fixed;top:64px;width:100%;z-index:999;}
+.ticker-inner{display:flex;align-items:center;height:100%;}
+.ticker-label{background:var(--emas);color:#fff;font-size:11px;font-weight:700;padding:0 14px;height:100%;display:flex;align-items:center;white-space:nowrap;letter-spacing:1px;flex-shrink:0;}
+.ticker-track{overflow:hidden;flex:1;height:100%;}
+.ticker-text{display:inline-flex;align-items:center;height:100%;white-space:nowrap;animation:ticker 30s linear infinite;}
+.ticker-text:hover{animation-play-state:paused;}
+@keyframes ticker{0%{transform:translateX(100vw);}100%{transform:translateX(-100%);}}
+.ticker-item{font-size:12px;color:rgba(255,255,255,0.9);padding:0 32px;display:inline-flex;align-items:center;gap:8px;}
+.ticker-item::before{content:'\25C6';color:var(--emas);font-size:8px;}
 </style>
 </head>
 <body>
@@ -305,7 +316,14 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
     <a href="kontak.html">Kontak</a>
   </div>
 </nav>
-
+<div class="ticker-wrap" id="tickerWrap" style="display:none;">
+  <div class="ticker-inner">
+    <div class="ticker-label">📢 INFO</div>
+    <div class="ticker-track">
+      <div class="ticker-text" id="tickerText"></div>
+    </div>
+  </div>
+</div>
 
 <!-- HERO SLIDER -->
 <div class="hero-slider" id="heroSlider">
@@ -602,6 +620,21 @@ function renderSlider(d) {
 }
 
 muatSlider();
+
+async function muatTicker(){
+  try{
+    const r = await fetch(`${PPDB_URL_I}?action=getTicker`);
+    const d = await r.json();
+    if(!d.ok||!d.data?.length) return;
+    const wrap = document.getElementById('tickerWrap');
+    const text = document.getElementById('tickerText');
+    text.innerHTML = d.data.map(t=>`<span class="ticker-item">${t.teks}</span>`).join('');
+    wrap.style.display = 'block';
+    // Geser hero slider ke bawah
+    document.getElementById('heroSlider').style.marginTop = '96px';
+  }catch(e){}
+}
+muatTicker();
 
 async function muatBerandaBerita() {
   // Cek cache berita
