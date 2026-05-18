@@ -110,10 +110,14 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .sec-title::after{content:'';flex:1;height:2px;background:linear-gradient(to right,var(--biru-mid),transparent);}
 
 /* INFO BADGE */
-.info-badges{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;}
-.badge{background:var(--abu);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;min-width:120px;}
-.badge-label{font-size:11px;color:var(--teks-sub);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
-.badge-val{font-size:18px;font-weight:700;color:var(--biru);}
+.identitas-list{background:var(--abu);border-radius:16px;padding:24px 28px;display:grid;grid-template-columns:auto 1fr;gap:8px 0;}
+.id-label{font-size:14px;font-weight:600;color:var(--teks);padding:6px 0;min-width:200px;}
+.id-sep{font-size:14px;color:var(--teks-sub);padding:6px 16px;}
+.id-val{font-size:14px;color:var(--teks-sub);padding:6px 0;}
+.id-row{display:contents;}
+.id-row:not(:last-child) .id-label,
+.id-row:not(:last-child) .id-sep,
+.id-row:not(:last-child) .id-val{border-bottom:1px solid #e8edf4;}
 
 /* SEJARAH */
 .sejarah-text{font-size:15px;color:var(--teks-sub);line-height:1.9;background:var(--abu);border-radius:16px;padding:28px;border-left:4px solid var(--biru-mid);}
@@ -245,7 +249,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
   <!-- INFO SINGKAT -->
   <div style="margin-bottom:52px;" id="identitas">
     <h2 class="sec-title">🏷️ Identitas Sekolah</h2>
-    <div class="info-badges" id="infoBadges"></div>
+    <div class="identitas-list" id="identitasList"></div>
   </div>
 
   <!-- SEJARAH -->
@@ -319,14 +323,18 @@ async function muatProfil(){
 function prosesProfil(d){
   const p = d.data;
 
-  // Info badges
-  const badges = [];
-  if(p.npsn)         badges.push({label:'NPSN', val:p.npsn});
-  if(p.akreditasi)   badges.push({label:'Akreditasi', val:p.akreditasi});
-  if(p.tahun_berdiri) badges.push({label:'Berdiri', val:p.tahun_berdiri});
-  document.getElementById('infoBadges').innerHTML = badges.map(b=>
-    `<div class="badge"><span class="badge-label">${b.label}</span><span class="badge-val">${b.val}</span></div>`
-  ).join('');
+  // Identitas poin-poin dari prefix identitas_
+  const identitas = Object.entries(p).filter(([k])=>k.startsWith('identitas_'));
+  document.getElementById('identitasList').innerHTML = identitas.length
+    ? identitas.map(([k,v])=>{
+        const label = k.replace('identitas_','');
+        return `<div class="id-row">
+          <span class="id-label">${label}</span>
+          <span class="id-sep">:</span>
+          <span class="id-val">${v}</span>
+        </div>`;
+      }).join('')
+    : '<p style="color:var(--teks-sub);font-size:13px;">Data identitas belum tersedia.</p>';
 
   // Sejarah
   document.getElementById('sejarahText').textContent = p.sejarah || '-';
