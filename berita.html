@@ -6,86 +6,109 @@
 <title>Berita — SMP Negeri 05 Sarolangun</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--biru:#0d3b6e;--biru-mid:#1a5ca8;--hijau:#1a7a4a;--emas:#f0a500;--abu:#f5f7fa;--teks:#1e2a3a;--teks-sub:#5a6a7e;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--teks);background:#fff;}
-/* ── NAVBAR ── */
-  nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97);backdrop-filter:blur(10px);box-shadow:0 2px 20px rgba(0,0,0,0.3);}
-  .nav-inner{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:64px;}
-  .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
-  .nav-brand img{width:42px;height:42px;object-fit:contain;}
-  .nav-brand-text{color:#fff;}
-  .nav-brand-text strong{display:block;font-size:14px;font-weight:700;white-space:nowrap;}
-  .nav-brand-text span{font-size:11px;opacity:0.7;}
-  .nav-links{display:flex;align-items:center;gap:2px;}
-  .nav-link{color:rgba(255,255,255,0.85);text-decoration:none;font-size:13px;font-weight:500;padding:7px 11px;border-radius:7px;transition:all 0.2s;white-space:nowrap;}
-  .nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.15);color:#fff;}
-  .dd-arrow{font-size:9px;opacity:0.7;margin-left:3px;display:inline-block;vertical-align:middle;line-height:1;position:relative;top:-1px;}
+:root{--biru:#0d3b6e;--biru-mid:#1a5ca8;--hijau:#1a7a4a;--emas:#f0a500;--abu:#f5f7fa;--teks:#1e2a3a;--teks-sub:#5a6a7e;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--teks);background:#f8f9fb;overflow-x:hidden;}
+/* NAVBAR sama seperti file lain */
+nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97);backdrop-filter:blur(10px);box-shadow:0 2px 20px rgba(0,0,0,0.3);}
+.nav-inner{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:64px;}
+.nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.nav-brand img{width:42px;height:42px;object-fit:contain;}
+.nav-brand-text{color:#fff;}
+.nav-brand-text strong{display:block;font-size:14px;font-weight:700;white-space:nowrap;}
+.nav-brand-text span{font-size:11px;opacity:0.7;}
+.nav-links{display:flex;align-items:center;gap:2px;}
+.nav-link{color:rgba(255,255,255,0.85);text-decoration:none;font-size:13px;font-weight:500;padding:7px 11px;border-radius:7px;transition:all 0.2s;white-space:nowrap;}
+.nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.15);color:#fff;}
+.dd-arrow{font-size:9px;opacity:0.7;margin-left:3px;display:inline-block;vertical-align:middle;}
+.nav-dropdown{position:relative;}
+.nav-dropdown:hover .dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)!important;}
+.dropdown-menu{position:absolute;top:calc(100% + 8px);background:#fff;border-radius:12px;padding:8px;min-width:190px;box-shadow:0 8px 32px rgba(0,0,0,0.18);opacity:0;visibility:hidden;transition:all 0.2s;z-index:100;left:50%;transform:translateX(-50%) translateY(-8px);}
+.dropdown-menu::before{content:'';position:absolute;top:-6px;border:6px solid transparent;border-bottom-color:#fff;border-top:none;left:50%;transform:translateX(-50%);}
+.dropdown-menu a{display:block;padding:9px 14px;color:var(--teks);text-decoration:none;font-size:13px;font-weight:500;border-radius:8px;transition:all 0.15s;white-space:nowrap;}
+.dropdown-menu a:hover{background:rgba(13,59,110,0.08);color:var(--biru);}
+.nav-dropdown.dd-right .dropdown-menu{left:auto;right:0;transform:translateY(-8px);}
+.nav-dropdown.dd-right .dropdown-menu::before{left:auto;right:16px;transform:none;}
+.nav-dropdown.dd-right:hover .dropdown-menu{transform:translateY(0);}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+.hamburger span{width:24px;height:2px;background:#fff;border-radius:2px;}
+.mobile-menu{display:none;flex-direction:column;padding:12px 20px 16px;background:rgba(13,59,110,0.98);border-top:1px solid rgba(255,255,255,0.1);}
+.mobile-menu.open{display:flex;}
+.mobile-menu a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;font-weight:500;padding:9px 12px;border-radius:8px;transition:background 0.2s;}
+.mobile-menu a:hover{background:rgba(255,255,255,0.1);}
+.mobile-menu .mob-parent{font-weight:700;color:#fff;margin-top:4px;}
+.mobile-menu .mob-child{font-size:13px;padding-left:24px;opacity:0.8;}
+@media(max-width:1024px){.nav-links{display:none;}.hamburger{display:flex;}}
 
-    /* Dropdown */
-  .nav-dropdown{position:relative;}
-  .nav-dropdown:hover .dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)!important;}
-  .dropdown-menu{
-    position:absolute;top:calc(100% + 8px);
-    background:#fff;border-radius:12px;padding:8px;min-width:190px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.18);
-    opacity:0;visibility:hidden;transition:all 0.2s;z-index:100;
-    left:50%;transform:translateX(-50%) translateY(-8px);
-  }
-  .dropdown-menu::before{
-    content:'';position:absolute;top:-6px;
-    border:6px solid transparent;border-bottom-color:#fff;border-top:none;
-    left:50%;transform:translateX(-50%);
-  }
-  .dropdown-menu a{
-    display:block;padding:9px 14px;color:var(--teks);text-decoration:none;
-    font-size:13px;font-weight:500;border-radius:8px;transition:all 0.15s;white-space:nowrap;
-  }
-  .dropdown-menu a:hover{background:rgba(13,59,110,0.08);color:var(--biru);}
-  /* Menu kanan → buka ke kiri */
-  .nav-dropdown.dd-right .dropdown-menu{
-    left:auto;right:0;transform:translateY(-8px);
-  }
-  .nav-dropdown.dd-right .dropdown-menu::before{
-    left:auto;right:16px;transform:none;
-  }
-  .nav-dropdown.dd-right:hover .dropdown-menu{transform:translateY(0);}
-  /* Default: kiri */
-    left:0;transform:translateY(-8px);
-  }
-  .dropdown-menu::before{
-    content:'';position:absolute;top:-6px;
-    border:6px solid transparent;border-bottom-color:#fff;border-top:none;
-    /* Default: kiri */
-    left:16px;transform:none;
-  }
-  .dropdown-menu a{
-    display:block;padding:9px 14px;color:var(--teks);text-decoration:none;
-    font-size:13px;font-weight:500;border-radius:8px;transition:all 0.15s;white-space:nowrap;
-  }
-  .dropdown-menu a:hover{background:rgba(13,59,110,0.08);color:var(--biru);}
-  /* Menu kanan → buka ke kiri */
-  .nav-dropdown.dd-right .dropdown-menu{
-    left:auto;right:0;transform:translateY(-8px);
-  }
-  .nav-dropdown.dd-right .dropdown-menu::before{
-    left:auto;right:16px;transform:none;
-  }
-  .nav-dropdown.dd-right:hover .dropdown-menu{transform:translateY(0);}
+/* PAGE HERO */
+.page-hero{background:linear-gradient(135deg,var(--biru),var(--biru-mid));padding:90px 24px 36px;text-align:center;color:#fff;}
+.page-hero h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:800;margin-bottom:8px;}
+.page-hero p{font-size:14px;opacity:0.8;}
 
+/* MAIN LAYOUT */
+.main{max-width:1100px;margin:0 auto;padding:36px 24px 60px;}
 
-  /* Hamburger & mobile */
-  .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
-  .hamburger span{width:24px;height:2px;background:#fff;border-radius:2px;transition:all 0.3s;}
-  .mobile-menu{display:none;flex-direction:column;padding:12px 20px 16px;background:rgba(13,59,110,0.98);border-top:1px solid rgba(255,255,255,0.1);}
-  .mobile-menu.open{display:flex;}
-  .mobile-menu a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;font-weight:500;padding:9px 12px;border-radius:8px;transition:background 0.2s;}
-  .mobile-menu a:hover{background:rgba(255,255,255,0.1);}
-  .mobile-menu .mob-parent{font-weight:700;color:#fff;margin-top:4px;}
-  .mobile-menu .mob-child{font-size:13px;padding-left:24px;opacity:0.8;}
+/* HERO BERITA UTAMA */
+.hero-berita{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);margin-bottom:36px;display:grid;grid-template-columns:1.4fr 1fr;cursor:pointer;transition:all 0.3s;}
+.hero-berita:hover{box-shadow:0 12px 40px rgba(0,0,0,0.14);transform:translateY(-3px);}
+.hero-foto{height:340px;position:relative;overflow:hidden;}
+.hero-foto img{width:100%;height:100%;object-fit:cover;}
+.hero-foto-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;}
+.hero-badge{position:absolute;top:16px;left:16px;background:var(--emas);color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:1px;}
+.hero-body{padding:32px 28px;display:flex;flex-direction:column;justify-content:center;}
+.hero-kat{font-size:11px;font-weight:700;color:var(--biru-mid);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;}
+.hero-judul{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;line-height:1.4;margin-bottom:14px;color:var(--teks);}
+.hero-exc{font-size:13px;color:var(--teks-sub);line-height:1.8;margin-bottom:20px;}
+.hero-meta{font-size:12px;color:var(--teks-sub);display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.baca-btn{display:inline-flex;align-items:center;gap:6px;background:var(--biru);color:#fff;padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;margin-top:16px;width:fit-content;transition:background 0.2s;}
+.baca-btn:hover{background:var(--biru-mid);}
 
-  @media(max-width:1024px){.nav-links{display:none;}.hamburger{display:flex;}}
+/* FILTER */
+.filter-wrap{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;align-items:center;}
+.fb{padding:7px 18px;border-radius:100px;border:2px solid #dde3ee;background:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;color:var(--teks-sub);transition:all 0.2s;}
+.fb.active,.fb:hover{background:var(--biru);color:#fff;border-color:var(--biru);}
+.filter-label{font-size:13px;font-weight:600;color:var(--teks-sub);margin-right:4px;}
 
+/* GRID BERITA */
+.berita-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:32px;}
+.bc{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;cursor:pointer;transition:all 0.3s;border-bottom:3px solid transparent;}
+.bc:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(0,0,0,0.11);border-bottom-color:var(--biru-mid);}
+.bi{height:160px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.bi img{width:100%;height:100%;object-fit:cover;}
+.bi-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;}
+.bc-kat{position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;color:#fff;background:var(--biru-mid);padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;}
+.bd{padding:16px;}
+.bjudul{font-size:14px;font-weight:700;color:var(--teks);line-height:1.5;margin-bottom:8px;}
+.bexc{font-size:12px;color:var(--teks-sub);line-height:1.7;margin-bottom:10px;}
+.bmeta{font-size:11px;color:var(--teks-sub);display:flex;justify-content:space-between;align-items:center;}
+.baca-link{color:var(--biru-mid);font-weight:700;font-size:12px;}
+
+/* PAGINATION */
+.pagination{display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap;}
+.pg-btn{padding:8px 14px;border-radius:8px;border:2px solid #dde3ee;background:#fff;color:var(--teks-sub);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;transition:all 0.2s;}
+.pg-btn.active,.pg-btn:hover{background:var(--biru);color:#fff;border-color:var(--biru);}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:20px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;position:relative;}
+.modal-foto{width:100%;height:280px;object-fit:cover;border-radius:20px 20px 0 0;}
+.modal-foto-bg{width:100%;height:220px;display:flex;align-items:center;justify-content:center;font-size:80px;border-radius:20px 20px 0 0;}
+.modal-body{padding:28px 32px 36px;}
+.modal-kat{font-size:11px;font-weight:700;color:var(--biru-mid);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;}
+.modal-judul{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-bottom:12px;line-height:1.4;}
+.modal-meta{font-size:12px;color:var(--teks-sub);margin-bottom:20px;display:flex;gap:16px;flex-wrap:wrap;}
+.modal-isi{font-size:14px;line-height:1.9;color:var(--teks);white-space:pre-line;}
+.modal-close{position:absolute;top:16px;right:16px;background:rgba(0,0,0,0.5);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;border:none;z-index:10;}
+.modal-close:hover{background:rgba(0,0,0,0.75);}
+
+/* EMPTY */
+.empty{grid-column:1/-1;text-align:center;padding:60px;color:var(--teks-sub);}
+
+/* RESPONSIVE */
+@media(max-width:900px){.hero-berita{grid-template-columns:1fr;}.hero-foto{height:220px;}.berita-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.berita-grid{grid-template-columns:1fr;}.modal-body{padding:20px;}.modal-judul{font-size:20px;}}
 </style>
 </head>
 <body>
@@ -173,99 +196,196 @@
     <a href="kontak.html">Kontak</a>
   </div>
 </nav>
-
-
-<div style="background:linear-gradient(135deg,var(--biru),var(--biru-mid));padding:110px 24px 50px;text-align:center;color:#fff;">
-  <h1 style="font-family:'Playfair Display',serif;font-size:38px;font-weight:800;margin-bottom:10px;">📰 Berita Sekolah</h1>
-  <p style="font-size:16px;opacity:0.8;">Informasi, kegiatan, dan prestasi terbaru SMP Negeri 05 Sarolangun</p>
+<div class="page-hero">
+  <h1>📰 Berita Sekolah</h1>
+  <p>Kegiatan, prestasi, dan informasi terbaru SMP Negeri 05 Sarolangun</p>
 </div>
-<div style="max-width:1100px;margin:0 auto;padding:52px 24px 60px;">
-  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;" id="filterBar">
+
+<div class="main">
+  <div id="heroBerita" style="display:none;" onclick="bukaBaca(0)"></div>
+  <div class="filter-wrap">
+    <span class="filter-label">Filter:</span>
     <button class="fb active" onclick="filterBerita('',this)">Semua</button>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;" id="beritaGrid">
-    <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--teks-sub);">
-      <div style="width:36px;height:36px;border:3px solid #f0f4f8;border-top-color:var(--biru-mid);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;"></div>
-      <p>Memuat berita...</p>
-    </div>
+  <div class="berita-grid" id="beritaGrid">
+    <div class="empty">Memuat...</div>
   </div>
-  <div style="display:flex;gap:8px;justify-content:center;margin-top:32px;" id="pagination"></div>
+  <div class="pagination" id="pagination"></div>
 </div>
-<style>
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .fb{padding:8px 20px;border-radius:100px;border:2px solid #dde3ee;background:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:var(--teks-sub);transition:all 0.2s;}
-  .fb.active,.fb:hover{background:var(--biru);color:#fff;border-color:var(--biru);}
-  .bc{background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.07);overflow:hidden;transition:all 0.3s;}
-  .bc:hover{transform:translateY(-5px);box-shadow:0 12px 36px rgba(0,0,0,0.12);}
-  .bi{height:180px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden;}
-  .bi img{width:100%;height:100%;object-fit:cover;}
-  .bd{padding:20px;}
-  .bcat{font-size:11px;font-weight:700;color:var(--biru-mid);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-  .bjudul{font-size:15px;font-weight:700;color:var(--teks);line-height:1.5;margin-bottom:10px;}
-  .bexc{font-size:13px;color:var(--teks-sub);line-height:1.7;}
-  @media(max-width:900px){#beritaGrid{grid-template-columns:repeat(2,1fr)!important;}}
-  @media(max-width:600px){#beritaGrid{grid-template-columns:1fr!important;}}
-</style>
-<script>
-const PPDB_URL_B = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
-const PER_PAGE = 9;
-let semuaBerita = [], filterAktif = '', halaman = 1;
-const WARNA = ['#0d3b6e','#1a7a4a','#7d3c98','#c0392b','#e67e22','#2980b9'];
-const IKON  = ['📰','🏆','🎓','📢','🎉','🌟','📚','⚽','🎨'];
 
-async function muatBerita() {
-  try {
-    const r = await fetch(`${PPDB_URL_B}?action=getBerita&max=500`);
-    const d = await r.json();
-    if (!d.ok || !d.data?.length) { kosong(); return; }
-    semuaBerita = d.data.map((b,i) => ({...b, warna:WARNA[i%WARNA.length], ikon:IKON[i%IKON.length]});
-    // Filter buttons
-    const kats = [...new Set(semuaBerita.map(b=>b.kategori))];
-    const bar = document.getElementById('filterBar');
-    kats.forEach(k => { const btn=document.createElement('button'); btn.className='fb'; btn.textContent=k; btn.onclick=()=>filterBerita(k,btn); bar.appendChild(btn); });
-    render();
-  } catch(e) { kosong(); }
-}
+<div class="modal-bg" id="modalBg" onclick="tutupModal(event)">
+  <div class="modal" id="modalBox">
+    <button class="modal-close" onclick="document.getElementById('modalBg').classList.remove('open');document.body.style.overflow='';">✕</button>
+    <div id="modalKonten"></div>
+  </div>
+</div>
 
-function filterBerita(kat, btn) {
-  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); filterAktif=kat; halaman=1; render();
-}
-
-function render() {
-  const data = filterAktif ? semuaBerita.filter(b=>b.kategori===filterAktif) : semuaBerita;
-  const slice = data.slice((halaman-1)*PER_PAGE, halaman*PER_PAGE);
-  document.getElementById('beritaGrid').innerHTML = slice.length ? slice.map((b,i) => `
-    <div class="bc">
-      <div class="bi" style="background:linear-gradient(135deg,${b.warna}cc,${b.warna});">
-        ${b.fotoUrl?`<img src="${b.fotoUrl}" onerror="this.style.display='none'">`:''}
-        ${b.ikon}
-      </div>
-      <div class="bd">
-        <div class="bcat">${b.kategori}</div>
-        <div class="bjudul">${b.judul}</div>
-        <div class="bexc">${(b.isi||'').substring(0,120)}...</div>
-      </div>
-    </div>`).join('') : '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--teks-sub);">Tidak ada berita</div>';
-  
-  const total = Math.ceil(data.length/PER_PAGE);
-  document.getElementById('pagination').innerHTML = total>1 ? Array.from({length:total},(_,i)=>`<button onclick="gantiHal(${i+1})" style="padding:8px 14px;border-radius:8px;border:2px solid ${i+1===halaman?'var(--biru)':'#dde3ee'};background:${i+1===halaman?'var(--biru)':'#fff'};color:${i+1===halaman?'#fff':'var(--teks-sub)'};cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">${i+1}</button>`).join('') : '';
-}
-
-function gantiHal(h) { halaman=h; render(); window.scrollTo({top:0,behavior:'smooth'}); }
-function kosong() { document.getElementById('beritaGrid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--teks-sub);"><div style="font-size:48px;margin-bottom:12px;">📰</div><p style="font-weight:700;color:var(--biru);margin-bottom:8px;">Berita Segera Hadir</p><p style="font-size:13px;">Tambah berita di Google Sheets → tab BERITA → Status: Publish</p></div>'; }
-muatBerita();
-</script>
-<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:40px 0;text-align:center;">
-  <p style="font-size:13px;opacity:0.6;">© 2026 SMP Negeri 05 Sarolangun</p>
-  <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-    <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Beranda</a>
-    <!-- PPDB FOOTER DISEMBUNYIKAN:
-    <a href="ppdb.html" style="color:var(--emas);text-decoration:none;font-size:13px;font-weight:700;">PPDB 2026</a>
-    -->
-    <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Kontak</a>
+<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:28px 0;text-align:center;margin-top:20px;">
+  <p style="font-size:12px;opacity:0.6;">© 2026 SMP Negeri 05 Sarolangun</p>
+  <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Beranda</a>
+    <a href="pengumuman.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Pengumuman</a>
+    <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Kontak</a>
   </div>
 </footer>
-<script>function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}</script>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
+const PER_PAGE = 6;
+const IKON = ['📰','🏆','🎓','🎉','🌟','📚','⚽','🎨','🏅','📢'];
+const WARNA_MAP = {Berita:'#1a5ca8',Prestasi:'#1a7a4a',Kegiatan:'#7d3c98',Pengumuman:'#c0392b'};
+const WARNA_DEF = ['#0d3b6e','#1a7a4a','#7d3c98','#c0392b','#e67e22','#2980b9'];
+
+let semuaBerita=[], filterAktif='', halaman=1, dataFilter=[];
+
+function formatTgl(t){
+  if(!t) return '';
+  const d=new Date(t);
+  return isNaN(d)?t:d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+}
+
+function getWarna(b,i){ return WARNA_MAP[b.kategori]||WARNA_DEF[i%WARNA_DEF.length]; }
+function getIkon(i){ return IKON[i%IKON.length]; }
+function exc(s,n){ return (s||'').substring(0,n); }
+
+async function muatBerita(){
+  const cached=localStorage.getItem('cache_berita_page');
+  if(cached) prosesBerita(JSON.parse(cached));
+  try{
+    const r=await fetch(`${SCRIPT_URL}?action=getBerita&max=500`);
+    const d=await r.json();
+    if(!d.ok||!d.data?.length){ if(!cached) kosong(); return; }
+    const beritaSaja=d.data.filter(b=>(b.kategori||'').toLowerCase()!=='pengumuman');
+    const payload={...d,data:beritaSaja};
+    localStorage.setItem('cache_berita_page',JSON.stringify(payload));
+    prosesBerita(payload);
+  }catch(e){ if(!cached) kosong(); }
+}
+
+function prosesBerita(d){
+  semuaBerita=d.data.map((b,i)=>({...b,_w:getWarna(b,i),_i:getIkon(i)}));
+  const bar=document.querySelector('.filter-wrap');
+  bar.querySelectorAll('.fb:not(:first-child)').forEach(b=>b.remove());
+  const kats=[...new Set(semuaBerita.map(b=>b.kategori).filter(Boolean))];
+  kats.forEach(k=>{
+    const btn=document.createElement('button');
+    btn.className='fb'; btn.textContent=k;
+    btn.onclick=()=>filterBerita(k,btn);
+    bar.appendChild(btn);
+  });
+  renderHero();
+  render();
+}
+
+function renderHero(){
+  if(!semuaBerita.length) return;
+  const b=semuaBerita[0];
+  const hero=document.getElementById('heroBerita');
+  const bg=`background:linear-gradient(135deg,${b._w}cc,${b._w})`;
+  hero.style.display='grid';
+  hero.className='hero-berita';
+  hero.innerHTML=`
+    <div class="hero-foto" style="${!b.fotoUrl?bg:''}">
+      ${b.fotoUrl
+        ?`<img src="${b.fotoUrl}" onerror="this.parentElement.setAttribute('style','${bg}');this.outerHTML='<div class=hero-foto-bg>${b._i}</div>'">`
+        :`<div class="hero-foto-bg">${b._i}</div>`}
+      <div class="hero-badge">Terbaru</div>
+    </div>
+    <div class="hero-body">
+      <div class="hero-kat">${b.kategori||'Berita'}</div>
+      <div class="hero-judul">${b.judul}</div>
+      <div class="hero-exc">${exc(b.isi,180)}...</div>
+      <div class="hero-meta">
+        <span>✍️ ${b.penulis||'Admin'}</span>
+        <span>📅 ${formatTgl(b.tanggal)}</span>
+      </div>
+      <span class="baca-btn">Baca Selengkapnya →</span>
+    </div>`;
+}
+
+function render(){
+  dataFilter=filterAktif?semuaBerita.filter(b=>b.kategori===filterAktif):semuaBerita;
+  const source=filterAktif?dataFilter:dataFilter.slice(1);
+  const slice=source.slice((halaman-1)*PER_PAGE,halaman*PER_PAGE);
+  document.getElementById('beritaGrid').innerHTML=slice.length?slice.map(b=>{
+    const idx=semuaBerita.indexOf(b);
+    const bg=`background:linear-gradient(135deg,${b._w}cc,${b._w})`;
+    return `<div class="bc" onclick="bukaBaca(${idx})">
+      <div class="bi" style="${!b.fotoUrl?bg:''}">
+        ${b.fotoUrl
+          ?`<img src="${b.fotoUrl}" onerror="this.parentElement.setAttribute('style','${bg}');this.outerHTML='<div class=bi-bg>${b._i}</div>'">`
+          :`<div class="bi-bg">${b._i}</div>`}
+        <div class="bc-kat">${b.kategori||'Berita'}</div>
+      </div>
+      <div class="bd">
+        <div class="bjudul">${b.judul}</div>
+        <div class="bexc">${exc(b.isi,100)}...</div>
+        <div class="bmeta">
+          <span>📅 ${formatTgl(b.tanggal)}</span>
+          <span class="baca-link">Baca →</span>
+        </div>
+      </div>
+    </div>`;
+  }).join(''):'<div class="empty">Tidak ada berita.</div>';
+
+  const total=Math.ceil(source.length/PER_PAGE);
+  document.getElementById('pagination').innerHTML=total>1
+    ?Array.from({length:total},(_,i)=>`<button class="pg-btn${i+1===halaman?' active':''}" onclick="gantiHal(${i+1})">${i+1}</button>`).join('')
+    :'';
+}
+
+function filterBerita(kat,btn){
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterAktif=kat; halaman=1;
+  document.getElementById('heroBerita').style.display=kat?'none':'grid';
+  render();
+}
+
+function gantiHal(h){ halaman=h; render(); window.scrollTo({top:300,behavior:'smooth'}); }
+
+function bukaBaca(idx){
+  const b=semuaBerita[idx];
+  if(!b) return;
+  const bg=`background:linear-gradient(135deg,${b._w}cc,${b._w})`;
+  document.getElementById('modalKonten').innerHTML=`
+    ${b.fotoUrl
+      ?`<img class="modal-foto" src="${b.fotoUrl}" onerror="this.style.display='none'">`
+      :`<div class="modal-foto-bg" style="${bg}">${b._i}</div>`}
+    <div class="modal-body">
+      <div class="modal-kat">${b.kategori||'Berita'}</div>
+      <div class="modal-judul">${b.judul}</div>
+      <div class="modal-meta">
+        <span>✍️ ${b.penulis||'Admin Sekolah'}</span>
+        <span>📅 ${formatTgl(b.tanggal)}</span>
+      </div>
+      <div class="modal-isi">${b.isi||''}</div>
+    </div>`;
+  document.getElementById('modalBg').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function tutupModal(e){
+  if(e&&e.target!==document.getElementById('modalBg')) return;
+  document.getElementById('modalBg').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function kosong(){
+  document.getElementById('heroBerita').style.display='none';
+  document.getElementById('beritaGrid').innerHTML=`
+    <div class="empty">
+      <div style="font-size:48px;margin-bottom:12px;">📰</div>
+      <p style="font-weight:700;color:var(--biru);margin-bottom:8px;">Berita Segera Hadir</p>
+      <p style="font-size:13px;">Tambah berita di Google Sheets tab BERITA → Kategori: Berita → Status: Publish</p>
+    </div>`;
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('modalBg').classList.remove('open');document.body.style.overflow='';}});
+if(history.scrollRestoration) history.scrollRestoration='manual';
+window.scrollTo(0,0);
+muatBerita();
+function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}
+</script>
 </body>
 </html>
