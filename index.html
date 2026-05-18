@@ -1,9 +1,4 @@
-<div class="stats-row">
-  <div class="stat-card"><div class="stat-num" style="color:var(--biru);" id="statSiswa">450+</div><div class="stat-desc">Siswa Aktif</div></div>
-  <div class="stat-card"><div class="stat-num" style="color:var(--hijau);" id="statGuru">34</div><div class="stat-desc">Guru &amp; Staf</div></div>
-  <div class="stat-card"><div class="stat-num" style="color:var(--emas);" id="statRombel">14</div><div class="stat-desc">Rombel / Kelas</div></div>
-  <div class="stat-card"><div class="stat-num" style="color:#e74c3c;" id="statAkreditasi">B</div><div class="stat-desc">Akreditasi</div></div>
-</div><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -109,7 +104,7 @@ html{scroll-behavior:smooth;}body{font-family:'Plus Jakarta Sans',sans-serif;col
 /* GEDUNG STRIP */
 /* HERO SLIDER */
 body{overflow-x:hidden;}
-.hero-slider{position:relative;width:100%;height:100vh;min-height:500px;margin-top:64px;overflow:hidden;background:#0d3b6e;transition:margin-top 0.2s;}
+.hero-slider{position:relative;width:100%;height:100vh;min-height:500px;margin-top:64px;overflow:hidden;background:#0d3b6e;}
 .slider-track{display:flex;height:100%;transition:transform 0.7s cubic-bezier(.4,0,.2,1);}
 .slider-slide{min-width:100%;height:100%;position:relative;flex-shrink:0;}
 .slider-slide img{width:100%;height:100%;object-fit:cover;object-position:center 60%;}
@@ -435,7 +430,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
       <!-- VISI -->
       <div class="vm-card visi" style="grid-column:1/-1;">
         <div class="vm-title"><span class="vm-icon">👁️</span> Visi Sekolah</div>
-        <p class="vm-visi-quote" id="visiQuote">
+        <p class="vm-visi-quote">
           "Bertaqwa, Cerdas, Terampil, Disiplin, Sehat, Berwawasan Lingkungan, serta Cinta Tanah Air"
         </p>
       </div>
@@ -447,7 +442,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
       <!-- MISI -->
       <div class="vm-card misi" style="grid-column:1/-1;">
         <div class="vm-title"><span class="vm-icon">🎯</span> Misi Sekolah</div>
-        <p id="misiText" style="font-family:'Playfair Display',serif;font-size:15px;font-style:italic;color:rgba(255,255,255,0.92);margin-bottom:20px;line-height:1.8;">"Mengembangkan potensi siswa melalui pembelajaran intrakurikuler, kokurikuler dan ekstrakurikuler sesuai bakat, minat dan kemampuan."</p>
+        <p style="font-size:14px;color:rgba(255,255,255,0.88);margin-bottom:20px;line-height:1.7;">Mengembangkan potensi siswa melalui pembelajaran intrakurikuler, kokurikuler dan ekstrakurikuler sesuai bakat, minat dan kemampuan.</p>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
           <div class="vm-misi-item" style="display:block;">
             <div class="vm-misi-label" style="display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">🏫</span> Intrakurikuler</div>
@@ -545,161 +540,137 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
 </footer>
 
 <script>
-const PPDB_URL_I = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
-
-// ── PROFIL: stats + visi misi dari sheet ──
-async function muatProfil(){
-  const cached = localStorage.getItem('cache_profil_beranda');
-  if(cached) renderProfilBeranda(JSON.parse(cached));
-  try{
-    const r = await fetch(`${PPDB_URL_I}?action=getProfil`);
-    const d = await r.json();
-    if(!d.ok||!d.data) return;
-    localStorage.setItem('cache_profil_beranda', JSON.stringify(d));
-    renderProfilBeranda(d);
-  }catch(e){}
-}
-function renderProfilBeranda(d){
-  const p = d.data;
-  const akreditasi = p['identitas_Akreditasi']||p['akreditasi'];
-  if(akreditasi){ const el=document.getElementById('statAkreditasi'); if(el) el.textContent=akreditasi; }
-  if(p.visi){ const el=document.getElementById('visiQuote'); if(el) el.textContent='"'+p.visi+'"'; }
-  if(p.misi){ const el=document.getElementById('misiText'); if(el) el.textContent='"'+p.misi+'"'; }
-}
-
-// ── TICKER ──
-function renderTicker(data){
-  if(!data?.length) return;
-  const wrap=document.getElementById('tickerWrap');
-  const text=document.getElementById('tickerText');
-  text.innerHTML=data.map(t=>`<span class="ticker-item">${t.teks}</span>`).join('');
-  wrap.style.display='block';
-  document.documentElement.style.setProperty('--ticker-offset','32px');
-  document.getElementById('heroSlider').style.marginTop='96px';
-  // Background gap
-  document.querySelector('.ticker-wrap').style.borderBottom='none';
-  document.querySelector('.ticker-wrap').style.boxShadow='0 32px 0 #0d3b6e';
-}
-async function muatTicker(){
-  const cached=localStorage.getItem('cache_ticker');
-  if(cached) renderTicker(JSON.parse(cached));
-  try{
-    const r=await fetch(`${PPDB_URL_I}?action=getTicker`);
-    const d=await r.json();
-    if(!d.ok||!d.data?.length) return;
-    localStorage.setItem('cache_ticker',JSON.stringify(d.data));
-    renderTicker(d.data);
-  }catch(e){}
-}
-
 // ── SLIDER ──
-let sliderIdx=0,sliderTotal=0,sliderTimer=null;
-function sliderGo(idx){
+const PPDB_URL_I = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
+let sliderIdx=0, sliderTotal=0, sliderTimer=null;
+
+function sliderGo(idx) {
   if(!sliderTotal) return;
-  sliderIdx=(idx+sliderTotal)%sliderTotal;
-  document.getElementById('sliderTrack').style.transform=`translateX(-${sliderIdx*100}%)`;
-  document.querySelectorAll('.slider-dot').forEach((d,i)=>d.classList.toggle('active',i===sliderIdx));
+  sliderIdx = (idx + sliderTotal) % sliderTotal;
+  document.getElementById('sliderTrack').style.transform = `translateX(-${sliderIdx*100}%)`;
+  document.querySelectorAll('.slider-dot').forEach((d,i) => d.classList.toggle('active', i===sliderIdx));
 }
-function sliderNext(){sliderGo(sliderIdx+1);resetSliderTimer();}
-function sliderPrev(){sliderGo(sliderIdx-1);resetSliderTimer();}
+function sliderNext(){ sliderGo(sliderIdx+1); resetSliderTimer(); }
+function sliderPrev(){ sliderGo(sliderIdx-1); resetSliderTimer(); }
 function resetSliderTimer(){
-  if(sliderTimer)clearInterval(sliderTimer);
-  sliderTimer=setInterval(sliderNext,7000);
+  if(sliderTimer) clearInterval(sliderTimer);
+  sliderTimer = setInterval(sliderNext, 7000);
 }
+
 async function muatSlider(){
-  const cached=localStorage.getItem('cache_slider');
-  if(cached) renderSlider(JSON.parse(cached));
-  try{
-    const r=await fetch(`${PPDB_URL_I}?action=getSlider`);
-    const d=await r.json();
-    localStorage.setItem('cache_slider',JSON.stringify(d));
+  const track = document.getElementById('sliderTrack');
+  const dots  = document.getElementById('sliderDots');
+  try {
+    // Cek cache slider
+    const cached = localStorage.getItem('cache_slider');
+    // Tampilkan cache dulu jika ada
+    if (cached) renderSlider(JSON.parse(cached));
+    // Selalu fetch di background
+    const r = await fetch(`${PPDB_URL_I}?action=getSlider`);
+    const d = await r.json();
+    localStorage.setItem('cache_slider', JSON.stringify(d));
+    localStorage.setItem('cache_slider_time', Date.now().toString());
+    if (true) {
+    if(!d.ok || !d.data || !d.data.length) {
+      if (!cached) { sliderTotal = 1; }
+      resetSliderTimer();
+      return;
+    }
     renderSlider(d);
-  }catch(e){ if(!sliderTotal) sliderTotal=1; resetSliderTimer(); }
-}
-function renderSlider(d){
-  if(!d.ok||!d.data||!d.data.length){ if(!sliderTotal) sliderTotal=1; resetSliderTimer(); return; }
-  const track=document.getElementById('sliderTrack');
-  const dots=document.getElementById('sliderDots');
-  track.innerHTML=''; dots.innerHTML='';
-  d.data.forEach((item,i)=>{
-    const slide=document.createElement('div');
-    slide.className='slider-slide';
-    slide.innerHTML=`<img src="${item.url}" alt="${item.caption||''}" style="width:100%;height:100%;object-fit:cover;object-position:center 60%;" onerror="this.style.display='none'">
-      <div class="slide-overlay"></div>`;
-    track.appendChild(slide);
-    const dot=document.createElement('div');
-    dot.className='slider-dot'+(i===0?' active':'');
-    dot.onclick=()=>{sliderGo(i);resetSliderTimer();};
-    dots.appendChild(dot);
-  });
-  sliderTotal=d.data.length; sliderIdx=0;
-  track.style.transform='translateX(0%)';
-  const el=document.getElementById('heroSlider');
-  if(!el._swipe){
-    el._swipe=true;
-    let x0=null;
-    el.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
-    el.addEventListener('touchend',e=>{
-      if(x0===null)return;
-      const dx=e.changedTouches[0].clientX-x0;
-      if(Math.abs(dx)>40){dx<0?sliderNext():sliderPrev();}
-      x0=null;
-    },{passive:true});
+    }
+  } catch(e) {
+    sliderTotal = sliderTotal || 1;
   }
   resetSliderTimer();
 }
 
-// ── BERITA & PENGUMUMAN ──
-function buatKartuBerita(b,i,href){
-  const ikon=['📣','🏆','📚','🎓','🌟'];
-  const tgl=b.tanggal?new Date(b.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}):'';
-  const warna=b.kategori==='Pengumuman'?'135deg,var(--biru-mid),#7d3c98':'135deg,var(--biru),var(--biru-mid)';
-  return `<div class="berita-card">
-    <div class="berita-img" style="background:linear-gradient(${warna});">
-      ${b.fotoUrl?`<img src="${b.fotoUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:ikon[i]}
-      <span class="berita-date">${tgl}</span>
-    </div>
-    <div class="berita-body">
-      <div class="berita-cat">${b.kategori||'Berita'}</div>
-      <div class="berita-judul">${b.judul}</div>
-      <div class="berita-excerpt">${(b.isi||'').substring(0,120)}...</div>
-    </div>
-    <div class="berita-footer"><span class="berita-author">${b.penulis||'Admin'}</span><a href="${href}" class="berita-link">Baca →</a></div>
-  </div>`;
+function renderSlider(d) {
+  if(!d.ok || !d.data || !d.data.length) { sliderTotal = 1; return; }
+  const track = document.getElementById('sliderTrack');
+  const dots  = document.getElementById('sliderDots');
+  track.innerHTML = '';
+  dots.innerHTML  = '';
+  d.data.forEach((item, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'slider-slide';
+    slide.innerHTML = `<img src="${item.url}" alt="${item.caption||'SMP Negeri 05 Sarolangun'}" style="width:100%;height:100%;object-fit:cover;object-position:center 60%;" onerror="this.style.display='none'">
+      <div class="slide-overlay"></div>`;
+    track.appendChild(slide);
+    const dot = document.createElement('div');
+    dot.className = 'slider-dot' + (i===0 ? ' active' : '');
+    dot.onclick = () => { sliderGo(i); resetSliderTimer(); };
+    dots.appendChild(dot);
+  });
+  sliderTotal = d.data.length;
+  sliderIdx   = 0;
+  track.style.transform = 'translateX(0%)';
+  // Swipe support mobile
+  let x0 = null;
+  const el = document.getElementById('heroSlider');
+  if (!el._swipe) {
+    el._swipe = true;
+    el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, {passive:true});
+    el.addEventListener('touchend', e => {
+      if(x0===null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      if(Math.abs(dx) > 40) { dx < 0 ? sliderNext() : sliderPrev(); }
+      x0 = null;
+    }, {passive:true});
+  }
 }
 
-async function muatBerandaBerita(){
-  const cachedB=localStorage.getItem('cache_berita');
-  if(cachedB) renderBerita(JSON.parse(cachedB));
+muatSlider();
+
+async function muatTicker(){
   try{
-    const r=await fetch(`${PPDB_URL_I}?action=getBerita&max=20`);
-    const d=await r.json();
-    localStorage.setItem('cache_berita',JSON.stringify(d));
-    renderBerita(d);
-  }catch(e){ if(!localStorage.getItem('cache_berita')) document.getElementById('berandaBerita').innerHTML=defaultCard(); }
+    const r = await fetch(`${PPDB_URL_I}?action=getTicker`);
+    const d = await r.json();
+    if(!d.ok||!d.data?.length) return;
+    const wrap = document.getElementById('tickerWrap');
+    const text = document.getElementById('tickerText');
+    text.innerHTML = d.data.map(t=>`<span class="ticker-item">${t.teks}</span>`).join('');
+    wrap.style.display = 'block';
+    // Geser hero slider ke bawah
+    document.getElementById('heroSlider').style.marginTop = '96px';
+  }catch(e){}
 }
+muatTicker();
 
-function renderBerita(d){
-  const el=document.getElementById('berandaBerita');
-  if(!d.ok||!d.data?.length){ el.innerHTML=defaultCard(); return; }
-  const berita=d.data.filter(b=>(b.kategori||'').toLowerCase()!=='pengumuman');
-  const pengumuman=d.data.filter(b=>(b.kategori||'').toLowerCase()==='pengumuman');
-  const k1=berita[0]?buatKartuBerita(berita[0],0,'berita.html'):null;
-  const k2=berita[1]?buatKartuBerita(berita[1],1,'berita.html'):null;
-  const k3=pengumuman[0]?buatKartuBerita(pengumuman[0],2,'pengumuman.html'):(berita[2]?buatKartuBerita(berita[2],2,'berita.html'):null);
-  el.innerHTML=[k1,k2,k3].filter(Boolean).join('')||defaultCard();
+async function muatBerandaBerita() {
+  // Cek cache berita
+  const cachedB = localStorage.getItem('cache_berita');
+  // Tampilkan cache berita dulu jika ada
+  if (cachedB) renderBerita(JSON.parse(cachedB));
+  try {
+    const r = await fetch(`${PPDB_URL_I}?action=getBerita&max=3`);
+    const d = await r.json();
+    const el = document.getElementById('berandaBerita');
+    if (!d.ok || !d.data?.length) { el.innerHTML = defaultCard(); return; }
+    const ikon = ['📣','🏆','📚','🎓','🌟'];
+    el.innerHTML = d.data.slice(0,3).map((b,i) => {
+      const tgl = b.tanggal ? new Date(b.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}) : '';
+      return `<div class="berita-card">
+        <div class="berita-img" style="background:linear-gradient(135deg,var(--biru),var(--biru-mid));">
+          ${b.fotoUrl?`<img src="${b.fotoUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:ikon[i]}
+          <span class="berita-date">${tgl}</span>
+        </div>
+        <div class="berita-body">
+          <div class="berita-cat">${b.kategori}</div>
+          <div class="berita-judul">${b.judul}</div>
+          <div class="berita-excerpt">${(b.isi||'').substring(0,120)}...</div>
+        </div>
+        <div class="berita-footer"><span class="berita-author">${b.penulis}</span><a href="berita.html" class="berita-link">Baca →</a></div>
+      </div>`;
+    }).join('');
+  } catch(e) { document.getElementById('berandaBerita').innerHTML = defaultCard(); }
 }
-
-function defaultCard(){
-  return `<div class="berita-card"><div class="berita-img">🏫</div><div class="berita-body"><div class="berita-cat">Selamat Datang</div><div class="berita-judul">Website Resmi SMP Negeri 05 Sarolangun</div><div class="berita-excerpt">Website resmi SMP Negeri 05 Sarolangun telah hadir. Informasi terbaru segera tersedia di sini.</div></div><div class="berita-footer"><span class="berita-author">Admin</span><a href="berita.html" class="berita-link">Selengkapnya →</a></div></div>`;
+function defaultCard() {
+  return `<div class="berita-card"><div class="berita-img">🏫</div><div class="berita-body"><div class="berita-cat">Selamat Datang</div><div class="berita-judul">Website Resmi SMP Negeri 05 Sarolangun</div><div class="berita-excerpt">Website resmi SMPN 05 Sarolangun telah hadir. Informasi terbaru segera tersedia di sini.</div></div><div class="berita-footer"><span class="berita-author">Admin</span><a href="berita.html" class="berita-link">Selengkapnya →</a></div></div>`;
 }
-
+muatBerandaBerita();
+// Scroll ke atas saat halaman dimuat/reload
 if(history.scrollRestoration) history.scrollRestoration='manual';
 window.scrollTo(0,0);
-muatSlider();
-muatProfil();
-muatTicker();
-muatBerandaBerita();
 function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}
 </script>
 </body>
