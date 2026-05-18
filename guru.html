@@ -53,23 +53,23 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .section-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:800;margin-bottom:8px;}
 .section-sub{font-size:13px;color:var(--teks-sub);margin-bottom:24px;}
 /* SEARCH */
-.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;align-items:center;}
-.search-box{padding:10px 14px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;flex:1;min-width:180px;}
-.search-box:focus{border-color:var(--biru-mid);}
+
+
+
 /* GRID */
 .guru-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-bottom:52px;}
 .guru-card{background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,0.07);overflow:hidden;transition:all 0.3s;border-bottom:3px solid var(--biru-mid);}
 .guru-card:hover{transform:translateY(-5px);box-shadow:0 12px 32px rgba(0,0,0,0.12);}
 .guru-foto{height:240px;background:linear-gradient(135deg,#eef2f8,#dde5f5);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
-.guru-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 15%;}
+.guru-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;}
 .guru-foto .no-foto{font-size:72px;opacity:0.18;}
 .no-foto-inisial{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:2px;}
 .guru-body{padding:14px 14px 14px 14px;}
 .guru-nama{font-size:14px;font-weight:700;color:var(--teks);margin-bottom:5px;line-height:1.4;}
-.guru-jabatan{font-size:11px;font-weight:600;color:var(--biru-mid);background:rgba(26,92,168,0.08);padding:3px 9px;border-radius:5px;display:inline-block;margin-bottom:5px;margin-left:0;}
+.guru-jabatan{font-size:12px;font-weight:600;color:var(--teks-sub);display:block;margin-bottom:4px;}
 .guru-mapel{font-size:12px;color:var(--teks-sub);line-height:1.5;}
 /* TENDIK */
-.tendik-card .guru-jabatan{color:var(--hijau);background:rgba(26,122,74,0.08);}
+.tendik-card .guru-jabatan{color:var(--hijau);}
 .tendik-card{border-bottom-color:var(--hijau);}
 /* STATISTIK */
 .stat-box{background:var(--abu);border-radius:16px;padding:28px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center;margin-top:16px;}
@@ -197,9 +197,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
         <div class="section-sub">Tenaga pendidik aktif SMP Negeri 05 Sarolangun</div>
       </div>
     </div>
-    <div class="toolbar">
-      <input type="text" class="search-box" id="searchGuru" placeholder="🔍 Cari nama atau mata pelajaran..." oninput="filterGuru()">
-    </div>
+
     <div class="guru-grid" id="guruGrid">
       <div class="empty-state">Memuat data...</div>
     </div>
@@ -319,15 +317,7 @@ function renderTendik(data) {
     : '<div class="empty-state">Tidak ada data tenaga kependidikan.</div>';
 }
 
-function filterGuru() {
-  const q = document.getElementById('searchGuru').value.toLowerCase();
-  const filtered = allGuru.filter(g =>
-    g.nama.toLowerCase().includes(q) ||
-    (g.mapel && g.mapel.toLowerCase().includes(q)) ||
-    (g.jabatan && g.jabatan.toLowerCase().includes(q))
-  );
-  renderGuru(filtered);
-}
+
 
 if (history.scrollRestoration) history.scrollRestoration = 'manual';
 window.scrollTo(0,0);
