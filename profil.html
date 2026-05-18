@@ -110,14 +110,12 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .sec-title::after{content:'';flex:1;height:2px;background:linear-gradient(to right,var(--biru-mid),transparent);}
 
 /* INFO BADGE */
-.identitas-list{background:var(--abu);border-radius:16px;padding:24px 28px;display:grid;grid-template-columns:auto 1fr;gap:8px 0;}
-.id-label{font-size:14px;font-weight:600;color:var(--teks);padding:6px 0;min-width:200px;}
-.id-sep{font-size:14px;color:var(--teks-sub);padding:6px 16px;}
-.id-val{font-size:14px;color:var(--teks-sub);padding:6px 0;}
-.id-row{display:contents;}
-.id-row:not(:last-child) .id-label,
-.id-row:not(:last-child) .id-sep,
-.id-row:not(:last-child) .id-val{border-bottom:1px solid #e8edf4;}
+.identitas-list{background:var(--abu);border-radius:16px;padding:8px 28px;}
+.id-row{display:flex;align-items:baseline;padding:10px 0;border-bottom:1px solid #e8edf4;}
+.id-row:last-child{border-bottom:none;}
+.id-label{font-size:14px;font-weight:600;color:var(--teks);min-width:180px;flex-shrink:0;}
+.id-sep{font-size:14px;color:var(--teks-sub);padding:0 12px;flex-shrink:0;}
+.id-val{font-size:14px;color:var(--teks-sub);}
 
 /* SEJARAH */
 .sejarah-text{font-size:15px;color:var(--teks-sub);line-height:1.9;background:var(--abu);border-radius:16px;padding:28px;border-left:4px solid var(--biru-mid);}
@@ -328,13 +326,9 @@ function prosesProfil(d){
   document.getElementById('identitasList').innerHTML = identitas.length
     ? identitas.map(([k,v])=>{
         const label = k.replace('identitas_','');
-        return `<div class="id-row">
-          <span class="id-label">${label}</span>
-          <span class="id-sep">:</span>
-          <span class="id-val">${v}</span>
-        </div>`;
+        return `<div class="id-row"><span class="id-label">${label}</span><span class="id-sep">:</span><span class="id-val">${v}</span></div>`;
       }).join('')
-    : '<p style="color:var(--teks-sub);font-size:13px;">Data identitas belum tersedia.</p>';
+    : '<p style="color:var(--teks-sub);font-size:13px;padding:16px 0;">Data identitas belum tersedia.</p>';
 
   // Sejarah
   document.getElementById('sejarahText').textContent = p.sejarah || '-';
