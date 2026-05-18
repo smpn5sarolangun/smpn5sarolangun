@@ -109,7 +109,7 @@ html{scroll-behavior:smooth;}body{font-family:'Plus Jakarta Sans',sans-serif;col
 /* GEDUNG STRIP */
 /* HERO SLIDER */
 body{overflow-x:hidden;}
-.hero-slider{position:relative;width:100%;height:100vh;min-height:500px;margin-top:64px;overflow:hidden;background:#0d3b6e;}
+.hero-slider{position:relative;width:100%;height:100vh;min-height:500px;margin-top:64px;overflow:hidden;background:#0d3b6e;transition:margin-top 0.2s;}
 .slider-track{display:flex;height:100%;transition:transform 0.7s cubic-bezier(.4,0,.2,1);}
 .slider-slide{min-width:100%;height:100%;position:relative;flex-shrink:0;}
 .slider-slide img{width:100%;height:100%;object-fit:cover;object-position:center 60%;}
@@ -574,7 +574,11 @@ function renderTicker(data){
   const text=document.getElementById('tickerText');
   text.innerHTML=data.map(t=>`<span class="ticker-item">${t.teks}</span>`).join('');
   wrap.style.display='block';
+  document.documentElement.style.setProperty('--ticker-offset','32px');
   document.getElementById('heroSlider').style.marginTop='96px';
+  // Background gap
+  document.querySelector('.ticker-wrap').style.borderBottom='none';
+  document.querySelector('.ticker-wrap').style.boxShadow='0 32px 0 #0d3b6e';
 }
 async function muatTicker(){
   const cached=localStorage.getItem('cache_ticker');
