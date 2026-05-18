@@ -123,7 +123,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .vm-box{border-radius:16px;padding:28px;}
 .vm-box.visi{background:linear-gradient(135deg,var(--biru),var(--biru-mid));color:#fff;}
 .vm-box.misi{background:var(--abu);border:2px solid #e2e8f0;}
-.vm-box-icon{font-size:28px;margin-bottom:10px;}
+
 .vm-box-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:12px;}
 .vm-box.visi .vm-box-title{color:#fff;}
 .vm-box.misi .vm-box-title{color:var(--hijau);}
@@ -243,7 +243,10 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 <div class="main">
 
   <!-- INFO SINGKAT -->
-  <div class="info-badges" id="infoBadges"></div>
+  <div style="margin-bottom:52px;" id="identitas">
+    <h2 class="sec-title">🏷️ Identitas Sekolah</h2>
+    <div class="info-badges" id="infoBadges"></div>
+  </div>
 
   <!-- SEJARAH -->
   <div class="section" id="sejarah">
@@ -256,13 +259,11 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
     <h2 class="sec-title">🎯 Visi & Misi</h2>
     <div class="vm-wrap">
       <div class="vm-box visi">
-        <div class="vm-box-icon">👁️</div>
-        <div class="vm-box-title">Visi Sekolah</div>
+        <div class="vm-box-title" style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;">👁️</span> Visi Sekolah</div>
         <div class="vm-box-text" id="visiText">Memuat...</div>
       </div>
       <div class="vm-box misi">
-        <div class="vm-box-icon">🚀</div>
-        <div class="vm-box-title">Misi Sekolah</div>
+        <div class="vm-box-title" style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;">🚀</span> Misi Sekolah</div>
         <div class="vm-box-text" id="misiText">Memuat...</div>
       </div>
     </div>
