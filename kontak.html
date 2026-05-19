@@ -215,23 +215,29 @@ async function kirimPesan(){
   if(!nama || !pesan){ alert('Nama dan pesan wajib diisi'); return; }
 
   btn.disabled = true;
-  btn.textContent = '⏳ Mengirim...';
+  btn.innerHTML = '⏳ Mengirim...';
 
   try {
-    const res = await fetch(SCRIPT_URL, {
+    // Pakai URLSearchParams + no-cors untuk menghindari CORS error GAS
+    const params = new URLSearchParams();
+    params.append('action', 'kirimPesan');
+    params.append('nama', nama);
+    params.append('keperluan', kep);
+    params.append('pesan', pesan);
+
+    await fetch(SCRIPT_URL, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'kirimPesan', nama, keperluan:kep, pesan })
+      mode: 'no-cors',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: params.toString()
     });
-    const data = await res.json();
-    if(data.ok){
-      document.getElementById('alertSukses').style.display = 'flex';
-      document.getElementById('cNama').value = '';
-      document.getElementById('cPesan').value = '';
-      setTimeout(()=>{ document.getElementById('alertSukses').style.display='none'; }, 5000);
-    } else {
-      alert('Gagal mengirim: ' + (data.error||'Error tidak diketahui'));
-    }
+
+    // no-cors tidak return response body, anggap sukses jika tidak throw
+    document.getElementById('alertSukses').style.display = 'flex';
+    document.getElementById('cNama').value = '';
+    document.getElementById('cPesan').value = '';
+    setTimeout(()=>{ document.getElementById('alertSukses').style.display='none'; }, 5000);
+
   } catch(err) {
     alert('Koneksi gagal. Coba lagi atau hubungi via email langsung.');
   }
