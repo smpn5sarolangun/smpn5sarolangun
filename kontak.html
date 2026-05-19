@@ -4,12 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kontak — SMP Negeri 05 Sarolangun</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--biru:#0d3b6e;--biru-mid:#1a5ca8;--biru-light:#2979d4;--hijau:#1a7a4a;--hijau-light:#22a060;--emas:#f0a500;--putih:#ffffff;--abu:#f5f7fa;--teks:#1e2a3a;--teks-sub:#5a6a7e;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--teks);background:#fff;}
-/* ── NAVBAR ── */
   nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97);backdrop-filter:blur(10px);box-shadow:0 2px 20px rgba(0,0,0,0.3);}
   .nav-inner{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:64px;}
   .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
@@ -21,70 +19,39 @@
   .nav-link{color:rgba(255,255,255,0.85);text-decoration:none;font-size:13px;font-weight:500;padding:7px 11px;border-radius:7px;transition:all 0.2s;white-space:nowrap;}
   .nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.15);color:#fff;}
   .dd-arrow{font-size:9px;opacity:0.7;margin-left:3px;display:inline-block;vertical-align:middle;line-height:1;position:relative;top:-1px;}
-
-    /* Dropdown */
+  /* Dropdown */
   .nav-dropdown{position:relative;}
-  .nav-dropdown:hover .dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)!important;}
+  .nav-dropdown:hover .dropdown-menu{opacity:1;visibility:visible;transform:translateY(0);}
   .dropdown-menu{
     position:absolute;top:calc(100% + 8px);
     background:#fff;border-radius:12px;padding:8px;min-width:190px;
     box-shadow:0 8px 32px rgba(0,0,0,0.18);
     opacity:0;visibility:hidden;transition:all 0.2s;z-index:100;
-    left:50%;transform:translateX(-50%) translateY(-8px);
-  }
-  .dropdown-menu::before{
-    content:'';position:absolute;top:-6px;
-    border:6px solid transparent;border-bottom-color:#fff;border-top:none;
-    left:50%;transform:translateX(-50%);
-  }
-  .dropdown-menu a{
-    display:block;padding:9px 14px;color:var(--teks);text-decoration:none;
-    font-size:13px;font-weight:500;border-radius:8px;transition:all 0.15s;white-space:nowrap;
-  }
-  .dropdown-menu a:hover{background:rgba(13,59,110,0.08);color:var(--biru);}
-  /* Menu kanan → buka ke kiri */
-  .nav-dropdown.dd-right .dropdown-menu{
-    left:auto;right:0;transform:translateY(-8px);
-  }
-  .nav-dropdown.dd-right .dropdown-menu::before{
-    left:auto;right:16px;transform:none;
-  }
-  .nav-dropdown.dd-right:hover .dropdown-menu{transform:translateY(0);}
-  /* Default: kiri */
     left:0;transform:translateY(-8px);
   }
   .dropdown-menu::before{
-    content:'';position:absolute;top:-6px;
+    content:'';position:absolute;top:-6px;left:16px;transform:none;
     border:6px solid transparent;border-bottom-color:#fff;border-top:none;
-    /* Default: kiri */
-    left:16px;transform:none;
   }
-  .dropdown-menu a{
-    display:block;padding:9px 14px;color:var(--teks);text-decoration:none;
-    font-size:13px;font-weight:500;border-radius:8px;transition:all 0.15s;white-space:nowrap;
-  }
+  .dropdown-menu a{display:block;padding:9px 14px;color:var(--teks);text-decoration:none;font-size:13px;font-weight:500;border-radius:8px;transition:all 0.15s;white-space:nowrap;}
   .dropdown-menu a:hover{background:rgba(13,59,110,0.08);color:var(--biru);}
   /* Menu kanan → buka ke kiri */
-  .nav-dropdown.dd-right .dropdown-menu{
-    left:auto;right:0;transform:translateY(-8px);
-  }
-  .nav-dropdown.dd-right .dropdown-menu::before{
-    left:auto;right:16px;transform:none;
-  }
-  .nav-dropdown.dd-right:hover .dropdown-menu{transform:translateY(0);}
-
-
+  .nav-dropdown.dd-right .dropdown-menu{left:auto;right:0;}
+  .nav-dropdown.dd-right .dropdown-menu::before{left:auto;right:16px;}
   /* Hamburger & mobile */
   .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
   .hamburger span{width:24px;height:2px;background:#fff;border-radius:2px;transition:all 0.3s;}
   .mobile-menu{display:none;flex-direction:column;padding:12px 20px 16px;background:rgba(13,59,110,0.98);border-top:1px solid rgba(255,255,255,0.1);}
   .mobile-menu.open{display:flex;}
-  .mobile-menu a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;font-weight:500;padding:9px 12px;border-radius:8px;transition:background 0.2s;}
+  .mobile-menu a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;font-weight:500;padding:9px 12px;border-radius:8px;}
   .mobile-menu a:hover{background:rgba(255,255,255,0.1);}
-  .mobile-menu .mob-parent{font-weight:700;color:#fff;margin-top:4px;}
-  .mobile-menu .mob-child{font-size:13px;padding-left:24px;opacity:0.8;}
+  .mob-parent{font-weight:700;color:#fff!important;}
+  .mob-child{padding-left:28px!important;font-size:13px!important;opacity:0.85;}
+  @media(max-width:900px){.nav-links{display:none;}.hamburger{display:flex;}}
 
-  @media(max-width:1024px){.nav-links{display:none;}.hamburger{display:flex;}}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--teks);background:#fff;}
+    
 
 
 </style>
@@ -184,22 +151,22 @@
   <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:40px;margin-bottom:60px;">
     <div style="display:flex;flex-direction:column;gap:20px;">
       <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.07);display:flex;gap:16px;align-items:flex-start;">
-        <div style="width:48px;height:48px;border-radius:12px;background:rgba(13,59,110,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📍</div>
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(13,59,110,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="#0d3b6e"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
         <div><div style="font-size:12px;font-weight:700;color:var(--teks-sub);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Alamat</div>
         <div style="font-size:15px;font-weight:600;">Jalan Diponegoro No. 1, Desa Bukit Talang Mas<br>Kecamatan Singkut, Kabupaten Sarolangun, Jambi 37482</div></div>
       </div>
       <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.07);display:flex;gap:16px;align-items:flex-start;">
-        <div style="width:48px;height:48px;border-radius:12px;background:rgba(26,122,74,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📘</div>
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(26,122,74,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="#1877f2"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg></div>
         <div><div style="font-size:12px;font-weight:700;color:var(--teks-sub);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Facebook</div>
         <div style="font-size:15px;font-weight:600;"><a href="https://facebook.com/smpnegeri5sarolangun" target="_blank" style="color:var(--biru-mid);">@smpnegeri5sarolangun</a></div></div>
       </div>
       <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.07);display:flex;gap:16px;align-items:flex-start;">
-        <div style="width:48px;height:48px;border-radius:12px;background:rgba(240,165,0,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">✉️</div>
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(240,165,0,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="#ea4335"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></div>
         <div><div style="font-size:12px;font-weight:700;color:var(--teks-sub);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Email</div>
         <div style="font-size:15px;font-weight:600;"><a href="mailto:smpn5sarolangun@gmail.com" style="color:var(--biru-mid);">smpn5sarolangun@gmail.com</a></div></div>
       </div>
       <a href="https://facebook.com/smpnegeri5sarolangun" target="_blank" style="display:flex;align-items:center;gap:12px;background:#1877f2;color:#fff;border-radius:14px;padding:18px 24px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 20px rgba(24,119,242,0.3);">
-        <span style="font-size:24px;">📘</span><div>Kunjungi Facebook Kami<small style="display:block;font-size:12px;font-weight:400;opacity:0.85;">@smpnegeri5sarolangun</small></div>
+        <span style="display:flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="30" height="30" fill="#fff"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg></span><div>Kunjungi Facebook Kami<small style="display:block;font-size:12px;font-weight:400;opacity:0.85;">@smpnegeri5sarolangun</small></div>
       </a>
     </div>
     <div style="background:#fff;border-radius:20px;padding:36px;box-shadow:0 4px 30px rgba(0,0,0,0.08);">
@@ -214,30 +181,62 @@
         </select></div>
         <div><label style="font-size:12px;font-weight:700;color:var(--teks-sub);display:block;margin-bottom:6px;">Pesan</label>
         <textarea id="cPesan" rows="4" placeholder="Tulis pesan Anda..." style="width:100%;padding:11px 14px;border:2px solid #dde3ee;border-radius:9px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;resize:vertical;"></textarea></div>
-        <button onclick="kirimEmail()" style="padding:13px;background:var(--biru);color:#fff;border:none;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">📧 Kirim via Email</button>
+        <button id="btnKirim" onclick="kirimPesan()" style="padding:13px 20px;background:var(--biru);color:#fff;border:none;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg> Kirim Pesan</button>
       </div>
     </div>
   </div>
   <div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-    <div style="height:400px;background:var(--abu);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--teks-sub);">
-      <div style="font-size:64px;">🗺️</div><p style="font-size:15px;font-weight:600;">Peta belum dikonfigurasi</p>
-      <p style="font-size:13px;max-width:400px;text-align:center;line-height:1.6;">Buka Google Maps → Cari sekolah → Bagikan → Sematkan Peta → Salin iframe → paste di sini.</p>
+    <iframe
+      src="https://maps.google.com/maps?q=SMPN+5+Sarolangun&output=embed&z=16"
+      width="100%" height="400" style="border:0;display:block;" allowfullscreen
+      loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+      title="Lokasi SMP Negeri 05 Sarolangun">
+    </iframe>
+    <div style="padding:12px 16px;background:#f0f4fa;display:flex;align-items:center;gap:10px;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="#0d3b6e"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <a href="https://maps.app.goo.gl/vgWi7EKs2x4TdrKc6" target="_blank"
+         style="font-size:13px;color:var(--biru-mid);font-weight:600;text-decoration:none;">
+        Buka di Google Maps ↗
+      </a>
     </div>
   </div>
 </div>
 <script>
-function kirimEmail(){
-  const nama = document.getElementById('cNama').value.trim();
-  const kep  = document.getElementById('cKeperluan').value;
-  const pesan= document.getElementById('cPesan').value.trim();
-  if(!nama||!pesan){alert('Nama dan pesan wajib diisi');return;}
-  const subj = encodeURIComponent(`[${kep}] dari ${nama} - Website SMPN 05 Sarolangun`);
-  const body = encodeURIComponent(`Nama: ${nama}
-Keperluan: ${kep}
+// ── GANTI dengan URL deployment Google Apps Script Anda ──
+const SCRIPT_URL = 'GANTI_DENGAN_URL_GAS_DEPLOYMENT';
 
-Pesan:
-${pesan}`);
-  window.open(`mailto:smpn5sarolangun@gmail.com?subject=${subj}&body=${body}`,'_blank');
+async function kirimPesan(){
+  const nama  = document.getElementById('cNama').value.trim();
+  const kep   = document.getElementById('cKeperluan').value;
+  const pesan = document.getElementById('cPesan').value.trim();
+  const btn   = document.getElementById('btnKirim');
+
+  if(!nama || !pesan){ alert('Nama dan pesan wajib diisi'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Mengirim...';
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'kirimPesan', nama, keperluan:kep, pesan })
+    });
+    const data = await res.json();
+    if(data.ok){
+      document.getElementById('alertSukses').style.display = 'flex';
+      document.getElementById('cNama').value = '';
+      document.getElementById('cPesan').value = '';
+      setTimeout(()=>{ document.getElementById('alertSukses').style.display='none'; }, 5000);
+    } else {
+      alert('Gagal mengirim: ' + (data.error||'Error tidak diketahui'));
+    }
+  } catch(err) {
+    alert('Koneksi gagal. Coba lagi atau hubungi via email langsung.');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="#fff" style="vertical-align:middle;margin-right:6px;"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg> Kirim Pesan';
 }
 </script>
 <footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:40px 0;text-align:center;">
