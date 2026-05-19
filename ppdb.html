@@ -346,7 +346,71 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.15);color:#fff;}
 .dd-arrow{font-size:9px;opacity:0.7;margin-left:3px;display:inline-block;vertical-align:middle;}
 .nav-dropdown{position:relative;}
-.nav-dropdown:hover .dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)!important;}
+  .nav-dropdown:hover .dropdown-menu{
+    opacity:1;visibility:visible;transform:translateY(0)!important;
+  }
+  .dropdown-menu{
+    position:absolute;top:calc(100% + 10px);
+    background:#fff;border-radius:12px;padding:8px;min-width:190px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.18);
+    opacity:0;visibility:hidden;
+    transition:opacity 0.2s,visibility 0.2s,transform 0.2s;
+    z-index:999;
+    left:0;transform:translateY(-8px);
+  }
+  .dropdown-menu::before{
+    content:'';position:absolute;top:-6px;left:20px;
+    border:6px solid transparent;
+    border-bottom-color:#fff;border-top:none;
+  }
+  .dropdown-menu a{
+    display:block;padding:9px 14px;color:#1e2a3a;text-decoration:none;
+    font-size:13px;font-weight:500;border-radius:8px;
+    transition:background 0.15s;white-space:nowrap;
+  }
+  .dropdown-menu a:hover{background:rgba(13,59,110,0.08);color:#0d3b6e;}
+  /* Menu kanan (PPDB, Akademik) → buka ke kiri */
+  .nav-dropdown.dd-right .dropdown-menu{
+    left:auto;right:0;transform:translateY(-8px);
+  }
+  .nav-dropdown.dd-right .dropdown-menu::before{
+    left:auto;right:20px;
+  }
+  .nav-dropdown.dd-right:hover .dropdown-menu{transform:translateY(0)!important;}
+  
+  /* Menu kanan → buka ke kiri */
+  .nav-dropdown.dd-right .dropdown-menu{
+    left:auto;right:0;transform:translateY(-8px);
+  }
+  .nav-dropdown.dd-right .dropdown-menu::before{
+    left:auto;right:16px;transform:none;
+  }
+  .nav-dropdown.dd-right:hover .dropdown-menu{transform:translateY(0);}
+  /* Default: kiri */
+    left:0;transform:translateY(-8px);
+  }
+  .dropdown-menu::before{
+    content:'';position:absolute;top:-6px;
+    border:6px solid transparent;border-bottom-color:#fff;border-top:none;
+    /* Default: kiri */
+    left:16px;transform:none;
+  }
+  .dropdown-menu a{
+    display:block;padding:9px 14px;color:var(--teks);text-decoration:none;
+    font-size:13px;font-weight:500;border-radius:8px;transition:all 0.15s;white-space:nowrap;
+  }
+  .dropdown-menu a:hover{background:rgba(13,59,110,0.08);color:var(--biru);}
+  /* Menu kanan → buka ke kiri */
+  .nav-dropdown.dd-right .dropdown-menu{
+    left:auto;right:0;transform:translateY(-8px);
+  }
+  .nav-dropdown.dd-right .dropdown-menu::before{
+    left:auto;right:16px;transform:none;
+  }
+  .nav-dropdown.dd-right:hover .dropdown-menu{transform:translateY(0);}
+
+
+  /* Hamburger & mobile */
 .dropdown-menu{position:absolute;top:calc(100% + 8px);background:#fff;border-radius:12px;padding:8px;min-width:190px;box-shadow:0 8px 32px rgba(0,0,0,0.18);opacity:0;visibility:hidden;transition:all 0.2s;z-index:100;left:50%;transform:translateX(-50%) translateY(-8px);}
 .dropdown-menu::before{content:'';position:absolute;top:-6px;border:6px solid transparent;border-bottom-color:#fff;border-top:none;left:50%;transform:translateX(-50%);}
 .dropdown-menu a{display:block;padding:9px 14px;color:var(--teks);text-decoration:none;font-size:13px;font-weight:500;border-radius:8px;transition:all 0.15s;white-space:nowrap;}
@@ -370,12 +434,12 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .page-hero p{font-size:14px;opacity:0.85;}
 
 /* TABS */
-.tab-bar{max-width:900px;margin:0 auto;display:flex;gap:4px;padding:20px 24px 0;}
+.tab-bar{max-width:1100px;margin:0 auto;display:flex;gap:4px;padding:20px 24px 0;}
 .tab-btn{flex:1;padding:12px;border:none;border-radius:10px 10px 0 0;background:#e8edf5;color:var(--teks-sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
 .tab-btn.active{background:#fff;color:var(--biru);box-shadow:0 -2px 8px rgba(0,0,0,0.06);}
 
 /* MAIN */
-.main{max-width:900px;margin:0 auto;padding:0 24px 60px;}
+.main{max-width:1100px;margin:0 auto;padding:0 24px 60px;}
 .tab-content{background:#fff;border-radius:0 16px 16px 16px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,0.07);display:none;}
 .tab-content.active{display:block;}
 
@@ -1192,9 +1256,10 @@ select.f-input{appearance:auto;}
   <div class="tab-content" id="tabCek">
     <div class="cek-wrap">
       <div class="sec-title" style="text-align:center;">🔍 Cek Status Pendaftaran</div>
-      <p style="font-size:13px;color:var(--teks-sub);margin-bottom:16px;">Masukkan NISN atau Nomor Pendaftaran untuk melihat status.</p>
+      <p style="font-size:13px;color:var(--teks-sub);margin-bottom:16px;">Masukkan Nomor Pendaftaran yang Anda terima saat mendaftar.</p>
+      <div id="bannerPengumuman" style="margin-bottom:16px;"></div>
       <div class="cek-input-wrap">
-        <input type="text" id="cekInput" class="f-input" placeholder="Masukkan NISN atau No. Pendaftaran" onkeydown="if(event.key==='Enter')cekStatus()">
+        <input type="text" id="cekInput" class="f-input" placeholder="Masukkan No. Pendaftaran (contoh: PPDB-2026-XXX-001)" onkeydown="if(event.key==='Enter')cekStatus()">
         <button onclick="cekStatus()" style="background:var(--biru);color:#fff;border:none;border-radius:10px;padding:0 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Cek</button>
       </div>
       <div class="result-card" id="resultCard">
@@ -1453,15 +1518,23 @@ function daftarLagi() {
 // ── CEK STATUS ──
 async function cekStatus() {
   const input = document.getElementById('cekInput').value.trim();
-  if (!input) return;
+  if (!input) { alert('Masukkan nomor pendaftaran terlebih dahulu.'); return; }
   const result = document.getElementById('resultCard');
   result.classList.remove('show');
+  result.innerHTML = '<p style="color:var(--teks-sub);font-size:13px;">Mencari data...</p>';
+  result.classList.add('show');
   try {
-    const r = await fetch(`${PPDB_SCRIPT}?action=cekStatusPPDB&nisn=${encodeURIComponent(input)}`);
+    const r = await fetch(`${PPDB_SCRIPT}?action=cekStatusPPDB&nomor=${encodeURIComponent(input)}`);
     const d = await r.json();
+
+    // Cek apakah pengumuman belum dibuka
+    if (d.ok && d.data && d.data.tutup) {
+      result.innerHTML = `<div class="banner tutup" style="margin:0;">🔒 ${d.data.pesan}</div>`;
+      return;
+    }
+
     if (!d.ok || !d.data) {
-      result.innerHTML = '<p style="color:var(--merah);font-size:14px;">Data tidak ditemukan. Periksa kembali NISN atau nomor pendaftaran Anda.</p>';
-      result.classList.add('show');
+      result.innerHTML = '<p style="color:var(--merah);font-size:14px;">Nomor pendaftaran tidak ditemukan. Periksa kembali nomor Anda.</p>';
       return;
     }
     const p = d.data;
@@ -1472,10 +1545,17 @@ async function cekStatus() {
     const statusEl = document.getElementById('rStatus');
     statusEl.textContent = statusLabel[p.status] || p.status;
     statusEl.className = 'result-status status-' + p.status;
+    result.innerHTML = '';
     result.classList.add('show');
+    // Re-append content
+    document.getElementById('resultCard').innerHTML = `
+      <div style="font-size:13px;color:var(--teks-sub);">No. Pendaftaran</div>
+      <div style="font-size:20px;font-weight:800;color:var(--biru);margin-bottom:4px;">${p.nomor}</div>
+      <div style="font-size:16px;font-weight:700;">${p.nama}</div>
+      <div style="font-size:12px;color:var(--teks-sub);margin-bottom:8px;">Mendaftar: ${p.tgl}</div>
+      <div class="result-status status-${p.status}">${statusLabel[p.status]||p.status}</div>`;
   } catch(e) {
-    result.innerHTML = '<p style="color:var(--merah);">Gagal mengambil data.</p>';
-    result.classList.add('show');
+    result.innerHTML = '<p style="color:var(--merah);">Gagal mengambil data. Coba lagi.</p>';
   }
 }
 
