@@ -618,6 +618,13 @@ select.f-input{appearance:auto;}
       <div class="sec-title">🎯 Kuota</div>
       <div style="display:flex;align-items:baseline;gap:8px;margin-top:8px;"><span style="font-size:22px;font-weight:800;color:var(--biru);" id="kuotaNum">—</span><span style="font-size:13px;color:var(--teks-sub);">Siswa Baru</span></div>
       </div>
+  </div>
+
+  <!-- ═══════ TAB DAFTAR ═══════ -->
+  <div class="tab-content" id="tabDaftar" style="display:none;">
+    <div id="bannerDaftar" style="margin-bottom:16px;"></div>
+    <div id="alertError" style="display:none;background:#fdecea;border:1px solid #f5c6c2;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#c0392b;margin-bottom:12px;"></div>
+
 
       <!-- B. ALAMAT -->
       <div class="sec-title">🏠 B. Alamat Siswa</div>
@@ -1289,9 +1296,9 @@ function renderPPDBInfo(d) {
   const syaratList = document.getElementById('syaratList');
   const syarats = Object.entries(p).filter(([k]) => k.startsWith('syarat_')).map(([,v]) => v);
   if(syaratList) syaratList.innerHTML = syarats.length
-    ? syarats.map(s => `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #eef2f7;">
-        <div style="width:22px;height:22px;background:#e8f5e9;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;">✓</div>
-        <span style="font-size:14px;color:var(--teks);line-height:1.5;">${s}</span>
+    ? syarats.map(s => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eef2f7;">
+        <div style="width:20px;height:20px;background:#e8f5e9;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#1a7a4a;font-weight:700;">✓</div>
+        <span style="font-size:13px;color:var(--teks);">${s}</span>
       </div>`).join('')
     : '<p style="color:var(--teks-sub);font-size:13px;">Data syarat belum tersedia.</p>';
 
@@ -1304,7 +1311,7 @@ function renderPPDBInfo(d) {
     {key:'jadwal_daftar_ulang',label:'Daftar Ulang',       ket:'Datang ke sekolah'},
   ];
   if(jadwalGrid) jadwalGrid.innerHTML = `
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;">
       <thead>
         <tr style="background:var(--biru);color:#fff;">
           <th style="padding:10px 14px;text-align:left;border-radius:8px 0 0 0;">Kegiatan</th>
