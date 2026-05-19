@@ -204,7 +204,6 @@
 </div>
 <script>
 // ── GANTI dengan URL deployment Google Apps Script Anda ──
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
 
 function kirimPesan(){
   const nama  = document.getElementById('cNama').value.trim();
@@ -217,21 +216,27 @@ function kirimPesan(){
   btn.disabled = true;
   btn.innerHTML = '⏳ Mengirim...';
 
-  // Isi hidden form lalu submit ke iframe (bypass CORS 100%)
-  document.getElementById('fNama').value     = nama;
-  document.getElementById('fKeperluan').value= kep;
-  document.getElementById('fPesan').value    = pesan;
-  document.getElementById('hiddenForm').submit();
-
-  // Anggap sukses setelah 2 detik
-  setTimeout(function(){
-    document.getElementById('alertSukses').style.display = 'flex';
-    document.getElementById('cNama').value  = '';
-    document.getElementById('cPesan').value = '';
+  fetch('https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({action:'kirimPesan', nama, keperluan:kep, pesan})
+  })
+  .then(r => r.json())
+  .then(d => {
+    if(d.ok){
+      document.getElementById('alertSukses').style.display = 'flex';
+      document.getElementById('cNama').value  = '';
+      document.getElementById('cPesan').value = '';
+      setTimeout(()=>{ document.getElementById('alertSukses').style.display='none'; }, 5000);
+    } else {
+      alert('Gagal: ' + (d.error||'Coba lagi'));
+    }
+  })
+  .catch(e => alert('Koneksi gagal: ' + e.message))
+  .finally(()=>{
     btn.disabled = false;
     btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="#fff" style="vertical-align:middle;margin-right:6px;"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg> Kirim Pesan';
-    setTimeout(function(){ document.getElementById('alertSukses').style.display='none'; }, 5000);
-  }, 2000);
+  });
 }
 </script>
 <footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:40px 0;text-align:center;">
@@ -246,15 +251,6 @@ function kirimPesan(){
 </footer>
 
 <script>function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}</script>
-
-<!-- Hidden iframe + form untuk kirim GAS tanpa CORS -->
-<iframe name="hiddenFrame" style="display:none;"></iframe>
-<form id="hiddenForm" action="https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec" method="POST" target="hiddenFrame" style="display:none;">
-  <input type="hidden" name="action" value="kirimPesan">
-  <input type="hidden" name="nama" id="fNama">
-  <input type="hidden" name="keperluan" id="fKeperluan">
-  <input type="hidden" name="pesan" id="fPesan">
-</form>
 
 </body>
 </html>
