@@ -1321,7 +1321,6 @@ function toggleWaliSection() {
 
 // ── MUAT INFO PPDB ──
 async function muatPPDBInfo() {
-  // Cek cache
   const cached = localStorage.getItem('cache_ppdb_info');
   if(cached) renderPPDBInfo(JSON.parse(cached));
   try {
@@ -1329,45 +1328,51 @@ async function muatPPDBInfo() {
     const d = await r.json();
     if (!d.ok || !d.data) return;
     localStorage.setItem('cache_ppdb_info', JSON.stringify(d));
-    const p = d.data;
-    ppdbStatus = (p.status||'TUTUP').toUpperCase();
-
-    // Banner status
-    const bannerInfo = document.getElementById('bannerStatus');
-    const bannerDaftar = document.getElementById('bannerDaftar');
-    if (ppdbStatus === 'BUKA') {
-      bannerInfo.innerHTML = `<div class="banner buka">✅ Pendaftaran PPDB sedang DIBUKA — Segera daftarkan putra-putri Anda!</div>`;
-      bannerDaftar.innerHTML = `<div class="banner buka">✅ Pendaftaran DIBUKA: ${p.tgl_buka||''} s/d ${p.tgl_tutup||''}</div>`;
-    } else {
-      bannerInfo.innerHTML = `<div class="banner tutup">🔒 Pendaftaran PPDB saat ini DITUTUP</div>`;
-      bannerDaftar.innerHTML = `<div class="banner tutup">🔒 Pendaftaran PPDB saat ini DITUTUP. Formulir tidak dapat diisi.</div>`;
-      setFormDisabled(true);
-    }
-
-    // Syarat
-    const syaratList = document.getElementById('syaratList');
-    const syarats = Object.entries(p).filter(([k]) => k.startsWith('syarat_')).map(([,v]) => v);
-    syaratList.innerHTML = syarats.length
-      ? syarats.map(s => `<li>${s}</li>`).join('')
-      : '<li>Data syarat belum tersedia.</li>';
-
-    // Jadwal
-    const jadwalMap = {
-      jadwal_pendaftaran: 'Pendaftaran',
-      jadwal_seleksi: 'Seleksi',
-      jadwal_pengumuman: 'Pengumuman',
-      jadwal_daftar_ulang: 'Daftar Ulang'
-    };
-    const jadwalGrid = document.getElementById('jadwalGrid');
-    jadwalGrid.innerHTML = Object.entries(jadwalMap).map(([k,label]) =>
-      p[k] ? `<div class="jadwal-card"><div class="jadwal-label">${label}</div><div class="jadwal-val">${p[k]}</div></div>` : ''
-    ).join('');
-
-    // Kuota
-    if (p.kuota) document.getElementById('kuotaNum').textContent = p.kuota;
-
+    renderPPDBInfo(d);
   } catch(e) {}
 }
+
+function renderPPDBInfo(d) {
+  const p = d.data || d;
+  const p = d.data;
+  ppdbStatus = (p.status||'TUTUP').toUpperCase();
+
+  // Banner status
+  const bannerInfo = document.getElementById('bannerStatus');
+  const bannerDaftar = document.getElementById('bannerDaftar');
+  if (ppdbStatus === 'BUKA') {
+    bannerInfo.innerHTML = `<div class="banner buka">✅ Pendaftaran PPDB sedang DIBUKA — Segera daftarkan putra-putri Anda!</div>`;
+    bannerDaftar.innerHTML = `<div class="banner buka">✅ Pendaftaran DIBUKA: ${p.tgl_buka||''} s/d ${p.tgl_tutup||''}</div>`;
+  } else {
+    bannerInfo.innerHTML = `<div class="banner tutup">🔒 Pendaftaran PPDB saat ini DITUTUP</div>`;
+    bannerDaftar.innerHTML = `<div class="banner tutup">🔒 Pendaftaran PPDB saat ini DITUTUP. Formulir tidak dapat diisi.</div>`;
+    setFormDisabled(true);
+  }
+
+  // Syarat
+  const syaratList = document.getElementById('syaratList');
+  const syarats = Object.entries(p).filter(([k]) => k.startsWith('syarat_')).map(([,v]) => v);
+  syaratList.innerHTML = syarats.length
+    ? syarats.map(s => `<li>${s}</li>`).join('')
+    : '<li>Data syarat belum tersedia.</li>';
+
+  // Jadwal
+  const jadwalMap = {
+    jadwal_pendaftaran: 'Pendaftaran',
+    jadwal_seleksi: 'Seleksi',
+    jadwal_pengumuman: 'Pengumuman',
+    jadwal_daftar_ulang: 'Daftar Ulang'
+  };
+  const jadwalGrid = document.getElementById('jadwalGrid');
+  jadwalGrid.innerHTML = Object.entries(jadwalMap).map(([k,label]) =>
+    p[k] ? `<div class="jadwal-card"><div class="jadwal-label">${label}</div><div class="jadwal-val">${p[k]}</div></div>` : ''
+  ).join('');
+
+  // Kuota
+  if (p.kuota) document.getElementById('kuotaNum').textContent = p.kuota;
+}
+
+
 
 function setFormDisabled(disabled) {
   document.querySelectorAll('#formSection input, #formSection select, #btnSubmit').forEach(el => {
