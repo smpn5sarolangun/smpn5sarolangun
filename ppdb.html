@@ -442,7 +442,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 
 /* MAIN */
 .main{max-width:800px;margin:0 auto;padding:0 24px 60px;}
-.tab-content{background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,0.07);display:none;}
+.tab-content{background:#fff;border-radius:16px;padding:24px 32px 32px;box-shadow:0 4px 24px rgba(0,0,0,0.07);display:none;}
 .tab-content.active{display:block;}
 
 /* BANNER STATUS */
@@ -485,7 +485,7 @@ select.f-input{appearance:auto;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 /* CEK STATUS */
-.cek-wrap{max-width:500px;margin:0 auto;text-align:center;}
+.cek-wrap{max-width:500px;margin:0 auto;text-align:center;padding-top:0;}
 .cek-input-wrap{display:flex;gap:10px;margin:20px 0;}
 .result-card{background:var(--abu);border-radius:14px;padding:24px;margin-top:20px;display:none;}
 .result-card.show{display:block;}
@@ -594,7 +594,7 @@ select.f-input{appearance:auto;}
   </div>
 </nav>
 <div class="page-hero">
-  <h1>📋 PPDB 2026/2027</h1>
+  <h1 id="judulPPDB">📋 PPDB 2026/2027</h1>
   <p>Penerimaan Peserta Didik Baru SMP Negeri 05 Sarolangun</p>
 </div>
 
@@ -607,15 +607,17 @@ select.f-input{appearance:auto;}
 <div class="main">
 
   <!-- ═══════ TAB INFO ═══════ -->
-  <div class="tab-content" id="tabInfo" style="display:block;">
+  <div class="tab-content" id="tabInfo" style="display:block;padding-top:20px;">
     <div class="sec-title">📅 Jadwal PPDB</div>
     <div id="jadwalGrid" style="margin-top:8px;"></div>
-    <div style="margin-top:20px;">
-      <div class="sec-title">🎯 Kuota</div>
-      <span style="font-size:20px;font-weight:800;color:var(--biru);" id="kuotaNum">—</span>
-      <span style="font-size:13px;color:var(--teks-sub);margin-left:6px;">Siswa Baru</span>
+    <div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;">
+      <div class="sec-title" style="margin:0;">🎯 Kuota</div>
+      <div style="text-align:right;">
+        <span style="font-size:22px;font-weight:800;color:var(--biru);" id="kuotaNum">—</span>
+        <span style="font-size:13px;color:var(--teks-sub);margin-left:6px;">Siswa Baru</span>
+      </div>
     </div>
-    <div style="margin-top:20px;">
+    <div style="margin-top:28px;border-top:2px solid #eef2f7;padding-top:20px;">
       <div class="sec-title">📋 Persyaratan Pendaftaran</div>
       <ul class="syarat-list" id="syaratList" style="margin-top:8px;padding-left:8px;">
         <li>Memuat data...</li>
@@ -1224,8 +1226,8 @@ select.f-input{appearance:auto;}
   </div>
 
   <!-- ═══════ TAB CEK ═══════ -->
-  <div class="tab-content" id="tabCek" style="display:none;">
-    <div class="cek-wrap">
+  <div class="tab-content" id="tabCek" style="display:none;padding-top:20px;">
+    <div class="cek-wrap" style="padding-top:0;margin-top:0;">
       <div class="sec-title" style="text-align:center;">🔍 Cek Status Pendaftaran</div>
       
       <div id="bannerPengumuman" style="margin-bottom:16px;"></div>
@@ -1371,6 +1373,10 @@ function renderPPDBInfo(d) {
   if(syaratList) syaratList.innerHTML = syarats.length
     ? syarats.map(s => '<li>' + s + '</li>').join('')
     : '<li>Data syarat belum tersedia.</li>';
+
+  // Judul dari sheet
+  const judulEl = document.getElementById('judulPPDB');
+  if(judulEl && p.judul_ppdb) judulEl.textContent = '📋 ' + p.judul_ppdb;
 
   // Kuota
   const kuotaEl = document.getElementById('kuotaNum');
