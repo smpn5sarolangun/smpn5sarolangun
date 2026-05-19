@@ -452,7 +452,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 
 /* SYARAT & JADWAL */
 .syarat-list{list-style:none;}
-.syarat-list li{padding:10px 0;border-bottom:1px solid #eef2f7;font-size:14px;display:flex;gap:10px;align-items:flex-start;}
+.syarat-list li{padding:5px 0;border-bottom:1px solid #f0f4f8;font-size:13px;display:flex;gap:10px;align-items:flex-start;}
 .syarat-list li::before{content:'✓';color:var(--hijau);font-weight:700;flex-shrink:0;margin-top:1px;}
 .jadwal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
 .jadwal-card{background:var(--abu);border-radius:10px;padding:14px 18px;}
@@ -608,17 +608,17 @@ select.f-input{appearance:auto;}
 
   <!-- ═══════ TAB INFO ═══════ -->
   <div class="tab-content" id="tabInfo" style="display:block;">
-    <div class="sec-title">📋 Persyaratan Pendaftaran</div>
-    <ul class="syarat-list" id="syaratList">
-      <li>Memuat data...</li>
-    </ul>
-    <div class="sec-title" style="margin-top:28px;">📅 Jadwal PPDB</div>
+    <div class="sec-title">📅 Jadwal PPDB</div>
     <div id="jadwalGrid" style="margin-top:8px;"></div>
     <div style="margin-top:24px;">
       <div class="sec-title">🎯 Kuota</div>
       <div style="display:flex;align-items:baseline;gap:8px;margin-top:8px;"><span style="font-size:22px;font-weight:800;color:var(--biru);" id="kuotaNum">—</span><span style="font-size:13px;color:var(--teks-sub);">Siswa Baru</span></div>
       </div>
-  </div>
+  </div><div class="sec-title" style="margin-top:28px;">📋 Persyaratan Pendaftaran</div>
+    <ul class="syarat-list" id="syaratList">
+      <li>Memuat data...</li>
+    </ul>
+    
 
   <!-- ═══════ TAB DAFTAR ═══════ -->
   <div class="tab-content" id="tabDaftar" style="display:none;">
@@ -1319,21 +1319,11 @@ function renderPPDBInfo(d) {
     }
   }
 
-  // Syarat - tampilan card dengan centang
-  const syaratList = document.getElementById('syaratList');
-  const syarats = Object.entries(p).filter(([k]) => k.startsWith('syarat_')).map(([,v]) => v);
-  if(syaratList) syaratList.innerHTML = syarats.length
-    ? syarats.map(s => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eef2f7;">
-        <div style="width:20px;height:20px;background:#e8f5e9;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#1a7a4a;font-weight:700;">✓</div>
-        <span style="font-size:13px;color:var(--teks);">${s}</span>
-      </div>`).join('')
-    : '<p style="color:var(--teks-sub);font-size:13px;">Data syarat belum tersedia.</p>';
-
   // Jadwal - tabel kegiatan/tanggal/keterangan
   const jadwalGrid = document.getElementById('jadwalGrid');
   const jadwalData = [
     {key:'jadwal_pendaftaran', label:'Pendaftaran Online', ket:'Via website ini'},
-    {key:'jadwal_seleksi',     label:'Verifikasi Berkas',  ket:'Datang ke sekolah'},
+    {key:'jadwal_seleksi',     label:'Verifikasi Berkas',  ket:'Dilakukan Panitia'},
     {key:'jadwal_pengumuman',  label:'Pengumuman Hasil',   ket:'Di website & sekolah'},
     {key:'jadwal_daftar_ulang',label:'Daftar Ulang',       ket:'Datang ke sekolah'},
   ];
@@ -1356,7 +1346,14 @@ function renderPPDBInfo(d) {
       </tbody>
     </table>`;
 
-  // Kuota - lebih compact
+  // Syarat
+  const syaratList = document.getElementById('syaratList');
+  const syarats = Object.entries(p).filter(([k]) => k.startsWith('syarat_')).map(([,v]) => v);
+  if(syaratList) syaratList.innerHTML = syarats.length
+    ? syarats.map(s => '<li>' + s + '</li>').join('')
+    : '<li>Data syarat belum tersedia.</li>';
+
+  // Kuota
   const kuotaEl = document.getElementById('kuotaNum');
   if(kuotaEl && p.kuota) kuotaEl.textContent = p.kuota;
 }
