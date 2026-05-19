@@ -452,7 +452,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 
 /* SYARAT & JADWAL */
 .syarat-list{list-style:none;}
-.syarat-list li{padding:5px 0;border-bottom:1px solid #f0f4f8;font-size:13px;display:flex;gap:10px;align-items:flex-start;}
+.syarat-list li{padding:6px 0 6px 8px;border-bottom:1px solid #f0f4f8;font-size:13px;display:flex;gap:10px;align-items:flex-start;}
 .syarat-list li::before{content:'✓';color:var(--hijau);font-weight:700;flex-shrink:0;margin-top:1px;}
 .jadwal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
 .jadwal-card{background:var(--abu);border-radius:10px;padding:14px 18px;}
@@ -610,17 +610,20 @@ select.f-input{appearance:auto;}
   <div class="tab-content" id="tabInfo" style="display:block;">
     <div class="sec-title">📅 Jadwal PPDB</div>
     <div id="jadwalGrid" style="margin-top:8px;"></div>
-    <div style="margin-top:24px;">
+    <div style="margin-top:20px;">
       <div class="sec-title">🎯 Kuota</div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-top:8px;"><span style="font-size:22px;font-weight:800;color:var(--biru);" id="kuotaNum">—</span><span style="font-size:13px;color:var(--teks-sub);">Siswa Baru</span></div>
-      </div>
-  </div><div class="sec-title" style="margin-top:28px;">📋 Persyaratan Pendaftaran</div>
-    <ul class="syarat-list" id="syaratList">
-      <li>Memuat data...</li>
-    </ul>
-    
+      <span style="font-size:20px;font-weight:800;color:var(--biru);" id="kuotaNum">—</span>
+      <span style="font-size:13px;color:var(--teks-sub);margin-left:6px;">Siswa Baru</span>
+    </div>
+    <div style="margin-top:20px;">
+      <div class="sec-title">📋 Persyaratan Pendaftaran</div>
+      <ul class="syarat-list" id="syaratList" style="margin-top:8px;padding-left:8px;">
+        <li>Memuat data...</li>
+      </ul>
+    </div>
+  </div>
 
-  <!-- ═══════ TAB DAFTAR ═══════ -->
+    <!-- ═══════ TAB DAFTAR ═══════ -->
   <div class="tab-content" id="tabDaftar" style="display:none;">
     <div id="bannerDaftar" style="margin-bottom:16px;"></div>
     <div id="alertError" style="display:none;background:#fdecea;border:1px solid #f5c6c2;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#c0392b;margin-bottom:12px;"></div>
@@ -1307,6 +1310,22 @@ async function muatPPDBInfo() {
 function renderPPDBInfo(d) {
   const p = d.data || d;
   ppdbStatus = (p.status||'TUTUP').toUpperCase();
+
+  // Cek status pengumuman - disable input kalau tutup
+  const cekInput = document.getElementById('cekInput');
+  const statusPengumuman = (p.status_pengumuman||'TUTUP').toUpperCase();
+  if(statusPengumuman === 'TUTUP' && cekInput) {
+    cekInput.disabled = true;
+    cekInput.placeholder = 'Informasi hasil seleksi belum dibuka';
+    const bannerPengumuman = document.getElementById('bannerPengumuman');
+    if(bannerPengumuman) bannerPengumuman.innerHTML = `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;text-align:center;color:#856404;margin-bottom:12px;">
+      <div style="font-size:20px;margin-bottom:6px;">🔔</div>
+      <div style="font-weight:700;margin-bottom:4px;">Informasi Hasil Seleksi Belum Dibuka</div>
+      <div style="font-size:13px;">Pantau terus website ini untuk informasi selanjutnya.</div>
+    </div>`;
+    const cekBtn = document.querySelector('#tabCek button');
+    if(cekBtn) cekBtn.disabled = true;
+  }
 
   // Banner hanya di tab Daftar
   const bannerDaftar = document.getElementById('bannerDaftar');
