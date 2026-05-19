@@ -608,7 +608,6 @@ select.f-input{appearance:auto;}
 
   <!-- ═══════ TAB INFO ═══════ -->
   <div class="tab-content" id="tabInfo" style="display:block;">
-    <div id="bannerStatus"></div>
     <div class="sec-title">📋 Persyaratan Pendaftaran</div>
     <ul class="syarat-list" id="syaratList">
       <li>Memuat data...</li>
@@ -617,68 +616,7 @@ select.f-input{appearance:auto;}
     <div class="jadwal-grid" id="jadwalGrid"></div>
     <div style="margin-top:24px;">
       <div class="sec-title">🎯 Kuota</div>
-      <div style="font-size:32px;font-weight:800;color:var(--biru);" id="kuotaNum">—</div>
-      <div style="font-size:13px;color:var(--teks-sub);">Siswa Baru</div>
-    </div>
-  </div>
-
-  <!-- ═══════ TAB DAFTAR ═══════ -->
-  <div class="tab-content" id="tabDaftar" style="display:none;">
-    <div id="bannerDaftar"></div>
-    <div class="alert alert-error" id="alertError"></div>
-    <div class="alert alert-sukses" id="alertSukses"></div>
-
-    <!-- FORM PENDAFTARAN -->
-    <div id="formSection">
-      <!-- A. DATA SISWA -->
-      <div class="sec-title">👤 A. Data Siswa</div>
-      <div class="form-grid">
-        <div class="full"><div class="fg">
-      <label class="f-label">Nama Lengkap <span class="req">*</span></label>
-      <input type="text" id="fNama" class="f-input" placeholder="Nama lengkap sesuai akta" required>
-    </div></div>
-        <div><div class="fg">
-      <label class="f-label">Jenis Kelamin <span class="req">*</span></label>
-      <select id="fJK" class="f-input" required onchange="cekLain('fJK')">
-      <option value="">-- Pilih Jenis Kelamin --</option>
-      <option value="Laki-Laki">Laki-Laki</option>
-<option value="Perempuan">Perempuan</option>
-      
-    </select>
-    </div></div>
-        <div><div class="fg">
-      <label class="f-label">NISN (10 digit) <span class="req">*</span></label>
-      <input type="text" id="fNISN" class="f-input" placeholder="Nomor Induk Siswa Nasional" required>
-    </div></div>
-        <div><div class="fg">
-      <label class="f-label">NIK Siswa <span class="req">*</span></label>
-      <input type="text" id="fNIK" class="f-input" placeholder="Nomor Induk Kependudukan" required>
-    </div></div>
-        <div><div class="fg">
-      <label class="f-label">Nomor Kartu Keluarga <span class="req">*</span></label>
-      <input type="text" id="fNoKK" class="f-input" placeholder="Nomor KK (bagian atas)" required>
-    </div></div>
-        <div><div class="fg">
-      <label class="f-label">Tempat Lahir <span class="req">*</span></label>
-      <input type="text" id="fTmptLahir" class="f-input" placeholder="Kota/Kabupaten" required>
-    </div></div>
-        <div><div class="fg">
-      <label class="f-label">Tanggal Lahir <span class="req">*</span></label>
-      <input type="text" id="fTglLahir" class="f-input" placeholder="contoh: 1 Januari 2013" required>
-    </div></div>
-        <div><div class="fg">
-      <label class="f-label">Agama <span class="req">*</span></label>
-      <select id="fAgama" class="f-input" required onchange="cekLain('fAgama')">
-      <option value="">-- Pilih Agama --</option>
-      <option value="Islam">Islam</option>
-<option value="Kristen">Kristen</option>
-<option value="Katolik">Katolik</option>
-<option value="Hindu">Hindu</option>
-<option value="Budha">Budha</option>
-<option value="Khonghucu">Khonghucu</option>
-      
-    </select>
-    </div></div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:8px;"><span style="font-size:22px;font-weight:800;color:var(--biru);" id="kuotaNum">—</span><span style="font-size:13px;color:var(--teks-sub);">Siswa Baru</span></div>
       </div>
 
       <!-- B. ALAMAT -->
@@ -1336,41 +1274,58 @@ function renderPPDBInfo(d) {
   const p = d.data || d;
   ppdbStatus = (p.status||'TUTUP').toUpperCase();
 
-  // Banner status
-  const bannerInfo = document.getElementById('bannerStatus');
+  // Banner hanya di tab Daftar
   const bannerDaftar = document.getElementById('bannerDaftar');
-  if (ppdbStatus === 'BUKA') {
-    bannerInfo.innerHTML = `<div class="banner buka">✅ Pendaftaran PPDB sedang DIBUKA — Segera daftarkan putra-putri Anda!</div>`;
-    bannerDaftar.innerHTML = `<div class="banner buka">✅ Pendaftaran DIBUKA: ${p.tgl_buka||''} s/d ${p.tgl_tutup||''}</div>`;
-  } else {
-    bannerInfo.innerHTML = `<div class="banner tutup">🔒 Pendaftaran PPDB saat ini DITUTUP</div>`;
-    bannerDaftar.innerHTML = `<div class="banner tutup">🔒 Pendaftaran PPDB saat ini DITUTUP. Formulir tidak dapat diisi.</div>`;
-    setFormDisabled(true);
+  if(bannerDaftar) {
+    if(ppdbStatus === 'BUKA') {
+      bannerDaftar.innerHTML = `<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#1a7a4a;margin-bottom:16px;">✅ Pendaftaran DIBUKA: ${p.tgl_buka||''} s/d ${p.tgl_tutup||''}</div>`;
+    } else {
+      bannerDaftar.innerHTML = `<div style="background:#fdecea;border:1px solid #f5c6c2;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#c0392b;margin-bottom:16px;">🔒 Pendaftaran PPDB saat ini DITUTUP. Formulir tidak dapat diisi.</div>`;
+      setFormDisabled(true);
+    }
   }
 
-  // Syarat
+  // Syarat - tampilan card dengan centang
   const syaratList = document.getElementById('syaratList');
   const syarats = Object.entries(p).filter(([k]) => k.startsWith('syarat_')).map(([,v]) => v);
-  syaratList.innerHTML = syarats.length
-    ? syarats.map(s => `<li>${s}</li>`).join('')
-    : '<li>Data syarat belum tersedia.</li>';
+  if(syaratList) syaratList.innerHTML = syarats.length
+    ? syarats.map(s => `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #eef2f7;">
+        <div style="width:22px;height:22px;background:#e8f5e9;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;">✓</div>
+        <span style="font-size:14px;color:var(--teks);line-height:1.5;">${s}</span>
+      </div>`).join('')
+    : '<p style="color:var(--teks-sub);font-size:13px;">Data syarat belum tersedia.</p>';
 
-  // Jadwal
-  const jadwalMap = {
-    jadwal_pendaftaran: 'Pendaftaran',
-    jadwal_seleksi: 'Seleksi',
-    jadwal_pengumuman: 'Pengumuman',
-    jadwal_daftar_ulang: 'Daftar Ulang'
-  };
+  // Jadwal - tabel kegiatan/tanggal/keterangan
   const jadwalGrid = document.getElementById('jadwalGrid');
-  jadwalGrid.innerHTML = Object.entries(jadwalMap).map(([k,label]) =>
-    p[k] ? `<div class="jadwal-card"><div class="jadwal-label">${label}</div><div class="jadwal-val">${p[k]}</div></div>` : ''
-  ).join('');
+  const jadwalData = [
+    {key:'jadwal_pendaftaran', label:'Pendaftaran Online', ket:'Via website ini'},
+    {key:'jadwal_seleksi',     label:'Verifikasi Berkas',  ket:'Datang ke sekolah'},
+    {key:'jadwal_pengumuman',  label:'Pengumuman Hasil',   ket:'Di website & sekolah'},
+    {key:'jadwal_daftar_ulang',label:'Daftar Ulang',       ket:'Datang ke sekolah'},
+  ];
+  if(jadwalGrid) jadwalGrid.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="background:var(--biru);color:#fff;">
+          <th style="padding:10px 14px;text-align:left;border-radius:8px 0 0 0;">Kegiatan</th>
+          <th style="padding:10px 14px;text-align:left;">Tanggal</th>
+          <th style="padding:10px 14px;text-align:left;border-radius:0 8px 0 0;">Keterangan</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${jadwalData.filter(j => p[j.key]).map((j,i) => `
+          <tr style="background:${i%2===0?'#fff':'#f8f9fb'};">
+            <td style="padding:10px 14px;font-weight:600;border-bottom:1px solid #eef2f7;">${j.label}</td>
+            <td style="padding:10px 14px;color:var(--biru);font-weight:600;border-bottom:1px solid #eef2f7;">${p[j.key]}</td>
+            <td style="padding:10px 14px;color:var(--teks-sub);border-bottom:1px solid #eef2f7;">${j.ket}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
 
-  // Kuota
-  if (p.kuota) document.getElementById('kuotaNum').textContent = p.kuota;
+  // Kuota - lebih compact
+  const kuotaEl = document.getElementById('kuotaNum');
+  if(kuotaEl && p.kuota) kuotaEl.textContent = p.kuota;
 }
-
 
 
 function setFormDisabled(disabled) {
@@ -1537,7 +1492,11 @@ async function cekStatus() {
 
     // Cek apakah pengumuman belum dibuka
     if (d.ok && d.data && d.data.tutup) {
-      result.innerHTML = `<div class="banner tutup" style="margin:0;">🔒 ${d.data.pesan}</div>`;
+      result.innerHTML = `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:16px 20px;text-align:center;color:#856404;">
+        <div style="font-size:24px;margin-bottom:8px;">🔔</div>
+        <div style="font-weight:700;margin-bottom:4px;">Informasi Hasil Seleksi Belum Dibuka</div>
+        <div style="font-size:13px;">${d.data.pesan}</div>
+      </div>`;
       return;
     }
 
