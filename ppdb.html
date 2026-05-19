@@ -38,6 +38,7 @@
     box-shadow: 0 8px 40px rgba(0,0,0,0.15);
     overflow: hidden;
     font-size: 13px;
+    margin: 0 auto;
   }
 
   /* Header kartu */
@@ -422,14 +423,14 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 @media(max-width:1024px){.nav-links{display:none;}.hamburger{display:flex;}}
 
 /* PAGE */
-.page-hero{background:linear-gradient(135deg,var(--biru),var(--biru-mid));padding:100px 24px 46px;text-align:center;color:#fff;}
+.page-hero{background:linear-gradient(135deg,var(--biru),var(--biru-mid));padding:100px 24px 46px;text-align:center;color:#fff;width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;box-sizing:border-box;}
 .page-hero h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:800;margin-bottom:8px;}
 .page-hero p{font-size:14px;opacity:0.85;}
 
 /* TABS */
-.tab-bar{max-width:1100px;margin:0 auto;display:flex;gap:4px;padding:20px 24px 0;width:100%;box-sizing:border-box;}
-.tab-btn{flex:1;padding:12px;border:none;border-radius:10px 10px 0 0;background:#e8edf5;color:var(--teks-sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
-.tab-btn.active{background:#fff;color:var(--biru);box-shadow:0 -2px 8px rgba(0,0,0,0.06);}
+.tab-bar{max-width:1100px;margin:0 auto;display:flex;gap:4px;padding:20px 24px 0;}
+.tab-btn{flex:1;padding:12px;border:none;border-radius:10px 10px 0 0;background:#dde3ee;color:var(--teks-sub);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.tab-btn.active{background:#fff;color:var(--biru);box-shadow:0 -3px 0 var(--biru) inset,0 -2px 8px rgba(0,0,0,0.06);font-weight:700;}
 
 /* MAIN */
 .main{max-width:1100px;margin:0 auto;padding:0 24px 60px;}
@@ -547,7 +548,7 @@ select.f-input{appearance:auto;}
 <a href="ppdb.html#cek">Cek Status</a>
         </div>
       </div>
-      <div class="nav-dropdown">
+      <div class="nav-dropdown dd-right">
         <a href="akademik/login.html" class="nav-link">Akademik <span class="dd-arrow">▾</span></a>
         <div class="dropdown-menu">
           <a href="akademik/login.html">🪪 Absensi Siswa</a>
