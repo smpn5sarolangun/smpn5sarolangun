@@ -1603,14 +1603,15 @@ function resetBtn() {
 function tampilError(msg) {
   const el = document.getElementById('alertError');
   el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
   el.classList.add('show');
   el.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function sembunyiAlert() {
   const e1 = document.getElementById('alertError');
   const e2 = document.getElementById('alertSukses');
-  if(e1) e1.classList.remove('show');
-  if(e2) e2.classList.remove('show');
+  if(e1){ e1.classList.remove('show'); e1.style.display='none'; }
+  if(e2){ e2.classList.remove('show'); e2.style.display='none'; }
 }
 
 // ── ISI KARTU BUKTI ──
