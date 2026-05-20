@@ -1176,13 +1176,13 @@ select.f-input{appearance:auto;}
       <div id="kTgl2" style="color:#555;"></div>
       <div style="color:#555;">Orang Tua / Wali Peserta</div>
       <div style="height:50px;"></div>
-      <div style="border-top:1px solid #333;padding-top:4px;">( _________________ )</div>
+      <div style="padding-top:4px;">( _________________ )</div>
     </div>
     <div>
       <div id="kTgl3" style="color:#555;"></div>
       <div style="color:#555;">Kepala SMP Negeri 05 Sarolangun</div>
       <div style="height:50px;"></div>
-      <div style="border-top:1px solid #333;padding-top:4px;">Sukardiman, M.Pd.</div>
+      <div style="padding-top:4px;">Sukardiman, M.Pd.</div>
     </div>
   </div>
 
@@ -1248,6 +1248,11 @@ function switchTab(tab, btn) {
   const tabEl = document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
   if(tabEl) tabEl.style.display = 'block';
   btn.classList.add('active');
+  // Clear result cek status saat pindah tab
+  const rc = document.getElementById('resultCard');
+  if(rc) { rc.innerHTML = ''; rc.classList.remove('show'); rc.style.display = 'none'; }
+  const ci = document.getElementById('cekInput');
+  if(ci) ci.value = '';
 }
 
 // ── DROPDOWN LAINNYA ──
@@ -1656,33 +1661,52 @@ async function cekStatus() {
   const input = document.getElementById('cekInput').value.trim();
   if (!input) { alert('Masukkan nomor pendaftaran atau NISN.'); return; }
   const result = document.getElementById('resultCard');
-
-  const CACHE_KEY = 'ppdb_status_' + input;
-  const CACHE_TTL = 5 * 60 * 1000; // 5 menit
+  const btn = document.querySelector('#tabCek button');
 
   function tampilHasil(p) {
-    const statusLabel = {PENDING:'⏳ Menunggu Verifikasi',TERDAFTAR:'✅ Terdaftar',DITERIMA:'✅ Diterima',DITOLAK:'❌ Tidak Diterima',DAFTAR_ULANG:'📝 Silakan Daftar Ulang','':'⏳ Menunggu Verifikasi'};
+    const statusLabel = {
+      'Terdaftar':      '⏳ Menunggu Verifikasi',
+      'Verifikasi':     '🔍 Sedang Diverifikasi',
+      'Diterima':       '✅ Diterima',
+      'Tidak Diterima': '❌ Tidak Diterima',
+      '':               '⏳ Menunggu Verifikasi'
+    };
+    const statusClass = {
+      'Terdaftar':      'status-PENDING',
+      'Verifikasi':     'status-PENDING',
+      'Diterima':       'status-DITERIMA',
+      'Tidak Diterima': 'status-DITOLAK',
+      '':               'status-PENDING'
+    };
+    const label = statusLabel[p.status] !== undefined ? statusLabel[p.status] : p.status;
+    const cls   = statusClass[p.status]  || 'status-PENDING';
     result.innerHTML = `
       <div style="font-size:13px;color:var(--teks-sub);">No. Pendaftaran</div>
       <div style="font-size:20px;font-weight:800;color:var(--biru);margin-bottom:4px;">${p.nomor}</div>
       <div style="font-size:16px;font-weight:700;">${p.nama}</div>
       <div style="font-size:12px;color:var(--teks-sub);margin-bottom:8px;">Mendaftar: ${p.tgl}</div>
-      <div class="result-status status-${p.status}">${statusLabel[p.status]||p.status}</div>`;
+      <div class="result-status ${cls}">${label}</div>`;
     result.style.display = 'block';
     result.classList.add('show');
   }
 
-  // Cek cache status dulu (TTL 5 menit)
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const { data, ts } = JSON.parse(cached);
-      if (Date.now() - ts < CACHE_TTL) {
-        tampilHasil(data);
-        return;
+  // Disable tombol 10 detik untuk cegah spam
+  if (btn) {
+    btn.disabled = true;
+    let sisa = 10;
+    const oriTeks = btn.textContent;
+    btn.textContent = `Tunggu ${sisa}s`;
+    const interval = setInterval(() => {
+      sisa--;
+      if (sisa <= 0) {
+        clearInterval(interval);
+        btn.disabled = false;
+        btn.textContent = oriTeks;
+      } else {
+        btn.textContent = `Tunggu ${sisa}s`;
       }
-    }
-  } catch(e) {}
+    }, 1000);
+  }
 
   // Tampil loading
   result.classList.remove('show');
@@ -1690,7 +1714,7 @@ async function cekStatus() {
   result.innerHTML = '<p style="color:var(--teks-sub);font-size:13px;">⏳ Mencari data...</p>';
   result.classList.add('show');
 
-  // Fetch dari server
+  // Selalu fetch dari server (tidak pakai cache)
   try {
     const qs = new URLSearchParams({action:'cekStatusPPDB', nomor: input}).toString();
     const r = await fetch(`${PPDB_SCRIPT}?${qs}`);
@@ -1710,11 +1734,6 @@ async function cekStatus() {
       result.innerHTML = '<p style="color:var(--merah);font-size:14px;">Nomor pendaftaran tidak ditemukan. Periksa kembali nomor Anda.</p>';
       return;
     }
-
-    // Simpan ke cache localStorage
-    try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ data: d.data, ts: Date.now() }));
-    } catch(e) {}
 
     tampilHasil(d.data);
   } catch(e) {
