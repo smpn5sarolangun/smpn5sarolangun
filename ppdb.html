@@ -1515,25 +1515,22 @@ async function submitPPDB() {
   try {
     const r = await fetch(PPDB_SCRIPT, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: {'Content-Type':'text/plain'},
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
       body: JSON.stringify({action:'daftarPPDB', ...data})
     });
+    const d = await r.json();
 
-    // no-cors tidak return response - tunggu sebentar lalu anggap sukses
-    await new Promise(res => setTimeout(res, 2000));
-
-    // Buat nomor sementara untuk ditampilkan (nomor asli ada di sheet)
-    const tglNow = new Date().toLocaleString('id-ID');
-    const nomorTemp = 'PPDB-' + new Date().getFullYear() + '-' + nisnInput;
-
-    // Simpan ke cache browser sebagai bukti sudah daftar
-    localStorage.setItem('ppdb_terkirim_' + nisnInput, JSON.stringify({nomor: nomorTemp, tgl: tglNow}));
-
-    isiKartu({ok:true, nomor:'Menunggu konfirmasi panitia', nama:data.nama, tgl:tglNow});
-    hapusDraft();
-    document.getElementById('formSection').style.display = 'none';
-    document.getElementById('kartuSection').classList.add('show');
+    if(d.ok){
+      // Simpan ke cache browser
+      localStorage.setItem('ppdb_terkirim_' + nisnInput, JSON.stringify({nomor: d.nomor, tgl: d.tgl}));
+      isiKartu(d);
+      hapusDraft();
+      document.getElementById('formSection').style.display = 'none';
+      document.getElementById('kartuSection').classList.add('show');
+    } else {
+      tampilError(d.error || 'Terjadi kesalahan. Coba lagi.');
+      resetBtn();
+    }
   } catch(e) {
     tampilError('Gagal mengirim. Periksa koneksi internet Anda.');
     resetBtn();
