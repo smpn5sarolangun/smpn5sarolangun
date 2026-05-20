@@ -1300,7 +1300,9 @@ async function muatPPDBInfo() {
   if(cached) renderPPDBInfo(JSON.parse(cached));
   try {
     const r = await fetch(`${PPDB_SCRIPT}?action=getPPDBInfo`);
+    console.log("5. Response diterima");
     const d = await r.json();
+    console.log("6. HASIL GAS:", JSON.stringify(d));
     if (!d.ok || !d.data) return;
     localStorage.setItem('cache_ppdb_info', JSON.stringify(d));
     renderPPDBInfo(d);
@@ -1493,12 +1495,14 @@ async function submitPPDB() {
   }
 
   // Validasi panjang digit
+  console.log("2. Validasi digit...");
   if(!validasiDigit('fNISN', 10, 'NISN')) return;
   if(!validasiDigit('fNIK',  16, 'NIK Siswa')) return;
   if(!validasiDigit('fNoKK', 16, 'Nomor KK')) return;
 
   // Cek duplikat dari cache browser
   const nisnInput = data.nisn;
+  console.log("1. DATA:", JSON.stringify(data));
   const sudahDaftar = localStorage.getItem('ppdb_terkirim_' + nisnInput);
   if(sudahDaftar){
     const info = JSON.parse(sudahDaftar);
@@ -1506,6 +1510,7 @@ async function submitPPDB() {
     return;
   }
 
+  console.log("3. Sampai loading - fetch akan dipanggil");
   // Loading
   document.getElementById('spinner').style.display = 'block';
   document.getElementById('btnTeks').textContent = 'Mengirim...';
@@ -1513,6 +1518,7 @@ async function submitPPDB() {
   sembunyiAlert();
 
   try {
+    console.log("4. FETCH dipanggil!");
     const r = await fetch(PPDB_SCRIPT, {
       method: 'POST',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
@@ -1563,7 +1569,9 @@ async function submitPPDB() {
         noHPSiswa:      data.hpSiswa
       })
     });
+    console.log("5. Response diterima");
     const d = await r.json();
+    console.log("6. HASIL GAS:", JSON.stringify(d));
 
     if(d.success){
       const tglNow = new Date().toLocaleString('id-ID');
@@ -1666,7 +1674,9 @@ async function cekStatus() {
   // Tidak ada di cache - coba GAS (mungkin kena CORS tapi coba dulu)
   try {
     const r = await fetch(`${PPDB_SCRIPT}?action=cekStatusPPDB&nomor=${encodeURIComponent(input)}`);
+    console.log("5. Response diterima");
     const d = await r.json();
+    console.log("6. HASIL GAS:", JSON.stringify(d));
 
     // Cek apakah pengumuman belum dibuka
     if (d.ok && d.data && d.data.tutup) {
