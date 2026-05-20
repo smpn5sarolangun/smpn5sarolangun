@@ -1471,22 +1471,18 @@ async function submitPPDB() {
   }
 
   // Validasi panjang digit
-  console.log("2. Validasi digit...");
   if(!validasiDigit('fNISN', 10, 'NISN')) return;
   if(!validasiDigit('fNIK',  16, 'NIK Siswa')) return;
   if(!validasiDigit('fNoKK', 16, 'Nomor KK')) return;
 
   // Cek duplikat dari cache browser
   const nisnInput = data.nisn;
-  console.log("1. DATA:", JSON.stringify(data));
   const sudahDaftar = localStorage.getItem('ppdb_terkirim_' + nisnInput);
   if(sudahDaftar){
     const info = JSON.parse(sudahDaftar);
     tampilError('NISN ' + nisnInput + ' sudah pernah mendaftar dari perangkat ini. Nomor pendaftaran: ' + info.nomor + ' (' + info.tgl + '). Hubungi panitia jika ada kendala.');
     return;
   }
-
-  console.log("3. Sampai loading - fetch akan dipanggil");
   // Loading
   document.getElementById('spinner').style.display = 'block';
   document.getElementById('btnTeks').textContent = 'Mengirim...';
@@ -1494,7 +1490,6 @@ async function submitPPDB() {
   sembunyiAlert();
 
   try {
-    console.log("4. FETCH dipanggil!");
     const r = await fetch(PPDB_SCRIPT, {
       method: 'POST',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
@@ -1545,11 +1540,7 @@ async function submitPPDB() {
         noHPSiswa:      data.hpSiswa
       })
     });
-    console.log("5. Response diterima");
     const d = await r.json();
-    console.log("6. HASIL GAS:", JSON.stringify(d));
-
-    console.log("HASIL SUBMIT:", JSON.stringify(d));
     if(d.success){
       const tglNow = new Date().toLocaleString('id-ID');
       // Simpan ke cache browser
@@ -1566,7 +1557,6 @@ async function submitPPDB() {
       resetBtn();
     }
   } catch(e) {
-    console.error('CATCH ERROR:', e.message, e.stack);
     tampilError('Gagal mengirim. Periksa koneksi internet Anda.');
     resetBtn();
   }
@@ -1651,35 +1641,35 @@ function daftarLagi() {
 }
 
 // ── CEK STATUS ──
-async function cekStatus() {
+async async function cekStatus() {
   const input = document.getElementById('cekInput').value.trim();
-  if (!input) { alert('Masukkan nomor pendaftaran terlebih dahulu.'); return; }
+  if (!input) { alert('Masukkan nomor pendaftaran atau NISN.'); return; }
   const result = document.getElementById('resultCard');
   result.classList.remove('show');
-  result.innerHTML = '<p style="color:var(--teks-sub);font-size:13px;">Mencari data...</p>';
+  result.style.display = 'block';
+  result.innerHTML = '<p style="color:var(--teks-sub);font-size:13px;">⏳ Mencari data...</p>';
   result.classList.add('show');
+
   // Cek cache lokal dulu
-  const cacheKey = 'ppdb_terkirim_' + input;
-  const cached = localStorage.getItem(cacheKey);
+  const cached = localStorage.getItem('ppdb_terkirim_' + input);
   if(cached){
     try{
       const info = JSON.parse(cached);
       result.innerHTML = `<div style="background:#e8f5e9;border-radius:10px;padding:16px;">
-        <div style="font-size:18px;font-weight:700;color:#1b5e20;margin-bottom:8px;">✅ Pendaftaran Ditemukan</div>
-        <div style="font-size:14px;color:#333;">Nomor: <strong>${info.nomor}</strong></div>
+        <div style="font-size:16px;font-weight:700;color:#1b5e20;margin-bottom:8px;">✅ Pendaftaran Ditemukan (Cache)</div>
+        <div style="font-size:14px;">Nomor: <strong>${info.nomor}</strong></div>
         <div style="font-size:13px;color:#666;margin-top:4px;">Waktu daftar: ${info.tgl}</div>
-        <div style="font-size:12px;color:#888;margin-top:8px;">Data tersimpan di perangkat ini. Hubungi panitia untuk nomor resmi.</div>
+        <div style="font-size:12px;color:#888;margin-top:8px;">Hubungi panitia untuk konfirmasi status resmi.</div>
       </div>`;
       return;
     }catch(e){}
   }
 
-  // Tidak ada di cache - coba GAS (mungkin kena CORS tapi coba dulu)
+  // Pakai GET query string - tidak kena CORS
   try {
-    const r = await fetch(`${PPDB_SCRIPT}?action=cekStatusPPDB&nomor=${encodeURIComponent(input)}`);
-    console.log("5. Response diterima");
+    const qs = new URLSearchParams({action:'cekStatusPPDB', nomor: input}).toString();
+    const r = await fetch(`${PPDB_SCRIPT}?${qs}`);
     const d = await r.json();
-    console.log("6. HASIL GAS:", JSON.stringify(d));
 
     // Cek apakah pengumuman belum dibuka
     if (d.ok && d.data && d.data.tutup) {
