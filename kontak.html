@@ -220,16 +220,10 @@ function kirimPesan(){
   btn.disabled = true;
   btn.innerHTML = '⏳ Mengirim...';
 
-  // Kirim sebagai FormData agar tidak kena CORS block
-  const formData = new FormData();
-  formData.append('action', 'kirimPesan');
-  formData.append('nama', nama);
-  formData.append('keperluan', kep);
-  formData.append('pesan', pesan);
-
   fetch('https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec', {
     method: 'POST',
-    body: formData
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({action:'kirimPesan', nama, keperluan:kep, pesan})
   })
   .then(r => r.json())
   .then(d => {
