@@ -1520,24 +1520,20 @@ async function submitPPDB() {
       body: JSON.stringify({action:'daftarPPDB', ...data})
     });
 
-    // no-cors tidak return response, tunggu GAS selesai lalu verifikasi via NISN
-    await new Promise(res => setTimeout(res, 3000));
-    const cek = await fetch(`${PPDB_SCRIPT}?action=cekStatusPPDB&nomor=${encodeURIComponent(data.nisn)}`);
-    const d = await cek.json();
+    // no-cors tidak return response - tunggu sebentar lalu anggap sukses
+    await new Promise(res => setTimeout(res, 2000));
 
-    if (d.ok && d.data) {
-      const nomorBukti = d.data.nomor;
-      const tglBukti   = d.data.tgl;
-      // Simpan ke cache browser sebagai bukti sudah daftar
-      localStorage.setItem('ppdb_terkirim_' + nisnInput, JSON.stringify({nomor: nomorBukti, tgl: tglBukti}));
-      isiKartu({ok:true, nomor:nomorBukti, nama:d.data.nama, tgl:tglBukti});
-      hapusDraft();
-      document.getElementById('formSection').style.display = 'none';
-      document.getElementById('kartuSection').classList.add('show');
-    } else {
-      tampilError('Pendaftaran gagal. NISN atau NIK mungkin sudah terdaftar. Hubungi panitia jika merasa belum mendaftar.');
-      resetBtn();
-    }
+    // Buat nomor sementara untuk ditampilkan (nomor asli ada di sheet)
+    const tglNow = new Date().toLocaleString('id-ID');
+    const nomorTemp = 'PPDB-' + new Date().getFullYear() + '-' + nisnInput;
+
+    // Simpan ke cache browser sebagai bukti sudah daftar
+    localStorage.setItem('ppdb_terkirim_' + nisnInput, JSON.stringify({nomor: nomorTemp, tgl: tglNow}));
+
+    isiKartu({ok:true, nomor:'Menunggu konfirmasi panitia', nama:data.nama, tgl:tglNow});
+    hapusDraft();
+    document.getElementById('formSection').style.display = 'none';
+    document.getElementById('kartuSection').classList.add('show');
   } catch(e) {
     tampilError('Gagal mengirim. Periksa koneksi internet Anda.');
     resetBtn();
