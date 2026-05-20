@@ -1456,7 +1456,7 @@ async function submitPPDB() {
   sembunyiAlert();
 
   try {
-    const r = await fetch(PPDB_SCRIPT, {
+    const r = await const r = await fetch(PPDB_SCRIPT, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({action:'daftarPPDB', ...data})
