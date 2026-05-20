@@ -7,7 +7,7 @@
 <title>Pengumuman - SMP Negeri 05 Sarolangun</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* ── NAVBAR ── */
+  /* -- NAVBAR -- */
   nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97);backdrop-filter:blur(10px);box-shadow:0 2px 20px rgba(0,0,0,0.3);}
   .nav-inner{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:64px;}
   .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
@@ -184,6 +184,9 @@
   }
 
   
+
+  .peng-item:hover { background: #f8faff; }
+  .peng-item { cursor: pointer; transition: background 0.15s; }
 </style>
 </head>
 <body>
@@ -361,7 +364,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMb
 let TGL_PENGUMUMAN = null; // dari sheet PPDB_INFO
 let statusKelulusan = null; // akan diisi dari GAS
 
-// ── INISIALISASI ──
+// INISIALISASI //
 async function init() {
   await muatStatusKelulusan();
   updateCekUI();
@@ -370,7 +373,7 @@ async function init() {
   muatPengumuman();
 }
 
-// ── MUAT STATUS DARI GAS ──
+// MUAT STATUS DARI GAS //
 async function muatStatusKelulusan() {
   try {
     const r = await fetch(SCRIPT_URL + '?action=getPPDBInfo');
@@ -382,19 +385,24 @@ async function muatStatusKelulusan() {
       // Tanggal pengumuman dari sheet
       const tglStr = info.tgl_pengumuman_kelulusan || '';
       if(tglStr) {
-        // Parse manual agar tidak kena UTC offset (misal: "2026-06-02 08:00")
-        const parts = tglStr.replace('T',' ').split(/[\s:-]/);
-        TGL_PENGUMUMAN = new Date(
-          parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]),
-          parseInt(parts[3]||0), parseInt(parts[4]||0), 0
-        );
-        // Format tampil tanggal
-        const opts = {day:'numeric', month:'long', year:'numeric'};
+        // Handle berbagai format: "2026-06-02 20:00", "Tue Jun 02 2026 20:00:00 GMT+0700", dll
+        const parsed = new Date(tglStr);
+        if(!isNaN(parsed)) {
+          TGL_PENGUMUMAN = parsed; // format panjang dari GAS - sudah include timezone
+        } else {
+          // Format manual: "2026-06-02 20:00"
+          const parts = tglStr.replace('T',' ').split(/[\s:-]/);
+          TGL_PENGUMUMAN = new Date(
+            parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]),
+            parseInt(parts[3]||0), parseInt(parts[4]||0), 0
+          );
+        }
+        const opts = {day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'};
         const tglTampil = TGL_PENGUMUMAN.toLocaleDateString('id-ID', opts).toUpperCase();
         const infoEl = document.getElementById('infoBannerTgl');
         if(infoEl) infoEl.innerHTML = 'PENGUMUMAN RESMI: <strong style="color:#fff;">' + tglTampil + '</strong>';
       } else {
-        TGL_PENGUMUMAN = new Date(2026, 5, 2, 8, 0, 0); // fallback: 2 Juni 2026 08:00 WIB
+        TGL_PENGUMUMAN = new Date(2026, 5, 2, 20, 0, 0); // fallback
       }
 
       // Tahun kelulusan dari sheet
@@ -409,7 +417,7 @@ async function muatStatusKelulusan() {
   }
 }
 
-// ── LOGIKA STATUS ──
+// LOGIKA STATUS //
 function cekBuka() {
   if(statusKelulusan === 'BUKA') return true;
   if(statusKelulusan === 'TUTUP') return false;
@@ -422,7 +430,7 @@ function cekTampilCountdown() {
   return new Date() < TGL_PENGUMUMAN;
 }
 
-// ── UPDATE UI CEK ──
+// UPDATE UI CEK //
 function updateCekUI() {
   const buka = cekBuka();
   const form = document.getElementById('cekForm');
@@ -445,7 +453,7 @@ function updateCekUI() {
   }
 }
 
-// ── HITUNG MUNDUR ──
+// HITUNG MUNDUR //
 function updateCountdown() {
   if(!cekTampilCountdown()) {
     document.getElementById('bannerHitung').style.display = 'none';
@@ -459,7 +467,7 @@ function updateCountdown() {
   document.getElementById('cdDetik').textContent = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
 }
 
-// ── CEK KELULUSAN ──
+// CEK KELULUSAN //
 async function cekKelulusanIX() {
   if(!cekBuka()) return;
   const nisn   = document.getElementById('inputNISN').value.trim();
@@ -467,30 +475,30 @@ async function cekKelulusanIX() {
   const hasil  = document.getElementById('hasilCek');
   if(!nisn) { alert('Masukkan NISN terlebih dahulu.'); return; }
   if(!tgl)  { alert('Masukkan tanggal lahir terlebih dahulu.'); return; }
-  hasil.innerHTML = '<div style="padding:16px;text-align:center;color:var(--teks-sub);">⏳ Memeriksa data...</div>';
+  hasil.innerHTML = '<div style="padding:16px;text-align:center;color:var(--teks-sub);">[loading] Memeriksa data...</div>';
   try {
     const r = await fetch(SCRIPT_URL + '?action=kelulusanIX&query=' + encodeURIComponent(nisn) + '&tglLahir=' + encodeURIComponent(tgl));
     const d = await r.json();
     if(d.found && d.salahTglLahir) {
-      hasil.innerHTML = '<div style="background:#fdecea;border-radius:10px;padding:16px;font-size:14px;color:#c0392b;">❌ Tanggal lahir tidak sesuai. Periksa kembali data Anda.</div>';
+      hasil.innerHTML = '<div style="background:#fdecea;border-radius:10px;padding:16px;font-size:14px;color:#c0392b;">[x] Tanggal lahir tidak sesuai. Periksa kembali data Anda.</div>';
       return;
     }
     if(!d.found) {
-      hasil.innerHTML = '<div style="background:#fff3cd;border-radius:10px;padding:16px;font-size:14px;color:#856404;">⚠️ Data tidak ditemukan. Pastikan NISN yang dimasukkan sudah benar.</div>';
+      hasil.innerHTML = '<div style="background:#fff3cd;border-radius:10px;padding:16px;font-size:14px;color:#856404;">[!] Data tidak ditemukan. Pastikan NISN yang dimasukkan sudah benar.</div>';
       return;
     }
     const lulus = (d.status||'').toUpperCase() === 'LULUS';
     hasil.innerHTML = \`<div style="border-radius:12px;padding:20px;text-align:center;background:\${lulus?'#e8f5e9':'#fdecea'};border:1px solid \${lulus?'#a5d6a7':'#f5c6c2'};">
-      <div style="font-size:32px;margin-bottom:8px;">\${lulus?'🎉':'😔'}</div>
+      <div style="font-size:32px;margin-bottom:8px;">\${lulus?':)':':('}</div>
       <div style="font-size:17px;font-weight:700;color:var(--teks);margin-bottom:4px;">\${d.namaLengkap||d.nama||''}</div>
-      <div style="font-size:13px;color:var(--teks-sub);margin-bottom:10px;">NISN: \${d.nisn||nisn} · Kelas \${d.kelas||''}</div>
+      <div style="font-size:13px;color:var(--teks-sub);margin-bottom:10px;">NISN: \${d.nisn||nisn} - Kelas \${d.kelas||''}</div>
       <div style="display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:14px;background:\${lulus?'#1a7a4a':'#e53935'};color:#fff;">
-        \${lulus?'✅ LULUS':'❌ TIDAK LULUS'}
+        \${lulus?'[v] LULUS':'[x] TIDAK LULUS'}
       </div>
       \${d.keterangan?'<div style="margin-top:12px;font-size:13px;color:var(--teks-sub);">'+d.keterangan+'</div>':''}
     </div>\`;
   } catch(e) {
-    hasil.innerHTML = '<div style="background:#fff3cd;border-radius:10px;padding:16px;font-size:14px;color:#856404;">⚠️ Gagal mengambil data. Coba lagi.</div>';
+    hasil.innerHTML = '<div style="background:#fff3cd;border-radius:10px;padding:16px;font-size:14px;color:#856404;">[!] Gagal mengambil data. Coba lagi.</div>';
   }
 }
 
@@ -502,7 +510,7 @@ function formatTglPengumuman(tglStr) {
   } catch(e) { return tglStr; }
 }
 
-// ── MUAT PENGUMUMAN ──
+// MUAT PENGUMUMAN //
 const ITEM_PER_HAL = 10;
 let _halAktif = 1;
 
@@ -539,18 +547,18 @@ function renderHalaman(hal) {
   const rows = items.map((item, i) => {
     const idx = start + i;
     const nomor = start + i + 1;
-    return '<div onclick="bukaPopup('+idx+')" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:'+(i<items.length-1?'1px solid #eef2f7':'')+';cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8faff'" onmouseout="this.style.background=''">'
+    return '<div onclick="bukaPopup('+idx+')" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:'+(i<items.length-1?'1px solid #eef2f7':'')+';cursor:pointer;transition:background 0.15s;" class="peng-item">'
       + '<div style="width:28px;height:28px;border-radius:50%;background:#eef2ff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--biru-mid);flex-shrink:0;">'+nomor+'</div>'
       + '<div style="flex:1;">'
       + '<div style="font-size:14px;font-weight:600;color:var(--teks);">'+(item.judul||'')+'</div>'
-      + '<div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">'+formatTglPengumuman(item.tanggal||'')+(item.kategori?' · '+item.kategori:'')+'</div>'
-      + '</div><div style="color:var(--teks-sub);font-size:18px;">›</div></div>';
+      + '<div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">'+formatTglPengumuman(item.tanggal||'')+(item.kategori?' - '+item.kategori:'')+'</div>'
+      + '</div><div style="color:var(--teks-sub);font-size:18px;">&rsaquo;</div></div>';
   }).join('');
 
   let pagination = '';
   if(totalHal > 1) {
-    const btnPrev = '<button onclick="renderHalaman('+(hal-1)+')" '+(hal<=1?'disabled':'')+' style="padding:6px 14px;border:1px solid #dde3ea;border-radius:8px;background:'+(hal<=1?'#f5f7fa':'#fff')+';color:'+(hal<=1?'#aaa':'var(--biru)')+';cursor:'+(hal<=1?'default':'pointer')+';font-size:13px;font-weight:600;">‹ Prev</button>';
-    const btnNext = '<button onclick="renderHalaman('+(hal+1)+')" '+(hal>=totalHal?'disabled':'')+' style="padding:6px 14px;border:1px solid #dde3ea;border-radius:8px;background:'+(hal>=totalHal?'#f5f7fa':'#fff')+';color:'+(hal>=totalHal?'#aaa':'var(--biru)')+';cursor:'+(hal>=totalHal?'default':'pointer')+';font-size:13px;font-weight:600;">Next ›</button>';
+    const btnPrev = '<button onclick="renderHalaman('+(hal-1)+')" '+(hal<=1?'disabled':'')+' style="padding:6px 14px;border:1px solid #dde3ea;border-radius:8px;background:'+(hal<=1?'#f5f7fa':'#fff')+';color:'+(hal<=1?'#aaa':'var(--biru)')+';cursor:'+(hal<=1?'default':'pointer')+';font-size:13px;font-weight:600;">&laquo; Prev</button>';
+    const btnNext = '<button onclick="renderHalaman('+(hal+1)+')" '+(hal>=totalHal?'disabled':'')+' style="padding:6px 14px;border:1px solid #dde3ea;border-radius:8px;background:'+(hal>=totalHal?'#f5f7fa':'#fff')+';color:'+(hal>=totalHal?'#aaa':'var(--biru)')+';cursor:'+(hal>=totalHal?'default':'pointer')+';font-size:13px;font-weight:600;">Next &raquo;</button>';
     const nums = Array.from({length:totalHal},(_,i)=>i+1).map(h =>
       '<button onclick="renderHalaman('+h+')" style="padding:6px 12px;border:1px solid '+(h===hal?'var(--biru)':'#dde3ea')+';border-radius:8px;background:'+(h===hal?'var(--biru)':'#fff')+';color:'+(h===hal?'#fff':'var(--teks)')+';cursor:pointer;font-size:13px;font-weight:600;">'+h+'</button>'
     ).join('');
@@ -561,7 +569,7 @@ function renderHalaman(hal) {
   list.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-// ── POPUP ──
+// POPUP //
 function bukaPopup(idx) {
   const item = window._pengumumanData[idx];
   if(!item) return;
