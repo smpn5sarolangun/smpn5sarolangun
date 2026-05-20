@@ -381,12 +381,19 @@ async function muatStatusKelulusan() {
       // Tanggal pengumuman dari sheet
       const tglStr = info.tgl_pengumuman_kelulusan || '';
       if(tglStr) {
-        TGL_PENGUMUMAN = new Date(tglStr);
-        // Update info tanggal di banner
+        // Parse manual agar tidak kena UTC offset (misal: "2026-06-02 08:00")
+        const parts = tglStr.replace('T',' ').split(/[\s:-]/);
+        TGL_PENGUMUMAN = new Date(
+          parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]),
+          parseInt(parts[3]||0), parseInt(parts[4]||0), 0
+        );
+        // Format tampil tanggal
+        const opts = {day:'numeric', month:'long', year:'numeric'};
+        const tglTampil = TGL_PENGUMUMAN.toLocaleDateString('id-ID', opts).toUpperCase();
         const infoEl = document.getElementById('infoBannerTgl');
-        if(infoEl) infoEl.innerHTML = 'PENGUMUMAN RESMI: <strong style="color:#fff;">' + tglStr + '</strong>';
+        if(infoEl) infoEl.innerHTML = 'PENGUMUMAN RESMI: <strong style="color:#fff;">' + tglTampil + '</strong>';
       } else {
-        TGL_PENGUMUMAN = new Date('2026-06-02T08:00:00'); // fallback
+        TGL_PENGUMUMAN = new Date(2026, 5, 2, 8, 0, 0); // fallback: 2 Juni 2026 08:00 WIB
       }
 
       // Tahun kelulusan dari sheet
