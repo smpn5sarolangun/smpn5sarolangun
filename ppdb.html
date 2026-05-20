@@ -1300,9 +1300,7 @@ async function muatPPDBInfo() {
   if(cached) renderPPDBInfo(JSON.parse(cached));
   try {
     const r = await fetch(`${PPDB_SCRIPT}?action=getPPDBInfo`);
-    console.log("5. Response diterima");
     const d = await r.json();
-    console.log("6. HASIL GAS:", JSON.stringify(d));
     if (!d.ok || !d.data) return;
     localStorage.setItem('cache_ppdb_info', JSON.stringify(d));
     renderPPDBInfo(d);
@@ -1573,6 +1571,7 @@ async function submitPPDB() {
     const d = await r.json();
     console.log("6. HASIL GAS:", JSON.stringify(d));
 
+    console.log("HASIL SUBMIT:", JSON.stringify(d));
     if(d.success){
       const tglNow = new Date().toLocaleString('id-ID');
       // Simpan ke cache browser
@@ -1589,6 +1588,7 @@ async function submitPPDB() {
       resetBtn();
     }
   } catch(e) {
+    console.error('CATCH ERROR:', e.message, e.stack);
     tampilError('Gagal mengirim. Periksa koneksi internet Anda.');
     resetBtn();
   }
