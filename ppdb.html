@@ -1601,6 +1601,23 @@ async function cekStatus() {
   result.classList.remove('show');
   result.innerHTML = '<p style="color:var(--teks-sub);font-size:13px;">Mencari data...</p>';
   result.classList.add('show');
+  // Cek cache lokal dulu
+  const cacheKey = 'ppdb_terkirim_' + input;
+  const cached = localStorage.getItem(cacheKey);
+  if(cached){
+    try{
+      const info = JSON.parse(cached);
+      result.innerHTML = `<div style="background:#e8f5e9;border-radius:10px;padding:16px;">
+        <div style="font-size:18px;font-weight:700;color:#1b5e20;margin-bottom:8px;">✅ Pendaftaran Ditemukan</div>
+        <div style="font-size:14px;color:#333;">Nomor: <strong>${info.nomor}</strong></div>
+        <div style="font-size:13px;color:#666;margin-top:4px;">Waktu daftar: ${info.tgl}</div>
+        <div style="font-size:12px;color:#888;margin-top:8px;">Data tersimpan di perangkat ini. Hubungi panitia untuk nomor resmi.</div>
+      </div>`;
+      return;
+    }catch(e){}
+  }
+
+  // Tidak ada di cache - coba GAS (mungkin kena CORS tapi coba dulu)
   try {
     const r = await fetch(`${PPDB_SCRIPT}?action=cekStatusPPDB&nomor=${encodeURIComponent(input)}`);
     const d = await r.json();
@@ -1705,7 +1722,7 @@ function resetFieldError(el){
 
 // ── DRAFT ──
 const DRAFT_KEY = 'ppdb_draft_smpn5';
-const DRAFT_FIELDS = ['fNama', 'fJK', 'fNISN', 'fNIK', 'fNoKK', 'fTmptLahir', 'fTglLahir', 'fAgama', 'fAlamatJalan', 'fRT', 'fDusun', 'fDesa', 'fDesaLainWrap', 'fDesaLain', 'fKecamatan', 'fKecamatanLainWrap', 'fKecamatanLain', 'fTinggal', 'fTinggalLainWrap', 'fTinggalLain', 'fTransportasi', 'fTransportasiLainWrap', 'fTransportasiLain', 'fAnakKe', 'fJmlSaudara', 'fHobi', 'fCitaCita', 'fBB', 'fTB', 'fSekolah', 'fSekolahLainWrap', 'fSekolahLain', 'fPIP', 'fNamaAyah', 'fNIKAyah', 'fTglAyah', 'fPendAyah', 'fPekAyah', 'fPengAyah', 'fNamaIbu', 'fNIKIbu', 'fTglIbu', 'fPendIbu', 'fPekIbu', 'fPengIbu', 'fHP', 'fHPSiswa', 'fNamaWali', 'fNIKWali', 'fTahunWali', 'fPendWali', 'fPekWali', 'fPengWali'];
+const DRAFT_FIELDS = ['fNama', 'fJK', 'fNISN', 'fNIK', 'fNoKK', 'fTmptLahir', 'fTglLahir', 'fAgama', 'fAlamatJalan', 'fRT', 'fDusun', 'fDesa', 'fDesaLainWrap', 'fDesaLain', 'fKecamatan', 'fKecamatanLainWrap', 'fKecamatanLain', 'fTinggal', 'fTinggalLainWrap', 'fTinggalLain', 'fTransportasi', 'fTransportasiLainWrap', 'fTransportasiLain', 'fAnakKe', 'fJmlSaudara', 'fHobi', 'fCitaCita', 'fBB', 'fTB', 'fSekolah', 'fSekolahLainWrap', 'fSekolahLain', 'fPIP', 'fNamaAyah', 'fNIKAyah', 'fTglAyah', 'fPendAyah', 'fPekAyah', 'fPengAyah', 'fNamaIbu', 'fNIKIbu', 'fTglIbu', 'fPendIbu', 'fPekIbu', 'fPengIbu', 'fHP', 'fHPSiswa', 'fNamaWali', 'fNIKWali', 'fTahunWali', 'fPendWali', 'fPekWali', 'fPengWali', 'fPIPNomor'];
 
 function simpanDraft(){
   const draft = {};
