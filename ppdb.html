@@ -1065,6 +1065,7 @@ select.f-input{appearance:auto;}
         </div>
       </div>
 
+      <button type="button" id="btnDraft" onclick="simpanDraft()" style="width:100%;padding:13px;margin-bottom:10px;background:#f0f4fa;color:var(--biru);border:2px solid var(--biru);border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;">💾 Simpan Draft</button>
       <button class="btn-submit" id="btnSubmit" onclick="submitPPDB()">
         <div class="spinner" id="spinner"></div>
         <span id="btnTeks">📤 Kirim Pendaftaran</span>
@@ -1504,6 +1505,7 @@ async function submitPPDB() {
 
     if (d.ok) {
       isiKartu(d);
+      hapusDraft();
       document.getElementById('formSection').style.display = 'none';
       document.getElementById('kartuSection').classList.add('show');
     } else {
@@ -1620,6 +1622,72 @@ async function cekStatus() {
 if(history.scrollRestoration) history.scrollRestoration='manual';
 window.scrollTo(0,0);
 muatPPDBInfo();
+// Reset border merah saat field mulai diisi
+document.addEventListener('DOMContentLoaded', function(){
+  muatDraft();
+  document.querySelectorAll('.f-input, .f-select').forEach(function(el){
+    el.addEventListener('input', function(){ resetFieldError(this); });
+    el.addEventListener('change', function(){ resetFieldError(this); });
+  });
+});
+function resetFieldError(el){
+  el.style.borderColor = '';
+  el.style.background  = '';
+}
+
+
+// ── DRAFT ──
+const DRAFT_KEY = 'ppdb_draft_smpn5';
+const DRAFT_FIELDS = ['fNama', 'fJK', 'fNISN', 'fNIK', 'fNoKK', 'fTmptLahir', 'fTglLahir', 'fAgama', 'fAlamatJalan', 'fRT', 'fDusun', 'fDesa', 'fDesaLainWrap', 'fDesaLain', 'fKecamatan', 'fKecamatanLainWrap', 'fKecamatanLain', 'fTinggal', 'fTinggalLainWrap', 'fTinggalLain', 'fTransportasi', 'fTransportasiLainWrap', 'fTransportasiLain', 'fAnakKe', 'fJmlSaudara', 'fHobi', 'fCitaCita', 'fBB', 'fTB', 'fSekolah', 'fSekolahLainWrap', 'fSekolahLain', 'fPIP', 'fNamaAyah', 'fNIKAyah', 'fTglAyah', 'fPendAyah', 'fPekAyah', 'fPengAyah', 'fNamaIbu', 'fNIKIbu', 'fTglIbu', 'fPendIbu', 'fPekIbu', 'fPengIbu', 'fHP', 'fHPSiswa', 'fNamaWali', 'fNIKWali', 'fTahunWali', 'fPendWali', 'fPekWali', 'fPengWali'];
+
+function simpanDraft(){
+  const draft = {};
+  DRAFT_FIELDS.forEach(function(id){
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.type === 'checkbox') draft[id] = el.checked;
+    else draft[id] = el.value;
+  });
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+
+  // Feedback visual di tombol draft
+  const btn = document.getElementById('btnDraft');
+  if(btn){
+    btn.textContent = '✅ Tersimpan';
+    btn.style.background = '#e8f5e9';
+    btn.style.color = '#1b5e20';
+    setTimeout(function(){
+      btn.textContent = '💾 Simpan Draft';
+      btn.style.background = '';
+      btn.style.color = '';
+    }, 1500);
+  }
+}
+
+function muatDraft(){
+  const raw = localStorage.getItem(DRAFT_KEY);
+  if(!raw) return;
+  try {
+    const draft = JSON.parse(raw);
+    DRAFT_FIELDS.forEach(function(id){
+      const el = document.getElementById(id);
+      if(!el || draft[id] === undefined) return;
+      if(el.type === 'checkbox') el.checked = draft[id];
+      else {
+        el.value = draft[id];
+        // Trigger cekLain jika select
+        if(el.tagName === 'SELECT' && typeof cekLain === 'function'){
+          cekLain(id);
+        }
+      }
+    });
+  } catch(e){}
+}
+
+function hapusDraft(){
+  localStorage.removeItem(DRAFT_KEY);
+}
+
 function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}
 </script>
 </body>
