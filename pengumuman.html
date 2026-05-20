@@ -270,390 +270,79 @@
     <a href="kontak.html">Kontak</a>
   </div>
 </nav>
-<div class="page-hero">
-  <h1>📢 Pengumuman</h1>
-  <p>Berita, informasi, dan pengumuman resmi dari SMP Negeri 05 Sarolangun</p>
-</div>
 
-<div class="main">
+<div style="height:64px;"></div>
 
-  <!-- HITUNG MUNDUR PENGUMUMAN PPDB -->
-  <div class="countdown-pengumuman">
-    <div class="cp-title">⏳ Hitung Mundur</div>
-    <!-- EDIT: Ganti judul sesuai kondisi (sebelum/sesudah pengumuman) -->
-    <div class="cp-subtitle" id="cpSubtitle">Pengumuman Kelulusan Kelas IX 2025/2026</div>
-    <div class="cd-grid">
-      <div class="cd-box"><div class="cd-num" id="cpHari">--</div><div class="cd-lbl">Hari</div></div>
-      <div class="cd-box"><div class="cd-num" id="cpJam">--</div><div class="cd-lbl">Jam</div></div>
-      <div class="cd-box"><div class="cd-num" id="cpMenit">--</div><div class="cd-lbl">Menit</div></div>
-      <div class="cd-box"><div class="cd-num" id="cpDetik">--</div><div class="cd-lbl">Detik</div></div>
-    </div>
-    <!-- EDIT: Ganti tanggal pengumuman -->
-    <div class="cp-info">Pengumuman kelulusan: <strong>[Ganti tanggal resmi pengumuman kelas IX]</strong></div>
-  </div>
+<div class="main" style="max-width:960px;margin:0 auto;padding:32px 20px;">
 
-  <!-- CEK KELULUSAN -->
-  <h2 class="sec-title">🔍 Cek Hasil Seleksi PPDB</h2>
-  <p class="sec-sub">Masukkan Nomor Pendaftaran untuk mengecek hasil seleksi PPDB 2026/2027</p>
-  <div class="cek-section">
-    <div class="cek-title">Cek Kelulusan PPDB 2026</div>
-    <div class="cek-sub">Masukkan NISN atau NIK peserta untuk melihat hasil seleksi</div>
-    <div class="cek-form">
-      <input type="text" id="inputCek" placeholder="Masukkan NISN atau NIK peserta" onkeypress="if(event.key==='Enter')cekKelulusan()">
-      <button class="btn-cek" onclick="cekKelulusan()">🔍 Cek Sekarang</button>
-    </div>
-    <div class="hasil-wrap" id="hasilWrap">
-      <!-- Diisi oleh JS -->
-    </div>
-  </div>
-
-  <!-- BERITA & PENGUMUMAN — Otomatis dari Blogger Posts -->
-  <h2 class="sec-title">📋 Berita & Pengumuman</h2>
-  <p class="sec-sub">
-    💡 <strong>Cara tambah berita:</strong> Masuk Blogger → <strong>Entri/Posts → Entri Baru</strong> → tulis berita → Publikasikan.
-    Berita baru otomatis muncul di sini!
-  </p>
-
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- WIDGET POSTS BLOGGER — Tampil otomatis dari Posts       -->
-  <!-- Ganti URL feed di bawah dengan URL blog Blogger Anda   -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <div id="bloggerPosts" class="berita-list">
-    <div style="text-align:center;padding:32px;color:var(--teks-sub);">
-      <div style="font-size:36px;margin-bottom:12px;">📰</div>
-      <p>Memuat berita terbaru...</p>
-    </div>
-  </div>
-
-  <script>
-  // ═══════════════════════════════════════════════════════════
-  // EDIT: Ganti URL blog Blogger Anda di sini
-    // Atau jika sudah pakai domain: https://smpn5sarolangun.sch.id
-  // ═══════════════════════════════════════════════════════════
-  const PPDB_SCRIPT_URL_PENG = "https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec";
-  const MAX_POSTS = 6; // Jumlah berita yang ditampilkan
-
-  async function muatBeritaBlogger() {
-    try {
-      const res = await fetch(`${PPDB_SCRIPT_URL_PENG}?action=getBerita&max=6`);
-      const d = await res.json();
-      const container = document.getElementById('bloggerPosts');
-      if (!d.ok || !d.data || !d.data.length) {
-        container.innerHTML = tampilkanBeritaDefault();
-        return;
-      }
-      const ikon = ['📣','🏆','📚','🎓','🌟','🎉'];
-      let html = '';
-      d.data.forEach((b, i) => {
-        const tglRaw = b.tanggal ? new Date(b.tanggal) : new Date();
-        const hari = tglRaw.getDate().toString().padStart(2,'0');
-        const bln = tglRaw.toLocaleDateString('id-ID', {month:'short', year:'2-digit'});
-        const isi = (b.isi||'').substring(0,180) + '...';
-        const warna = ['var(--biru)','var(--hijau)','#7d3c98','#e67e22','#2980b9'][i%5];
-        html += `
-        <div class="berita-item">
-          <div class="berita-date-box" style="background:${warna}">
-            <div class="day">${hari}</div>
-            <div class="month">${bln}</div>
-          </div>
-          <div style="flex:1">
-            <div class="berita-cat">${b.kategori||'Umum'}</div>
-            <div class="berita-judul">${b.judul}</div>
-            <div class="berita-excerpt">${isi}</div>
-            <a href="berita.html" style="font-size:13px;font-weight:600;color:var(--biru-mid);text-decoration:none;display:inline-block;margin-top:8px;">Baca selengkapnya →</a>
-          </div>
-        </div>`;
-      });
-      container.innerHTML = html;
-    } catch(e) {
-      document.getElementById('bloggerPosts').innerHTML = tampilkanBeritaDefault();
-    }
-  }
-
-  muatBeritaBlogger();
-  </script>
-</div>
-
-<!-- CONFETTI CONTAINER -->
-<div class="confetti-container" id="confettiContainer"></div>
-
-<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:40px 0;text-align:center;">
-  <p style="font-size:13px;opacity:0.6;">© 2026 SMP Negeri 05 Sarolangun</p>
-  <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-    <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Beranda</a>
-    <!-- PPDB FOOTER DISEMBUNYIKAN:
-    <a href="ppdb.html" style="color:var(--emas);text-decoration:none;font-size:13px;font-weight:700;">PPDB 2026</a>
-    -->
-    <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Kontak</a>
-  </div>
-</footer>
-
-<script>
-function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}
-
-// HITUNG MUNDUR PENGUMUMAN
-// EDIT: Ganti tanggal pengumuman
-const TGL_PENGUMUMAN = new Date("2026-05-08T08:00:00"); // EDIT: Ganti tanggal pengumuman kelulusan kelas IX
-function updateCdPengumuman(){
-  const now = new Date();
-  const diff = TGL_PENGUMUMAN - now;
-  if(diff <= 0){
-    document.getElementById('cpSubtitle').textContent = "Pengumuman Telah Tersedia!";
-    ['cpHari','cpJam','cpMenit','cpDetik'].forEach(id=>document.getElementById(id).textContent='00');
-    return;
-  }
-  document.getElementById('cpHari').textContent = String(Math.floor(diff/(1000*60*60*24))).padStart(2,'0');
-  document.getElementById('cpJam').textContent = String(Math.floor((diff%(1000*60*60*24))/(1000*60*60))).padStart(2,'0');
-  document.getElementById('cpMenit').textContent = String(Math.floor((diff%(1000*60*60))/(1000*60))).padStart(2,'0');
-  document.getElementById('cpDetik').textContent = String(Math.floor((diff%(1000*60))/1000)).padStart(2,'0');
-}
-setInterval(updateCdPengumuman,1000);
-updateCdPengumuman();
-
-// EDIT: Ganti URL Apps Script
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec";
-
-// ── Cek Kelulusan Kelas IX ──
-async function cekKelulusanIX() {
-  const nisn = document.getElementById('inputNisnIX').value.trim();
-  const tglLahir = document.getElementById('inputTglIX').value.trim();
-  if(!nisn){alert('Masukkan NISN terlebih dahulu.');return;}
-  if(!tglLahir){alert('Masukkan tanggal lahir terlebih dahulu.');return;}
-  const input = nisn;
-  const hasilEl = document.getElementById('hasilWrapIX');
-  hasilEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--teks-sub);">⏳ Sedang memeriksa data...</div>';
-  hasilEl.classList.add('show');
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=kelulusanIX&query=${input}&tglLahir=${tglLahir}`);
-    const data = await res.json();
-    tampilkanHasilKelulusan(data, hasilEl);
-  } catch(e) {
-    hasilEl.innerHTML = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:20px;text-align:center;">⚠️ Pengumuman belum tersedia atau koneksi bermasalah.</div>';
-  }
-}
-
-// ── Cek Hasil Seleksi PPDB ──
-async function cekHasilPPDB() {
-  const noPeserta = document.getElementById('inputNoPeserta').value.trim();
-  if(!noPeserta){alert('Masukkan Nomor Peserta terlebih dahulu.');return;}
-  const hasilEl = document.getElementById('hasilWrapPPDB');
-  hasilEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--teks-sub);">⏳ Sedang memeriksa data...</div>';
-  hasilEl.classList.add('show');
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=kelulusan&query=${encodeURIComponent(noPeserta)}`);
-    const data = await res.json();
-    tampilkanHasilKelulusan(data, hasilEl);
-  } catch(e) {
-    hasilEl.innerHTML = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:20px;text-align:center;">⚠️ Data tidak ditemukan atau sistem sedang dalam pemeliharaan.</div>';
-  }
-}
-
-// ── Tampilkan Hasil (dipakai kedua fungsi) ──
-function tampilkanHasilKelulusan(data, hasilEl) {
-  if(data.found && data.salahTglLahir) {
-    hasilEl.innerHTML = '<div style="background:#fdecea;border:1px solid #f5b7b1;border-radius:12px;padding:20px;text-align:center;">❌ Tanggal lahir tidak sesuai. Periksa kembali data Anda.</div>';
-    return;
-  }
-  tampilkanHasil(data);
-}
-
-// Fungsi cekKelulusan lama — tetap ada untuk kompatibilitas
-async function cekKelulusan(){
-  const nisn = document.getElementById('inputNisnIX')?.value.trim() || '';
-  const tglLahir = document.getElementById('inputTglIX')?.value.trim() || '';
-  if(!nisn){alert('Masukkan NISN terlebih dahulu.');return;}
-  if(!tglLahir){alert('Masukkan tanggal lahir terlebih dahulu.');return;}
-  const input = nisn;
-
-  const hasilWrap = document.getElementById('hasilWrap');
-  hasilWrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--teks-sub);">⏳ Sedang memeriksa data...</div>';
-  hasilWrap.classList.add('show');
-
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=kelulusan&query=${input}&tglLahir=${tglLahir}`);
-    const data = await res.json();
-    tampilkanHasil(data);
-  } catch(e) {
-    // Demo/fallback
-    hasilWrap.innerHTML = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:20px;text-align:center;">⚠️ Pengumuman belum tersedia atau koneksi bermasalah. Silakan coba lagi setelah pengumuman resmi dibuka.</div>';
-  }
-}
-
-function tampilkanHasil(data){
-  const hasilWrap = document.getElementById('hasilWrap');
-
-  if(data.found && data.status === 'Diterima'){
-    hasilWrap.innerHTML = `
-      <div class="hasil-diterima">
-        <div class="hasil-icon">🎉</div>
-        <div class="hasil-nama">${data.namaLengkap}</div>
-        <div class="hasil-nisn">NISN: ${data.nisn} | NIK: ${data.nik}</div>
-        <div class="hasil-status">✅ DITERIMA</div>
-        <div class="hasil-detail">
-          Selamat! Anda dinyatakan <strong>DITERIMA</strong> sebagai peserta didik baru<br>
-          SMP Negeri 05 Sarolangun Tahun Ajaran 2026/2027.<br><br>
-          ${data.keterangan||'Silakan datang ke sekolah untuk proses daftar ulang sesuai jadwal yang telah ditentukan.'}
-        </div>
-        <button class="btn-cetak-hasil" onclick="window.print()">📄 Cetak / Unduh</button>
-      </div>`;
-    buatConfetti();
-  } else if(data.found && data.status !== 'Diterima'){
-    hasilWrap.innerHTML = `
-      <div class="hasil-tidak">
-        <div class="hasil-icon">😔</div>
-        <div class="hasil-nama">${data.namaLengkap}</div>
-        <div class="hasil-nisn">NISN: ${data.nisn}</div>
-        <div class="hasil-status">❌ TIDAK DITERIMA</div>
-        <div class="hasil-detail">
-          Mohon maaf, Anda belum berhasil dalam seleksi PPDB SMP Negeri 05 Sarolangun.<br>
-          ${data.keterangan||'Jangan menyerah! Tetap semangat dan coba di sekolah lain. Semoga sukses.'}
-        </div>
-      </div>`;
-  } else {
-    hasilWrap.innerHTML = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:20px;text-align:center;">⚠️ Data tidak ditemukan. Pastikan NISN atau NIK yang Anda masukkan sudah benar.</div>';
-  }
-}
-
-function buatConfetti(){
-  const container = document.getElementById('confettiContainer');
-  const warna = ['#f0a500','#0d3b6e','#1a7a4a','#e74c3c','#9b59b6','#3498db','#fff'];
-  for(let i=0;i<120;i++){
-    const c = document.createElement('div');
-    c.className = 'confetti-piece';
-    c.style.cssText = `
-      left:${Math.random()*100}%;
-      background:${warna[Math.floor(Math.random()*warna.length)]};
-      width:${6+Math.random()*8}px;
-      height:${6+Math.random()*8}px;
-      border-radius:${Math.random()>0.5?'50%':'2px'};
-      animation-duration:${2+Math.random()*3}s;
-      animation-delay:${Math.random()*2}s;
-    `;
-    container.appendChild(c);
-  }
-  setTimeout(()=>{container.innerHTML='';},6000);
-}
-</script>
-</body>
-</html>  <!-- CEK KELULUSAN KELAS IX -->
-  <h2 class="sec-title">🔍 Cek Kelulusan Kelas IX</h2>
-  <p class="sec-sub">Masukkan NISN dan Tanggal Lahir untuk melihat hasil kelulusan Tahun Ajaran 2025/2026</p>
-  <div class="cek-section">
-    <div class="cek-title">🎓 Pengumuman Kelulusan Kelas IX — TA 2025/2026</div>
-    <div class="cek-sub">Masukkan NISN dan Tanggal Lahir siswa</div>
-    <div style="display:flex;flex-direction:column;gap:12px;max-width:480px;margin:0 auto;">
-      <input type="text" id="inputNisnIX" placeholder="NISN (10 angka)"
-        style="padding:13px 16px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;outline:none;text-align:center;letter-spacing:3px;" maxlength="10">
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:12px;font-weight:600;color:var(--teks-sub);text-align:left;">
-          📅 Tanggal Lahir — format: Tahun-Bulan-Tanggal (contoh: 2009-05-17)
-        </label>
-        <input type="date" id="inputTglIX"
-          style="padding:13px 16px;border:2px solid #dde3ee;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;">
+  <!-- ═══ BANNER HITUNG MUNDUR ═══ -->
+  <div id="bannerHitung" style="background:var(--biru);border-radius:16px;padding:28px 24px;text-align:center;margin-bottom:32px;">
+    <div style="font-size:12px;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-weight:600;">Hitung Mundur Menuju</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;font-weight:600;">Pengumuman Kelulusan Kelas IX</div>
+    <div id="bannerJudulTA" style="font-size:22px;font-weight:800;color:#fff;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px;">SMP NEGERI 05 SAROLANGUN TA 2025/2026</div>
+    <div id="cdGrid" style="display:inline-flex;gap:10px;margin-bottom:14px;">
+      <div style="background:rgba(255,255,255,0.15);border-radius:10px;padding:12px 18px;min-width:64px;">
+        <div id="cdHari" style="font-size:28px;font-weight:700;color:#fff;line-height:1;">--</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;">Hari</div>
       </div>
-      <button class="btn-cek" onclick="cekKelulusanIX()" style="width:100%;padding:14px;font-size:15px;">
-        🔍 Cek Kelulusan
+      <div style="background:rgba(255,255,255,0.15);border-radius:10px;padding:12px 18px;min-width:64px;">
+        <div id="cdJam" style="font-size:28px;font-weight:700;color:#fff;line-height:1;">--</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;">Jam</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:10px;padding:12px 18px;min-width:64px;">
+        <div id="cdMenit" style="font-size:28px;font-weight:700;color:#fff;line-height:1;">--</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;">Menit</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:10px;padding:12px 18px;min-width:64px;">
+        <div id="cdDetik" style="font-size:28px;font-weight:700;color:#fff;line-height:1;">--</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;">Detik</div>
+      </div>
+    </div>
+    <div id="infoBannerTgl" style="font-size:12px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;font-weight:600;">PENGUMUMAN RESMI: <strong style="color:#fff;">2 JUNI 2026</strong></div>
+  </div>
+
+  <!-- ═══ CEK KELULUSAN ═══ -->
+  <div id="sectionCek" style="background:#fff;border:1px solid #e8ecf0;border-radius:16px;padding:28px 24px;margin-bottom:32px;">
+    <h2 style="font-size:18px;font-weight:700;color:var(--biru);margin:0 0 4px;">🔍 Cek Kelulusan Kelas IX <span id="tahunCekJudul" style="font-weight:400;font-size:15px;color:var(--teks-sub);"></span></h2>
+    <p style="font-size:13px;color:var(--teks-sub);margin:0 0 18px;">Masukkan NISN dan tanggal lahir untuk melihat hasil kelulusan.</p>
+
+    <div id="cekTutupMsg" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 16px;font-size:14px;color:#856404;margin-bottom:12px;">
+      ⏳ Pengumuman kelulusan belum dibuka. Pantau terus halaman ini.
+    </div>
+
+    <div id="cekForm" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <input type="text" id="inputNISN" placeholder="NISN (10 digit)" maxlength="10" inputmode="numeric"
+        style="flex:1;min-width:140px;padding:11px 14px;border:1px solid #dde3ea;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;"
+        onkeypress="if(event.key==='Enter')cekKelulusanIX()">
+      <input type="date" id="inputTgl"
+        style="flex:1;min-width:140px;padding:11px 14px;border:1px solid #dde3ea;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;">
+      <button onclick="cekKelulusanIX()" id="btnCek"
+        style="padding:11px 22px;background:var(--biru);color:#fff;border:none;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">
+        Cek
       </button>
     </div>
-    <div class="hasil-wrap" id="hasilWrapIX"></div>
+    <div id="hasilCek"></div>
   </div>
 
-    <!-- BERITA & PENGUMUMAN — Otomatis dari Blogger Posts -->
-  <h2 class="sec-title">📋 Berita & Pengumuman</h2>
-  <p class="sec-sub">
-    💡 <strong>Cara tambah berita:</strong> Masuk Blogger → <strong>Entri/Posts → Entri Baru</strong> → tulis berita → Publikasikan.
-    Berita baru otomatis muncul di sini!
-  </p>
-
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- WIDGET POSTS BLOGGER — Tampil otomatis dari Posts       -->
-  <!-- Ganti URL feed di bawah dengan URL blog Blogger Anda   -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <div id="bloggerPosts" class="berita-list">
-    <div style="text-align:center;padding:32px;color:var(--teks-sub);">
-      <div style="font-size:36px;margin-bottom:12px;">📰</div>
-      <p>Memuat berita terbaru...</p>
-    </div>
+  <!-- ═══ LIST PENGUMUMAN ═══ -->
+  <h2 style="font-size:18px;font-weight:700;color:var(--biru);margin:0 0 4px;">📋 Pengumuman</h2>
+  <p style="font-size:13px;color:var(--teks-sub);margin:0 0 16px;">Klik judul untuk membaca isi pengumuman.</p>
+  <div id="listPengumuman" style="background:#fff;border:1px solid #e8ecf0;border-radius:16px;overflow:hidden;">
+    <div style="text-align:center;padding:32px;color:var(--teks-sub);">⏳ Memuat pengumuman...</div>
   </div>
 
-  <script>
-  // ═══════════════════════════════════════════════════════════
-  // EDIT: Ganti URL blog Blogger Anda di sini
-    // Atau jika sudah pakai domain: https://smpn5sarolangun.sch.id
-  // ═══════════════════════════════════════════════════════════
-  const PPDB_SCRIPT_URL_PENG = "https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec";
-  const MAX_POSTS = 6; // Jumlah berita yang ditampilkan
-
-  async function muatBeritaBlogger() {
-    const feedURL = `${BLOGGER_URL}/feeds/posts/default?alt=json&max-results=${MAX_POSTS}`;
-    try {
-      const res = await fetch(feedURL);
-      const data = await res.json();
-      const entries = data.feed.entry || [];
-      const container = document.getElementById('bloggerPosts');
-
-      if (entries.length === 0) {
-        container.innerHTML = tampilkanBeritaDefault();
-        return;
-      }
-
-      let html = '';
-      entries.forEach(entry => {
-        const judul = entry.title.$t;
-        const tglRaw = new Date(entry.published.$t);
-        const hari = tglRaw.getDate().toString().padStart(2,'0');
-        const bulan = tglRaw.toLocaleDateString('id-ID', {month:'short', year:'2-digit'});
-        const isi = entry.summary ? entry.summary.$t.substring(0,180) + '...' : '';
-        const link = entry.link ? entry.link.find(l => l.rel === 'alternate')?.href || '#' : '#';
-        const kategori = entry.category ? entry.category[0]?.term || 'Umum' : 'Umum';
-        const warna = ['var(--biru)','var(--hijau)','#7d3c98','#e67e22','#2980b9'][Math.floor(Math.random()*5)];
-
-        html += `
-        <div class="berita-item">
-          <div class="berita-date-box" style="background:${warna}">
-            <div class="day">${hari}</div>
-            <div class="month">${bulan}</div>
-          </div>
-          <div style="flex:1">
-            <div class="berita-cat">${kategori}</div>
-            <div class="berita-judul">${judul}</div>
-            <div class="berita-excerpt">${isi}</div>
-            <a href="${link}" style="font-size:13px;font-weight:600;color:var(--biru-mid);text-decoration:none;display:inline-block;margin-top:8px;">Baca selengkapnya →</a>
-          </div>
-        </div>`;
-      });
-      container.innerHTML = html;
-    } catch(e) {
-      document.getElementById('bloggerPosts').innerHTML = tampilkanBeritaDefault();
-    }
-  }
-
-  function tampilkanBeritaDefault() {
-    return `
-    <div class="berita-item penting">
-      <div class="berita-date-box"><div class="day" style="font-size:20px">📌</div><div class="month">Info</div></div>
-      <div>
-        <div class="berita-cat">PENGUMUMAN</div>
-        <div class="berita-judul">Selamat Datang di Website Resmi SMP Negeri 05 Sarolangun</div>
-        <div class="berita-excerpt">Website resmi SMP Negeri 05 Sarolangun kini telah hadir. Kami akan terus memperbarui informasi seputar kegiatan, prestasi, dan pengumuman penting sekolah di halaman ini.</div>
-      </div>
-    </div>
-    <div class="berita-item">
-      <div class="berita-date-box" style="background:var(--hijau)"><div class="day" style="font-size:20px">✍️</div><div class="month">Tips</div></div>
-      <div>
-        <div class="berita-cat">PANDUAN</div>
-        <div class="berita-judul">Cara Menambah Berita Baru</div>
-        <div class="berita-excerpt">Untuk menambah berita: masuk ke GitHub Pages → klik Entri/Posts → klik Entri Baru → tulis judul dan isi berita → klik Publikasikan. Berita akan langsung muncul di halaman ini secara otomatis.</div>
-      </div>
-    </div>`;
-  }
-
-  muatBeritaBlogger();
-  </script>
 </div>
 
-<!-- CONFETTI CONTAINER -->
-<div class="confetti-container" id="confettiContainer"></div>
+<!-- ═══ POPUP PENGUMUMAN ═══ -->
+<div id="popupOverlay" onclick="tutupPopup()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;padding:28px;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
+    <button onclick="tutupPopup()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--teks-sub);">✕</button>
+    <div id="popupKategori" style="font-size:11px;color:var(--biru-mid);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;"></div>
+    <div id="popupTanggal" style="font-size:12px;color:var(--teks-sub);margin-bottom:10px;"></div>
+    <h3 id="popupJudul" style="font-size:17px;font-weight:700;color:var(--biru);margin:0 0 14px;"></h3>
+    <div id="popupIsi" style="font-size:14px;color:var(--teks);line-height:1.8;"></div>
+  </div>
+</div>
 
 <footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:40px 0;text-align:center;">
   <p style="font-size:13px;opacity:0.6;">© 2026 SMP Negeri 05 Sarolangun</p>
@@ -667,150 +356,189 @@ function buatConfetti(){
 </footer>
 
 <script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
+let TGL_PENGUMUMAN = null; // dari sheet PPDB_INFO
+let statusKelulusan = null; // akan diisi dari GAS
+
+// ── INISIALISASI ──
+async function init() {
+  await muatStatusKelulusan();
+  updateCekUI();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+  muatPengumuman();
+}
+
+// ── MUAT STATUS DARI GAS ──
+async function muatStatusKelulusan() {
+  try {
+    const r = await fetch(SCRIPT_URL + '?action=getPPDBInfo');
+    const d = await r.json();
+    if(d.ok && d.data) {
+      const info = d.data;
+      statusKelulusan = (info.status_pengumuman_kelulusan || '').toUpperCase();
+
+      // Tanggal pengumuman dari sheet
+      const tglStr = info.tgl_pengumuman_kelulusan || '';
+      if(tglStr) {
+        TGL_PENGUMUMAN = new Date(tglStr);
+        // Update info tanggal di banner
+        const infoEl = document.getElementById('infoBannerTgl');
+        if(infoEl) infoEl.innerHTML = 'PENGUMUMAN RESMI: <strong style="color:#fff;">' + tglStr + '</strong>';
+      } else {
+        TGL_PENGUMUMAN = new Date('2026-06-02T08:00:00'); // fallback
+      }
+
+      // Tahun kelulusan dari sheet
+      const tahun = info.tahun_kelulusan || new Date().getFullYear();
+      const tahunCekEl = document.getElementById('tahunCekJudul');
+      if(tahunCekEl) tahunCekEl.textContent = tahun;
+      const judulEl = document.getElementById('bannerJudulTA');
+      if(judulEl) judulEl.textContent = 'SMP NEGERI 05 SAROLANGUN TA ' + tahun;
+    }
+  } catch(e) {
+    TGL_PENGUMUMAN = new Date('2026-06-02T08:00:00'); // fallback
+  }
+}
+
+// ── LOGIKA STATUS ──
+function cekBuka() {
+  if(statusKelulusan === 'BUKA') return true;
+  if(statusKelulusan === 'TUTUP') return false;
+  // Otomatis by tanggal
+  return new Date() >= TGL_PENGUMUMAN;
+}
+
+function cekTampilCountdown() {
+  if(statusKelulusan === 'BUKA') return false;
+  return new Date() < TGL_PENGUMUMAN;
+}
+
+// ── UPDATE UI CEK ──
+function updateCekUI() {
+  const buka = cekBuka();
+  const form = document.getElementById('cekForm');
+  const msg = document.getElementById('cekTutupMsg');
+  const btn = document.getElementById('btnCek');
+  if(buka) {
+    form.style.display = 'flex';
+    msg.style.display = 'none';
+    btn.disabled = false;
+  } else {
+    form.style.display = 'flex';
+    msg.style.display = 'block';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  }
+  // Banner hitung mundur
+  const banner = document.getElementById('bannerHitung');
+  if(!cekTampilCountdown()) {
+    banner.style.display = buka ? 'none' : 'block';
+  }
+}
+
+// ── HITUNG MUNDUR ──
+function updateCountdown() {
+  if(!cekTampilCountdown()) {
+    document.getElementById('bannerHitung').style.display = 'none';
+    return;
+  }
+  const diff = TGL_PENGUMUMAN - new Date();
+  if(diff <= 0) { updateCekUI(); return; }
+  document.getElementById('cdHari').textContent  = String(Math.floor(diff/86400000)).padStart(2,'0');
+  document.getElementById('cdJam').textContent   = String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
+  document.getElementById('cdMenit').textContent = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  document.getElementById('cdDetik').textContent = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+}
+
+// ── CEK KELULUSAN ──
+async function cekKelulusanIX() {
+  if(!cekBuka()) return;
+  const nisn   = document.getElementById('inputNISN').value.trim();
+  const tgl    = document.getElementById('inputTgl').value.trim();
+  const hasil  = document.getElementById('hasilCek');
+  if(!nisn) { alert('Masukkan NISN terlebih dahulu.'); return; }
+  if(!tgl)  { alert('Masukkan tanggal lahir terlebih dahulu.'); return; }
+  hasil.innerHTML = '<div style="padding:16px;text-align:center;color:var(--teks-sub);">⏳ Memeriksa data...</div>';
+  try {
+    const r = await fetch(SCRIPT_URL + '?action=kelulusanIX&query=' + encodeURIComponent(nisn) + '&tglLahir=' + encodeURIComponent(tgl));
+    const d = await r.json();
+    if(d.found && d.salahTglLahir) {
+      hasil.innerHTML = '<div style="background:#fdecea;border-radius:10px;padding:16px;font-size:14px;color:#c0392b;">❌ Tanggal lahir tidak sesuai. Periksa kembali data Anda.</div>';
+      return;
+    }
+    if(!d.found) {
+      hasil.innerHTML = '<div style="background:#fff3cd;border-radius:10px;padding:16px;font-size:14px;color:#856404;">⚠️ Data tidak ditemukan. Pastikan NISN yang dimasukkan sudah benar.</div>';
+      return;
+    }
+    const lulus = (d.status||'').toUpperCase() === 'LULUS';
+    hasil.innerHTML = \`<div style="border-radius:12px;padding:20px;text-align:center;background:\${lulus?'#e8f5e9':'#fdecea'};border:1px solid \${lulus?'#a5d6a7':'#f5c6c2'};">
+      <div style="font-size:32px;margin-bottom:8px;">\${lulus?'🎉':'😔'}</div>
+      <div style="font-size:17px;font-weight:700;color:var(--teks);margin-bottom:4px;">\${d.namaLengkap||d.nama||''}</div>
+      <div style="font-size:13px;color:var(--teks-sub);margin-bottom:10px;">NISN: \${d.nisn||nisn} · Kelas \${d.kelas||''}</div>
+      <div style="display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:14px;background:\${lulus?'#1a7a4a':'#e53935'};color:#fff;">
+        \${lulus?'✅ LULUS':'❌ TIDAK LULUS'}
+      </div>
+      \${d.keterangan?'<div style="margin-top:12px;font-size:13px;color:var(--teks-sub);">'+d.keterangan+'</div>':''}
+    </div>\`;
+  } catch(e) {
+    hasil.innerHTML = '<div style="background:#fff3cd;border-radius:10px;padding:16px;font-size:14px;color:#856404;">⚠️ Gagal mengambil data. Coba lagi.</div>';
+  }
+}
+
+// ── MUAT PENGUMUMAN ──
+async function muatPengumuman() {
+  const list = document.getElementById('listPengumuman');
+  try {
+    const r = await fetch(SCRIPT_URL + '?action=getBerita&max=20&kategori=Pengumuman');
+    const d = await r.json();
+    const items = (d.data || d.berita || []).filter(b => 
+      (b.kategori||'').toLowerCase().includes('pengumuman') || !b.kategori
+    );
+    if(!items.length) {
+      list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--teks-sub);">Belum ada pengumuman.</div>';
+      return;
+    }
+    list.innerHTML = items.map((item, i) => \`
+      <div onclick="bukaPopup(\${i})" data-idx="\${i}"
+        style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:\${i<items.length-1?'1px solid #eef2f7':''};cursor:pointer;transition:background 0.15s;"
+        onmouseover="this.style.background='#f8faff'" onmouseout="this.style.background=''">
+        <div style="width:36px;height:36px;border-radius:10px;background:#eef2ff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📢</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--teks);">\${item.judul||''}</div>
+          <div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">\${item.tanggal||''}\${item.kategori?' · '+item.kategori:''}</div>
+        </div>
+        <div style="color:var(--teks-sub);font-size:18px;">›</div>
+      </div>
+    \`).join('');
+    // Simpan data untuk popup
+    window._pengumumanData = items;
+  } catch(e) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--teks-sub);">Gagal memuat pengumuman.</div>';
+  }
+}
+
+// ── POPUP ──
+function bukaPopup(idx) {
+  const item = window._pengumumanData[idx];
+  if(!item) return;
+  document.getElementById('popupKategori').textContent = item.kategori || 'Pengumuman';
+  document.getElementById('popupTanggal').textContent  = item.tanggal || '';
+  document.getElementById('popupJudul').textContent    = item.judul   || '';
+  document.getElementById('popupIsi').innerHTML        = item.isi || item.ringkasan || item.konten || '<em>Tidak ada isi.</em>';
+  const overlay = document.getElementById('popupOverlay');
+  overlay.style.display = 'flex';
+}
+
+function tutupPopup() {
+  document.getElementById('popupOverlay').style.display = 'none';
+}
+
+document.addEventListener('keydown', e => { if(e.key === 'Escape') tutupPopup(); });
+
 function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}
 
-// HITUNG MUNDUR PENGUMUMAN
-// EDIT: Ganti tanggal pengumuman
-const TGL_PENGUMUMAN = new Date("2026-06-02T08:00:00"); // EDIT: Ganti tanggal pengumuman kelulusan kelas IX
-function updateCdPengumuman(){
-  const now = new Date();
-  const diff = TGL_PENGUMUMAN - now;
-  if(diff <= 0){
-    document.getElementById('cpSubtitle').textContent = "Pengumuman Telah Tersedia!";
-    ['cpHari','cpJam','cpMenit','cpDetik'].forEach(id=>document.getElementById(id).textContent='00');
-    return;
-  }
-  document.getElementById('cpHari').textContent = String(Math.floor(diff/(1000*60*60*24))).padStart(2,'0');
-  document.getElementById('cpJam').textContent = String(Math.floor((diff%(1000*60*60*24))/(1000*60*60))).padStart(2,'0');
-  document.getElementById('cpMenit').textContent = String(Math.floor((diff%(1000*60*60))/(1000*60))).padStart(2,'0');
-  document.getElementById('cpDetik').textContent = String(Math.floor((diff%(1000*60))/1000)).padStart(2,'0');
-}
-setInterval(updateCdPengumuman,1000);
-updateCdPengumuman();
-
-// EDIT: Ganti URL Apps Script
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec";
-
-// ── Cek Kelulusan Kelas IX ──
-async function cekKelulusanIX() {
-  const nisn = document.getElementById('inputNisnIX').value.trim();
-  const tglLahir = document.getElementById('inputTglIX').value.trim();
-  if(!nisn){alert('Masukkan NISN terlebih dahulu.');return;}
-  if(!tglLahir){alert('Masukkan tanggal lahir terlebih dahulu.');return;}
-  const input = nisn;
-  const hasilEl = document.getElementById('hasilWrapIX');
-  hasilEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--teks-sub);">⏳ Sedang memeriksa data...</div>';
-  hasilEl.classList.add('show');
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=kelulusanIX&query=${input}&tglLahir=${tglLahir}`);
-    const data = await res.json();
-    tampilkanHasilKelulusan(data, hasilEl);
-  } catch(e) {
-    hasilEl.innerHTML = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:20px;text-align:center;">⚠️ Pengumuman belum tersedia atau koneksi bermasalah.</div>';
-  }
-}
-
-// ── Cek Hasil Seleksi PPDB ──
-async function cekHasilPPDB() {
-  const noPeserta = document.getElementById('inputNoPeserta').value.trim();
-  if(!noPeserta){alert('Masukkan Nomor Peserta terlebih dahulu.');return;}
-  const hasilEl = document.getElementById('hasilWrapPPDB');
-  hasilEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--teks-sub);">⏳ Sedang memeriksa data...</div>';
-  hasilEl.classList.add('show');
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=kelulusan&query=${encodeURIComponent(noPeserta)}`);
-    const data = await res.json();
-    tampilkanHasilKelulusan(data, hasilEl);
-  } catch(e) {
-    hasilEl.innerHTML = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:20px;text-align:center;">⚠️ Data tidak ditemukan atau sistem sedang dalam pemeliharaan.</div>';
-  }
-}
-
-// ── Tampilkan Hasil (dipakai kedua fungsi) ──
-function tampilkanHasilKelulusan(data, hasilEl) {
-  if(data.found && data.salahTglLahir) {
-    hasilEl.innerHTML = '<div style="background:#fdecea;border:1px solid #f5b7b1;border-radius:12px;padding:20px;text-align:center;">❌ Tanggal lahir tidak sesuai. Periksa kembali data Anda.</div>';
-    return;
-  }
-  tampilkanHasil(data);
-}
-
-// Fungsi cekKelulusan lama — tetap ada untuk kompatibilitas
-async function cekKelulusan(){
-  const nisn = document.getElementById('inputNisnIX')?.value.trim() || '';
-  const tglLahir = document.getElementById('inputTglIX')?.value.trim() || '';
-  if(!nisn){alert('Masukkan NISN terlebih dahulu.');return;}
-  if(!tglLahir){alert('Masukkan tanggal lahir terlebih dahulu.');return;}
-  const input = nisn;
-
-  const hasilWrap = document.getElementById('hasilWrap');
-  hasilWrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--teks-sub);">⏳ Sedang memeriksa data...</div>';
-  hasilWrap.classList.add('show');
-
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=kelulusan&query=${input}&tglLahir=${tglLahir}`);
-    const data = await res.json();
-    tampilkanHasil(data);
-  } catch(e) {
-    // Demo/fallback
-    hasilWrap.innerHTML = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:20px;text-align:center;">⚠️ Pengumuman belum tersedia atau koneksi bermasalah. Silakan coba lagi setelah pengumuman resmi dibuka.</div>';
-  }
-}
-
-function tampilkanHasil(data){
-  const hasilWrap = document.getElementById('hasilWrap');
-
-  if(data.found && data.status === 'Diterima'){
-    hasilWrap.innerHTML = `
-      <div class="hasil-diterima">
-        <div class="hasil-icon">🎉</div>
-        <div class="hasil-nama">${data.namaLengkap}</div>
-        <div class="hasil-nisn">NISN: ${data.nisn} | NIK: ${data.nik}</div>
-        <div class="hasil-status">✅ DITERIMA</div>
-        <div class="hasil-detail">
-          Selamat! Anda dinyatakan <strong>DITERIMA</strong> sebagai peserta didik baru<br>
-          SMP Negeri 05 Sarolangun Tahun Ajaran 2026/2027.<br><br>
-          ${data.keterangan||'Silakan datang ke sekolah untuk proses daftar ulang sesuai jadwal yang telah ditentukan.'}
-        </div>
-        <button class="btn-cetak-hasil" onclick="window.print()">📄 Cetak / Unduh</button>
-      </div>`;
-    buatConfetti();
-  } else if(data.found && data.status !== 'Diterima'){
-    hasilWrap.innerHTML = `
-      <div class="hasil-tidak">
-        <div class="hasil-icon">😔</div>
-        <div class="hasil-nama">${data.namaLengkap}</div>
-        <div class="hasil-nisn">NISN: ${data.nisn}</div>
-        <div class="hasil-status">❌ TIDAK DITERIMA</div>
-        <div class="hasil-detail">
-          Mohon maaf, Anda belum berhasil dalam seleksi PPDB SMP Negeri 05 Sarolangun.<br>
-          ${data.keterangan||'Jangan menyerah! Tetap semangat dan coba di sekolah lain. Semoga sukses.'}
-        </div>
-      </div>`;
-  } else {
-    hasilWrap.innerHTML = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:20px;text-align:center;">⚠️ Data tidak ditemukan. Pastikan NISN atau NIK yang Anda masukkan sudah benar.</div>';
-  }
-}
-
-function buatConfetti(){
-  const container = document.getElementById('confettiContainer');
-  const warna = ['#f0a500','#0d3b6e','#1a7a4a','#e74c3c','#9b59b6','#3498db','#fff'];
-  for(let i=0;i<120;i++){
-    const c = document.createElement('div');
-    c.className = 'confetti-piece';
-    c.style.cssText = `
-      left:${Math.random()*100}%;
-      background:${warna[Math.floor(Math.random()*warna.length)]};
-      width:${6+Math.random()*8}px;
-      height:${6+Math.random()*8}px;
-      border-radius:${Math.random()>0.5?'50%':'2px'};
-      animation-duration:${2+Math.random()*3}s;
-      animation-delay:${Math.random()*2}s;
-    `;
-    container.appendChild(c);
-  }
-  setTimeout(()=>{container.innerHTML='';},6000);
-}
+init();
 </script>
 </body>
 </html>
