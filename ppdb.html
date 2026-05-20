@@ -1274,24 +1274,35 @@ function toggleWaliSection() {
 
 // ── MUAT INFO PPDB ──
 async function muatPPDBInfo() {
-  const cached = localStorage.getItem('cache_ppdb_info');
-  if(cached) renderPPDBInfo(JSON.parse(cached));
+  const CACHE_KEY = 'cache_ppdb_info';
+  const CACHE_TTL = 10 * 60 * 1000; // 10 menit
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data, ts } = JSON.parse(cached);
+      renderPPDBInfo(data);
+      // Cache masih fresh, skip fetch server
+      if (Date.now() - ts < CACHE_TTL) return;
+    }
+  } catch(e) {}
+  // Fetch server (background refresh / pertama kali)
   try {
     const r = await fetch(`${PPDB_SCRIPT}?action=getPPDBInfo`);
     const d = await r.json();
     if (!d.ok || !d.data) return;
-    localStorage.setItem('cache_ppdb_info', JSON.stringify(d));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ data: d, ts: Date.now() }));
     renderPPDBInfo(d);
   } catch(e) {}
 }
 
 function renderPPDBInfo(d) {
   const p = d.data || d;
-  ppdbStatus = (p.status||'TUTUP').toUpperCase();
+  // Ikut 100% dari sheet, tidak ada default fallback
+  ppdbStatus = p.status ? p.status.toUpperCase() : '';
 
-  // Cek status pengumuman - disable input kalau tutup
+  // Cek status pengumuman - disable input hanya kalau sheet bilang TUTUP secara eksplisit
   const cekInput = document.getElementById('cekInput');
-  const statusPengumuman = (p.status_pengumuman||'TUTUP').toUpperCase();
+  const statusPengumuman = p.status_pengumuman ? p.status_pengumuman.toUpperCase() : '';
   if(statusPengumuman === 'TUTUP' && cekInput) {
     cekInput.disabled = true;
     cekInput.placeholder = 'Informasi hasil seleksi belum dibuka';
@@ -1645,33 +1656,47 @@ async function cekStatus() {
   const input = document.getElementById('cekInput').value.trim();
   if (!input) { alert('Masukkan nomor pendaftaran atau NISN.'); return; }
   const result = document.getElementById('resultCard');
+
+  const CACHE_KEY = 'ppdb_status_' + input;
+  const CACHE_TTL = 5 * 60 * 1000; // 5 menit
+
+  function tampilHasil(p) {
+    const statusLabel = {PENDING:'⏳ Menunggu Verifikasi',TERDAFTAR:'✅ Terdaftar',DITERIMA:'✅ Diterima',DITOLAK:'❌ Tidak Diterima',DAFTAR_ULANG:'📝 Silakan Daftar Ulang','':'⏳ Menunggu Verifikasi'};
+    result.innerHTML = `
+      <div style="font-size:13px;color:var(--teks-sub);">No. Pendaftaran</div>
+      <div style="font-size:20px;font-weight:800;color:var(--biru);margin-bottom:4px;">${p.nomor}</div>
+      <div style="font-size:16px;font-weight:700;">${p.nama}</div>
+      <div style="font-size:12px;color:var(--teks-sub);margin-bottom:8px;">Mendaftar: ${p.tgl}</div>
+      <div class="result-status status-${p.status}">${statusLabel[p.status]||p.status}</div>`;
+    result.style.display = 'block';
+    result.classList.add('show');
+  }
+
+  // Cek cache status dulu (TTL 5 menit)
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data, ts } = JSON.parse(cached);
+      if (Date.now() - ts < CACHE_TTL) {
+        tampilHasil(data);
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Tampil loading
   result.classList.remove('show');
   result.style.display = 'block';
   result.innerHTML = '<p style="color:var(--teks-sub);font-size:13px;">⏳ Mencari data...</p>';
   result.classList.add('show');
 
-  // Cek cache lokal dulu
-  const cached = localStorage.getItem('ppdb_terkirim_' + input);
-  if(cached){
-    try{
-      const info = JSON.parse(cached);
-      result.innerHTML = `<div style="background:#e8f5e9;border-radius:10px;padding:16px;">
-        <div style="font-size:16px;font-weight:700;color:#1b5e20;margin-bottom:8px;">✅ Pendaftaran Ditemukan (Cache)</div>
-        <div style="font-size:14px;">Nomor: <strong>${info.nomor}</strong></div>
-        <div style="font-size:13px;color:#666;margin-top:4px;">Waktu daftar: ${info.tgl}</div>
-        <div style="font-size:12px;color:#888;margin-top:8px;">Hubungi panitia untuk konfirmasi status resmi.</div>
-      </div>`;
-      return;
-    }catch(e){}
-  }
-
-  // Pakai GET query string - tidak kena CORS
+  // Fetch dari server
   try {
     const qs = new URLSearchParams({action:'cekStatusPPDB', nomor: input}).toString();
     const r = await fetch(`${PPDB_SCRIPT}?${qs}`);
     const d = await r.json();
 
-    // Cek apakah pengumuman belum dibuka
+    // Pengumuman belum dibuka (dari server)
     if (d.ok && d.data && d.data.tutup) {
       result.innerHTML = `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:16px 20px;text-align:center;color:#856404;">
         <div style="font-size:24px;margin-bottom:8px;">🔔</div>
@@ -1685,23 +1710,13 @@ async function cekStatus() {
       result.innerHTML = '<p style="color:var(--merah);font-size:14px;">Nomor pendaftaran tidak ditemukan. Periksa kembali nomor Anda.</p>';
       return;
     }
-    const p = d.data;
-    const statusLabel = {PENDING:'⏳ Menunggu Verifikasi',TERDAFTAR:'✅ Terdaftar',DITERIMA:'✅ Diterima',DITOLAK:'❌ Tidak Diterima',DAFTAR_ULANG:'📝 Silakan Daftar Ulang','':'⏳ Menunggu Verifikasi'};
-    document.getElementById('rNomor').textContent = p.nomor;
-    document.getElementById('rNama').textContent = p.nama;
-    document.getElementById('rTgl').textContent = 'Mendaftar: ' + p.tgl;
-    const statusEl = document.getElementById('rStatus');
-    statusEl.textContent = statusLabel[p.status] || p.status;
-    statusEl.className = 'result-status status-' + p.status;
-    result.innerHTML = '';
-    result.classList.add('show');
-    // Re-append content
-    document.getElementById('resultCard').innerHTML = `
-      <div style="font-size:13px;color:var(--teks-sub);">No. Pendaftaran</div>
-      <div style="font-size:20px;font-weight:800;color:var(--biru);margin-bottom:4px;">${p.nomor}</div>
-      <div style="font-size:16px;font-weight:700;">${p.nama}</div>
-      <div style="font-size:12px;color:var(--teks-sub);margin-bottom:8px;">Mendaftar: ${p.tgl}</div>
-      <div class="result-status status-${p.status}">${statusLabel[p.status]||p.status}</div>`;
+
+    // Simpan ke cache localStorage
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ data: d.data, ts: Date.now() }));
+    } catch(e) {}
+
+    tampilHasil(d.data);
   } catch(e) {
     result.innerHTML = '<p style="color:var(--merah);">Gagal mengambil data. Coba lagi.</p>';
   }
