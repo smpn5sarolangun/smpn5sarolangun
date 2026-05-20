@@ -176,6 +176,8 @@
       <div style="display:flex;flex-direction:column;gap:16px;">
         <div><label style="font-size:12px;font-weight:700;color:var(--teks-sub);display:block;margin-bottom:6px;">Nama</label>
         <input type="text" id="cNama" placeholder="Nama Anda" style="width:100%;padding:11px 14px;border:2px solid #dde3ee;border-radius:9px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;"></div>
+        <div><label style="font-size:12px;font-weight:700;color:var(--teks-sub);display:block;margin-bottom:6px;">Nomor WhatsApp</label>
+        <input type="tel" id="cWA" placeholder="Contoh: 08123456789" style="width:100%;padding:11px 14px;border:2px solid #dde3ee;border-radius:9px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;"></div>
         <div><label style="font-size:12px;font-weight:700;color:var(--teks-sub);display:block;margin-bottom:6px;">Keperluan</label>
         <select id="cKeperluan" style="width:100%;padding:11px 14px;border:2px solid #dde3ee;border-radius:9px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;">
           <option>Informasi PPDB</option><option>Informasi Umum</option><option>Pengaduan</option><option>Lainnya</option>
@@ -211,11 +213,12 @@
 
 function kirimPesan(){
   const nama  = document.getElementById('cNama').value.trim();
+  const wa    = document.getElementById('cWA').value.trim();
   const kep   = document.getElementById('cKeperluan').value;
   const pesan = document.getElementById('cPesan').value.trim();
   const btn   = document.getElementById('btnKirim');
 
-  if(!nama || !pesan){ alert('Nama dan pesan wajib diisi'); return; }
+  if(!nama || !wa || !pesan){ alert('Nama, nomor WA, dan pesan wajib diisi'); return; }
 
   btn.disabled = true;
   btn.innerHTML = '⏳ Mengirim...';
@@ -223,13 +226,14 @@ function kirimPesan(){
   fetch('https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec', {
     method: 'POST',
     headers: {'Content-Type': 'text/plain;charset=utf-8'},
-    body: JSON.stringify({action:'kirimPesan', nama, keperluan:kep, pesan})
+    body: JSON.stringify({action:'kirimPesan', nama, wa, keperluan:kep, pesan})
   })
   .then(r => r.json())
   .then(d => {
     if(d.ok){
       document.getElementById('alertSukses').style.display = 'flex';
       document.getElementById('cNama').value  = '';
+      document.getElementById('cWA').value    = '';
       document.getElementById('cPesan').value = '';
       setTimeout(()=>{ document.getElementById('alertSukses').style.display='none'; }, 5000);
     } else {
