@@ -1516,19 +1516,68 @@ async function submitPPDB() {
     const r = await fetch(PPDB_SCRIPT, {
       method: 'POST',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
-      body: JSON.stringify({action:'daftarPPDB', ...data})
+      body: JSON.stringify({
+        action: 'daftar',
+        namaLengkap:    data.nama,
+        nisn:           data.nisn,
+        nik:            data.nik,
+        noKK:           data.nokk,
+        jenisKelamin:   data.jk,
+        tempatLahir:    data.tmptLahir,
+        tglLahir:       data.tglLahir,
+        agama:          data.agama,
+        jalan:          data.alamatJalan,
+        rt:             data.alamatRT,
+        dusun:          data.alamatDusun,
+        desa:           data.alamatDesa,
+        kecamatan:      data.kecamatan + (data.kecamatanLain ? ' - '+data.kecamatanLain : ''),
+        tempatTinggal:  data.tinggal + (data.tinggalLain ? ' - '+data.tinggalLain : ''),
+        transportasi:   data.transportasi + (data.transportasiLain ? ' - '+data.transportasiLain : ''),
+        anakKe:         data.anakKe,
+        jmlSaudara:     data.jmlSaudara,
+        hobi:           data.hobi,
+        citaCita:       data.citaCita,
+        beratBadan:     data.bb,
+        tinggiBadan:    data.tb,
+        pip:            data.pip + (data.nomorPIP ? ' - '+data.nomorPIP : ''),
+        sekolahAsal:    data.sekolahAsal + (data.sekolahAsalLain ? ' - '+data.sekolahAsalLain : ''),
+        namaAyah:       data.namaAyah,
+        nikAyah:        data.nikAyah,
+        tglLahirAyah:   data.tglLahirAyah,
+        pendAyah:       data.pendidikanAyah,
+        pekerjaanAyah:  data.pekerjaanAyah,
+        pengAyah:       data.penghasilanAyah,
+        namaIbu:        data.namaIbu,
+        nikIbu:         data.nikIbu,
+        tglLahirIbu:    data.tglLahirIbu,
+        pendIbu:        data.pendidikanIbu,
+        pekerjaanIbu:   data.pekerjaanIbu,
+        pengIbu:        data.penghasilanIbu,
+        namaWali:       data.namaWali,
+        nikWali:        data.nikWali,
+        tahunWali:      data.tahunLahirWali,
+        pendWali:       data.pendidikanWali,
+        pekerjaanWali:  data.pekerjaanWali,
+        pengWali:       data.penghasilanWali,
+        noHPOrtu:       data.hpOrtu,
+        noHPSiswa:      data.hpSiswa
+      })
     });
     const d = await r.json();
 
-    if(d.ok){
+    if(d.success){
+      const tglNow = new Date().toLocaleString('id-ID');
       // Simpan ke cache browser
-      localStorage.setItem('ppdb_terkirim_' + nisnInput, JSON.stringify({nomor: d.nomor, tgl: d.tgl}));
-      isiKartu(d);
+      localStorage.setItem('ppdb_terkirim_' + nisnInput, JSON.stringify({nomor: d.noPendaftaran, tgl: tglNow}));
+      isiKartu({ok:true, nomor: d.noPendaftaran, nama: d.namaLengkap, tgl: tglNow});
       hapusDraft();
       document.getElementById('formSection').style.display = 'none';
       document.getElementById('kartuSection').classList.add('show');
+    } else if(d.duplikat){
+      tampilError(d.message || 'Data sudah terdaftar.');
+      resetBtn();
     } else {
-      tampilError(d.error || 'Terjadi kesalahan. Coba lagi.');
+      tampilError(d.message || d.error || 'Terjadi kesalahan. Coba lagi.');
       resetBtn();
     }
   } catch(e) {
