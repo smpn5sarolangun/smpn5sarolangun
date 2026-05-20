@@ -1497,6 +1497,15 @@ async function submitPPDB() {
   if(!validasiDigit('fNIK',  16, 'NIK Siswa')) return;
   if(!validasiDigit('fNoKK', 16, 'Nomor KK')) return;
 
+  // Cek duplikat dari cache browser
+  const nisnInput = data.nisn;
+  const sudahDaftar = localStorage.getItem('ppdb_terkirim_' + nisnInput);
+  if(sudahDaftar){
+    const info = JSON.parse(sudahDaftar);
+    tampilError('NISN ' + nisnInput + ' sudah pernah mendaftar dari perangkat ini. Nomor pendaftaran: ' + info.nomor + ' (' + info.tgl + '). Hubungi panitia jika ada kendala.');
+    return;
+  }
+
   // Loading
   document.getElementById('spinner').style.display = 'block';
   document.getElementById('btnTeks').textContent = 'Mengirim...';
@@ -1506,18 +1515,27 @@ async function submitPPDB() {
   try {
     const r = await fetch(PPDB_SCRIPT, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      mode: 'no-cors',
+      headers: {'Content-Type':'text/plain'},
       body: JSON.stringify({action:'daftarPPDB', ...data})
     });
-    const d = await r.json();
 
-    if (d.ok) {
-      isiKartu(d);
+    // no-cors tidak return response, tunggu GAS selesai lalu verifikasi via NISN
+    await new Promise(res => setTimeout(res, 3000));
+    const cek = await fetch(`${PPDB_SCRIPT}?action=cekStatusPPDB&nomor=${encodeURIComponent(data.nisn)}`);
+    const d = await cek.json();
+
+    if (d.ok && d.data) {
+      const nomorBukti = d.data.nomor;
+      const tglBukti   = d.data.tgl;
+      // Simpan ke cache browser sebagai bukti sudah daftar
+      localStorage.setItem('ppdb_terkirim_' + nisnInput, JSON.stringify({nomor: nomorBukti, tgl: tglBukti}));
+      isiKartu({ok:true, nomor:nomorBukti, nama:d.data.nama, tgl:tglBukti});
       hapusDraft();
       document.getElementById('formSection').style.display = 'none';
       document.getElementById('kartuSection').classList.add('show');
     } else {
-      tampilError(d.error || 'Terjadi kesalahan. Coba lagi.');
+      tampilError('Pendaftaran gagal. NISN atau NIK mungkin sudah terdaftar. Hubungi panitia jika merasa belum mendaftar.');
       resetBtn();
     }
   } catch(e) {
