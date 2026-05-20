@@ -1578,7 +1578,7 @@ async function submitPPDB() {
       localStorage.setItem('ppdb_terkirim_' + nisnInput, JSON.stringify({nomor: d.noPendaftaran, tgl: tglNow}));
       isiKartu({ok:true, nomor: d.noPendaftaran, nama: d.namaLengkap, tgl: tglNow});
       hapusDraft();
-      document.getElementById('formSection').style.display = 'none';
+      document.getElementById('tabDaftar').style.display = 'none';
       document.getElementById('kartuSection').classList.add('show');
     } else if(d.duplikat){
       tampilError(d.message || 'Data sudah terdaftar.');
