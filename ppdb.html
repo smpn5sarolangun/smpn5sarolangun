@@ -1757,6 +1757,16 @@ function validasiDigit(id, panjang, label){
 
 // Reset border merah saat field mulai diisi
 document.addEventListener('DOMContentLoaded', function(){
+  // Handle anchor hash untuk switch tab otomatis
+  const hash = window.location.hash;
+  if(hash === '#registrasi' || hash === '#daftar'){
+    const btn = document.querySelector('.tab-btn[onclick*="Daftar"]');
+    switchTab('Daftar', btn);
+  } else if(hash === '#cek' || hash === '#status'){
+    const btn = document.querySelector('.tab-btn[onclick*="Cek"]');
+    switchTab('Cek', btn);
+  }
+
   muatDraft();
   document.querySelectorAll('.f-input, .f-select').forEach(function(el){
     el.addEventListener('input', function(){ resetFieldError(this); });
