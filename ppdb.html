@@ -635,9 +635,9 @@ select.f-input{appearance:auto;}
 <option value="Perempuan">Perempuan</option>
 
 </select></div></div>
-        <div><div class="fg"><label class="f-label">NISN (10 digit) <span class="req">*</span></label><input type="text" id="fNISN" class="f-input" placeholder="Nomor Induk Siswa Nasional" required></div></div>
-        <div><div class="fg"><label class="f-label">NIK Siswa <span class="req">*</span></label><input type="text" id="fNIK" class="f-input" placeholder="Nomor Induk Kependudukan" required></div></div>
-        <div><div class="fg"><label class="f-label">Nomor Kartu Keluarga <span class="req">*</span></label><input type="text" id="fNoKK" class="f-input" placeholder="Nomor KK" required></div></div>
+        <div><div class="fg"><label class="f-label">NISN (10 digit) <span class="req">*</span></label><input type="text" id="fNISN" class="f-input" placeholder="10 digit angka" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,10,'NISN')" required><span id="hint_fNISN" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
+        <div><div class="fg"><label class="f-label">NIK Siswa <span class="req">*</span></label><input type="text" id="fNIK" class="f-input" placeholder="16 digit angka" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,16,'NIK Siswa')" required><span id="hint_fNIK" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
+        <div><div class="fg"><label class="f-label">Nomor Kartu Keluarga <span class="req">*</span></label><input type="text" id="fNoKK" class="f-input" placeholder="16 digit angka" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,16,'Nomor KK')" required><span id="hint_fNoKK" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
         <div><div class="fg"><label class="f-label">Tempat Lahir <span class="req">*</span></label><input type="text" id="fTmptLahir" class="f-input" placeholder="Kota/Kabupaten" required></div></div>
         <div><div class="fg"><label class="f-label">Tanggal Lahir <span class="req">*</span></label><input type="text" id="fTglLahir" class="f-input" placeholder="contoh: 1 Januari 2013" required></div></div>
         <div><div class="fg"><label class="f-label">Agama <span class="req">*</span></label><select id="fAgama" class="f-input" required onchange="cekLain('fAgama')">
@@ -797,16 +797,16 @@ select.f-input{appearance:auto;}
 <option value="8">8</option>
 <option value="9">9</option>
 <option value="10">10</option>
-<option value="11">11</option>
-<option value="12">12</option>
-<option value="13">13</option>
-<option value="14">14</option>
-<option value="15">15</option>
-<option value="16">16</option>
-<option value="17">17</option>
-<option value="18">18</option>
-<option value="19">19</option>
-<option value="20">20</option>
+
+
+
+
+
+
+
+
+
+
       
     </select>
     </div></div>
@@ -825,16 +825,16 @@ select.f-input{appearance:auto;}
 <option value="8">8</option>
 <option value="9">9</option>
 <option value="10">10</option>
-<option value="11">11</option>
-<option value="12">12</option>
-<option value="13">13</option>
-<option value="14">14</option>
-<option value="15">15</option>
-<option value="16">16</option>
-<option value="17">17</option>
-<option value="18">18</option>
-<option value="19">19</option>
-<option value="20">20</option>
+
+
+
+
+
+
+
+
+
+
       
     </select>
     </div></div>
@@ -875,12 +875,15 @@ select.f-input{appearance:auto;}
     </div></div>
         <div><div class="fg">
       <label class="f-label">Kartu PIP <span class="req">*</span></label>
-      <select id="fPIP" class="f-input" required onchange="cekLain('fPIP')">
+      <select id="fPIP" class="f-input" required onchange="togglePIPNomor(this.value);resetFieldError(this)">
       <option value="">-- Pilih Kartu PIP --</option>
       <option value="Ada">Ada</option>
-<option value="Tidak Ada">Tidak Ada</option>
-      
+      <option value="Tidak Ada">Tidak Ada</option>
     </select>
+    <div id="pipNomorWrap" style="display:none;margin-top:8px;">
+      <input type="text" id="fPIPNomor" class="f-input" placeholder="Nomor PIP (angka/huruf)" autocomplete="off">
+      <span style="font-size:12px;color:#888;margin-top:4px;display:block;">Isi nomor PIP jika ada</span>
+    </div>
     </div></div>
       </div>
 
@@ -1430,7 +1433,7 @@ async function submitPPDB() {
     hpOrtu: val('fHP'), hpSiswa: val('fHPSiswa'),
     namaWali: val('fNamaWali'), nikWali: val('fNIKWali'), tahunLahirWali: val('fTahunWali'),
     pendidikanWali: val('fPendWali'), pekerjaanWali: val('fPekWali'), penghasilanWali: val('fPengWali'),
-    pip: val('fPIP')
+    pip: val('fPIP'), nomorPIP: (document.getElementById('fPIPNomor') ? document.getElementById('fPIPNomor').value.trim() : '')
   };
 
   // Validasi wajib
@@ -1488,6 +1491,11 @@ async function submitPPDB() {
     if (firstEl) firstEl.scrollIntoView({behavior:'smooth', block:'center'});
     return;
   }
+
+  // Validasi panjang digit
+  if(!validasiDigit('fNISN', 10, 'NISN')) return;
+  if(!validasiDigit('fNIK',  16, 'NIK Siswa')) return;
+  if(!validasiDigit('fNoKK', 16, 'Nomor KK')) return;
 
   // Loading
   document.getElementById('spinner').style.display = 'block';
@@ -1622,6 +1630,51 @@ async function cekStatus() {
 if(history.scrollRestoration) history.scrollRestoration='manual';
 window.scrollTo(0,0);
 muatPPDBInfo();
+
+
+// ── VALIDASI PANJANG LANGSUNG DI FIELD ──
+function cekPanjang(el, panjang, label){
+  if(!el.value) return; // kosong = biarkan validasi wajib yang handle
+  const hint = document.getElementById('hint_' + el.id);
+  if(el.value.length < panjang){
+    el.style.borderColor = '#e53935';
+    el.style.background  = '#fff5f5';
+    if(hint){ hint.textContent = '⚠ Kurang ' + (panjang - el.value.length) + ' digit'; hint.style.color='#e53935'; }
+  } else {
+    el.style.borderColor = '#2e7d32';
+    el.style.background  = '#f1f8e9';
+    if(hint){ hint.textContent = '✓ ' + panjang + ' digit'; hint.style.color='#2e7d32'; }
+  }
+}
+
+// ── TOGGLE NOMOR PIP ──
+function togglePIPNomor(val){
+  const wrap = document.getElementById('pipNomorWrap');
+  const inp  = document.getElementById('fPIPNomor');
+  if(!wrap) return;
+  if(val === 'Ada'){
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+    if(inp) inp.value = '';
+  }
+}
+
+// ── VALIDASI PANJANG DIGIT ──
+function validasiDigit(id, panjang, label){
+  const el = document.getElementById(id);
+  if(!el) return true;
+  const val = el.value.replace(/\D/g,'');
+  if(val.length !== panjang){
+    el.style.borderColor = '#e53935';
+    el.style.background  = '#fff5f5';
+    el.focus();
+    tampilError(label + ' harus tepat ' + panjang + ' digit angka. Saat ini ' + val.length + ' digit.');
+    return false;
+  }
+  return true;
+}
+
 // Reset border merah saat field mulai diisi
 document.addEventListener('DOMContentLoaded', function(){
   muatDraft();
