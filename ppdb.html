@@ -1025,7 +1025,7 @@ select.f-input{appearance:auto;}
       <input type="text" id="fHP" class="f-input" placeholder="Nomor WA aktif" required>
     </div></div>
         <div><div class="fg">
-      <label class="f-label">HP Siswa <span class="req">*</span></label>
+      <label class="f-label">HP Siswa <span style="font-size:11px;color:#888;font-weight:400;">(opsional)</span></label>
       <input type="text" id="fHPSiswa" class="f-input" placeholder="Jika ada" >
     </div></div>
       </div>
@@ -1445,8 +1445,47 @@ async function submitPPDB() {
     ['pendidikanIbu','Pendidikan Ibu'],['pekerjaanIbu','Pekerjaan Ibu'],['penghasilanIbu','Penghasilan Ibu'],
     ['hpOrtu','HP Orang Tua'],['pip','Kartu PIP']];
 
-  for (const [k,label] of wajib) {
-    if (!data[k]) { tampilError(`Field "${label}" wajib diisi.`); return; }
+  // Reset border field sebelumnya
+  document.querySelectorAll('.f-input, .f-select').forEach(el => {
+    el.style.borderColor = '';
+    el.style.background  = '';
+  });
+
+  // Map key data ke id elemen
+  const fieldMap = {
+    nama:'fNama', jk:'fJK', nisn:'fNISN', nik:'fNIK', nokk:'fNoKK',
+    tmptLahir:'fTmptLahir', tglLahir:'fTglLahir', agama:'fAgama',
+    alamatRT:'fRT', alamatDusun:'fDusun', alamatDesa:'fDesa', kecamatan:'fKecamatan',
+    tinggal:'fTinggal', transportasi:'fTransportasi', anakKe:'fAnakKe',
+    jmlSaudara:'fJmlSaudara', hobi:'fHobi', citaCita:'fCitaCita',
+    bb:'fBB', tb:'fTB', sekolahAsal:'fSekolah',
+    namaAyah:'fNamaAyah', nikAyah:'fNIKAyah', tglLahirAyah:'fTglAyah',
+    pendidikanAyah:'fPendAyah', pekerjaanAyah:'fPekAyah', penghasilanAyah:'fPengAyah',
+    namaIbu:'fNamaIbu', nikIbu:'fNIKIbu', tglLahirIbu:'fTglIbu',
+    pendidikanIbu:'fPendIbu', pekerjaanIbu:'fPekIbu', penghasilanIbu:'fPengIbu',
+    hpOrtu:'fHP', pip:'fPIP'
+  };
+
+  let adaKosong = false;
+  let firstEl = null;
+  for (const [k, label] of wajib) {
+    if (!data[k]) {
+      adaKosong = true;
+      const elId = fieldMap[k];
+      if (elId) {
+        const el = document.getElementById(elId);
+        if (el) {
+          el.style.borderColor = '#e53935';
+          el.style.background  = '#fff5f5';
+          if (!firstEl) firstEl = el;
+        }
+      }
+    }
+  }
+  if (adaKosong) {
+    tampilError('Harap lengkapi field yang ditandai merah sebelum mengirim.');
+    if (firstEl) firstEl.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
   }
 
   // Loading
@@ -1456,7 +1495,7 @@ async function submitPPDB() {
   sembunyiAlert();
 
   try {
-    const r = await const r = await fetch(PPDB_SCRIPT, {
+    const r = await fetch(PPDB_SCRIPT, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({action:'daftarPPDB', ...data})
@@ -1490,8 +1529,10 @@ function tampilError(msg) {
   el.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function sembunyiAlert() {
-  document.getElementById('alertError').classList.remove('show');
-  document.getElementById('alertSukses').classList.remove('show');
+  const e1 = document.getElementById('alertError');
+  const e2 = document.getElementById('alertSukses');
+  if(e1) e1.classList.remove('show');
+  if(e2) e2.classList.remove('show');
 }
 
 // ── ISI KARTU BUKTI ──
