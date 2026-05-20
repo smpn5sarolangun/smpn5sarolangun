@@ -184,9 +184,6 @@
   }
 
   
-
-  .peng-item:hover { background: #f8faff; }
-  .peng-item { cursor: pointer; transition: background 0.15s; }
 </style>
 </head>
 <body>
@@ -542,7 +539,7 @@ function renderHalaman(hal) {
   const rows = items.map((item, i) => {
     const idx = start + i;
     const nomor = start + i + 1;
-    return '<div onclick="bukaPopup('+idx+')" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:'+(i<items.length-1?'1px solid #eef2f7':'')+';cursor:pointer;transition:background 0.15s;" class="peng-item">'
+    return '<div onclick="bukaPopup('+idx+')" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:'+(i<items.length-1?'1px solid #eef2f7':'')+';cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8faff'" onmouseout="this.style.background=''">'
       + '<div style="width:28px;height:28px;border-radius:50%;background:#eef2ff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--biru-mid);flex-shrink:0;">'+nomor+'</div>'
       + '<div style="flex:1;">'
       + '<div style="font-size:14px;font-weight:600;color:var(--teks);">'+(item.judul||'')+'</div>'
