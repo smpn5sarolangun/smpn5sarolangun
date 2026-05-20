@@ -1641,7 +1641,7 @@ function daftarLagi() {
 }
 
 // ── CEK STATUS ──
-async function cekStatus() {
+async async function cekStatus() {
   const input = document.getElementById('cekInput').value.trim();
   if (!input) { alert('Masukkan nomor pendaftaran atau NISN.'); return; }
   const result = document.getElementById('resultCard');
@@ -1686,7 +1686,7 @@ async function cekStatus() {
       return;
     }
     const p = d.data;
-    const statusLabel = {PENDING:'⏳ Menunggu Verifikasi',DITERIMA:'✅ Diterima',DITOLAK:'❌ Tidak Diterima',DAFTAR_ULANG:'📝 Silakan Daftar Ulang'};
+    const statusLabel = {PENDING:'⏳ Menunggu Verifikasi',TERDAFTAR:'✅ Terdaftar',DITERIMA:'✅ Diterima',DITOLAK:'❌ Tidak Diterima',DAFTAR_ULANG:'📝 Silakan Daftar Ulang','':'⏳ Menunggu Verifikasi'};
     document.getElementById('rNomor').textContent = p.nomor;
     document.getElementById('rNama').textContent = p.nama;
     document.getElementById('rTgl').textContent = 'Mendaftar: ' + p.tgl;
@@ -1760,11 +1760,14 @@ document.addEventListener('DOMContentLoaded', function(){
   // Handle anchor hash untuk switch tab otomatis
   const hash = window.location.hash;
   if(hash === '#registrasi' || hash === '#daftar'){
-    const btn = document.querySelector('.tab-btn[onclick*="Daftar"]');
-    switchTab('Daftar', btn);
+    const btn = document.querySelector('.tab-btn[onclick*="daftar"]');
+    switchTab('daftar', btn);
   } else if(hash === '#cek' || hash === '#status'){
-    const btn = document.querySelector('.tab-btn[onclick*="Cek"]');
-    switchTab('Cek', btn);
+    const btn = document.querySelector('.tab-btn[onclick*="cek"]');
+    switchTab('cek', btn);
+  } else if(hash === '#info'){
+    const btn = document.querySelector('.tab-btn[onclick*="info"]');
+    switchTab('info', btn);
   }
 
   muatDraft();
