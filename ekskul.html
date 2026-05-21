@@ -25,7 +25,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .nav-dropdown{position:relative;}
 .nav-dropdown:hover .dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)!important;}
 .dropdown-menu{position:absolute;top:calc(100% + 8px);background:#fff;border-radius:12px;padding:8px;min-width:190px;box-shadow:0 8px 32px rgba(0,0,0,0.18);opacity:0;visibility:hidden;transition:all 0.2s;z-index:100;left:50%;transform:translateX(-50%) translateY(-8px);}
-.dropdown-menu::before{content:'';position:absolute;top:-6px;border:6px solid transparent;border-bottom-color:#fff;border-top:none;left:50%;transform:translateX(-50%);}
+.dropdown-menu::before{content:'';position:absolute;top:-6px;left:20px;border:6px solid transparent;border-bottom-color:#fff;border-top:none;}
 .dropdown-menu a{display:block;padding:9px 14px;color:var(--teks);text-decoration:none;font-size:13px;font-weight:500;border-radius:8px;transition:all 0.15s;white-space:nowrap;}
 .dropdown-menu a:hover{background:rgba(13,59,110,0.08);color:var(--biru);}
 .nav-dropdown.dd-right .dropdown-menu{left:auto;right:0;transform:translateY(-8px);}
@@ -60,7 +60,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .ekskul-hari{position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.45);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;backdrop-filter:blur(4px);}
 .ekskul-body{padding:18px 20px 20px;}
 .ekskul-nama{font-size:17px;font-weight:700;color:var(--teks);margin-bottom:6px;}
-.ekskul-desc{font-size:13px;color:var(--teks-sub);line-height:1.7;margin-bottom:14px;}
+.ekskul-desc{text-align:justify;font-size:13px;color:var(--teks-sub);line-height:1.7;margin-bottom:14px;}
 .ekskul-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--teks-sub);border-top:1px solid #eef2f7;padding-top:12px;}
 .ekskul-meta span{display:flex;align-items:center;gap:4px;}
 .ekskul-pembina{font-size:12px;color:var(--biru-mid);font-weight:600;}
@@ -70,15 +70,15 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 
 @media(max-width:768px){
   html,body{overflow-x:hidden;}
-  .ekskul-grid, .card-grid{grid-template-columns:1fr 1fr !important;}
+  .ekskul-grid{grid-template-columns:1fr 1fr !important;}
   .ekskul-card{word-break:break-word;}
-  img{max-width:100% !important; height:auto !important;}
-  h1,h2,h3,p{word-break:break-word;}
   .page-hero{padding:80px 16px 40px !important;}
-  .main-content, .container, .inner{padding:0 16px !important; max-width:100% !important;}
+  .main{padding:0 16px !important;}
+  img{max-width:100% !important; height:auto !important;}
+  h1,h2,h3{word-break:break-word;}
 }
 @media(max-width:480px){
-  .ekskul-grid, .card-grid{grid-template-columns:1fr !important;}
+  .ekskul-grid{grid-template-columns:1fr !important;}
 }
 </style>
 </head>
@@ -167,20 +167,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
     <a href="kontak.html">Kontak</a>
   </div>
 </nav>
-<div class="page-hero">
-  <h1>🏆 Ekstrakurikuler</h1>
-  <p>Wadah pengembangan bakat, minat, dan potensi siswa SMP Negeri 05 Sarolangun</p>
-</div>
-
-<div class="main">
-  <div class="sec-title">Kegiatan Ekstrakurikuler</div>
-  <div class="sec-sub">Temukan kegiatan yang sesuai dengan minat dan bakatmu. Daftarkan diri ke pembina masing-masing ekskul.</div>
-  <div class="ekskul-grid" id="ekskulGrid">
-    <div class="empty">Memuat data...</div>
-  </div>
-</div>
-
-<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:28px 20px;text-align:center;margin-top:20px;">
+<div class="page-hero"><footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:28px 20px;text-align:center;margin-top:20px;">
   <p style="font-size:12px;opacity:0.6;">© 2026 SMP Negeri 05 Sarolangun</p>
   <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
     <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Beranda</a>
@@ -200,6 +187,11 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
     <a href="ppdb.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">PPDB</a>
     <span style="opacity:0.3;">·</span>
     <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Kontak</a>
+  </div>
+</footer>margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Beranda</a>
+    <a href="guru.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Guru & Tendik</a>
+    <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Kontak</a>
   </div>
 </footer>
 
