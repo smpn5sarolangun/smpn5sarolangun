@@ -487,18 +487,9 @@ async function cekKelulusanIX() {
       hasil.innerHTML = '<div style="background:#fff3cd;border-radius:10px;padding:16px;font-size:14px;color:#856404;">[!] Data tidak ditemukan. Pastikan NISN yang dimasukkan sudah benar.</div>';
       return;
     }
-    const lulus = (d.status||'').toUpperCase() === 'LULUS';
-    hasil.innerHTML = \`<div style="border-radius:12px;padding:20px;text-align:center;background:\${lulus?'#e8f5e9':'#fdecea'};border:1px solid \${lulus?'#a5d6a7':'#f5c6c2'};">
-      <div style="font-size:32px;margin-bottom:8px;">\${lulus?':)':':('}</div>
-      <div style="font-size:17px;font-weight:700;color:var(--teks);margin-bottom:4px;">\${d.namaLengkap||d.nama||''}</div>
-      <div style="font-size:13px;color:var(--teks-sub);margin-bottom:10px;">NISN: \${d.nisn||nisn} - Kelas \${d.kelas||''}</div>
-      <div style="display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:14px;background:\${lulus?'#1a7a4a':'#e53935'};color:#fff;">
-        \${lulus?'[v] LULUS':'[x] TIDAK LULUS'}
-      </div>
-      \${d.keterangan?'<div style="margin-top:12px;font-size:13px;color:var(--teks-sub);">'+d.keterangan+'</div>':''}
-    </div>\`;
-  } catch(e) {
-    hasil.innerHTML = '<div style="background:#fff3cd;border-radius:10px;padding:16px;font-size:14px;color:#856404;">[!] Gagal mengambil data. Coba lagi.</div>';
+    const lulus = (d.status||'').toUpp
+    hasil.innerHTML = '<div style="border-radius:12px;padding:20px;text-align:center;background:'+(lulus?'#e8f5e9':'#fdecea')+';border:1px solid '+(lulus?'#a5d6a7':'#f5c6c2')+';"><div style="font-size:17px;font-weight:700;color:var(--teks);margin-bottom:4px;">'+(d.namaLengkap||d.nama||'')+'</div><div style="font-size:13px;color:var(--teks-sub);margin-bottom:10px;">NISN: '+(d.nisn||nisn)+' - Kelas '+(d.kelas||'')+'</div><div style="display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:14px;background:'+(lulus?'#1a7a4a':'#e53935')+';color:#fff;">'+(lulus?'LULUS':'TIDAK LULUS')+'</div>'+(d.keterangan?'<div style="margin-top:12px;font-size:13px;color:var(--teks-sub);">'+d.keterangan+'</div>':'')+'</div>';
+ '<div style="background:#fff3cd;border-radius:10px;padding:16px;font-size:14px;color:#856404;">[!] Gagal mengambil data. Coba lagi.</div>';
   }
 }
 
