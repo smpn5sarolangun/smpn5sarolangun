@@ -302,7 +302,21 @@
         <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;">Detik</div>
       </div>
     </div>
-    <div id="infoBannerTgl" style="font-size:12px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;font-weight:600;">PENGUMUMAN RESMI: <strong style="color:#fff;">2 JUNI 2026</strong></div>
+    <div id="bannerSub" style="display:block;">
+      <div id="infoBannerTgl" style="font-size:12px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;font-weight:600;">PENGUMUMAN RESMI: <strong style="color:#fff;">2 JUNI 2026</strong></div>
+    </div>
+    <div id="bannerBuka" style="display:none;">
+      <div style="display:inline-block;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:30px;padding:8px 24px;margin:6px 0 12px;font-size:15px;font-weight:700;color:#fff;letter-spacing:1px;">
+        TELAH DIBUKA RESMI
+      </div>
+      <div id="tglBukaInfo" style="font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:18px;"></div>
+      <div>
+        <button onclick="document.getElementById('sectionCek').scrollIntoView({behavior:'smooth'})"
+          style="background:#fff;color:#0d3b6e;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.5px;">
+          Cek Kelulusan Saya
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- ═══ CEK KELULUSAN ═══ -->
@@ -359,27 +373,7 @@
   </div>
 </footer>
 
-<script>function prosesInfo(info) {
-  statusKelulusan = (info.status_pengumuman_kelulusan||'').toUpperCase();
-  const tglStr = info.tgl_pengumuman_kelulusan||'';
-  if(tglStr) {
-    const parsed = new Date(tglStr);
-    TGL_PENGUMUMAN = !isNaN(parsed) ? parsed : new Date(2026,5,2,20,0,0);
-    const opts = {day:'numeric',month:'long',year:'numeric'};
-    const tglTampil = TGL_PENGUMUMAN.toLocaleDateString('id-ID',opts).toUpperCase();
-    const el = document.getElementById('infoBannerTgl');
-    if(el) el.innerHTML = 'PENGUMUMAN RESMI: <strong style="color:#fff;">'+tglTampil+'</strong>';
-  } else {
-    TGL_PENGUMUMAN = new Date(2026,5,2,20,0,0);
-  }
-  const tahun = info.tahun_kelulusan||new Date().getFullYear();
-  const jEl = document.getElementById('bannerJudulTA');
-  if(jEl) jEl.textContent = 'SMP NEGERI 05 SAROLANGUN TA '+tahun;
-  const tEl = document.getElementById('tahunCekJudul');
-  if(tEl) tEl.textContent = tahun;
-}
-
-
+<script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
 let TGL_PENGUMUMAN = null; // dari sheet PPDB_INFO
 let statusKelulusan = null; // akan diisi dari GAS
@@ -396,16 +390,9 @@ async function init() {
 // MUAT STATUS DARI GAS //
 async function muatStatusKelulusan() {
   try {
-    const cKey = 'cache_peng_info';
-    const cached = localStorage.getItem(cKey);
-    if(cached) {
-      const obj = JSON.parse(cached);
-      if(Date.now() - obj.ts < 60000) { prosesInfo(obj.data); return; }
-    }
     const r = await fetch(SCRIPT_URL + '?action=getPPDBInfo');
     const d = await r.json();
     if(d.ok && d.data) {
-      localStorage.setItem(cKey, JSON.stringify({ts:Date.now(), data:d.data}));
       const info = d.data;
       statusKelulusan = (info.status_pengumuman_kelulusan || '').toUpperCase();
 
@@ -461,22 +448,30 @@ function cekTampilCountdown() {
 function updateCekUI() {
   const buka = cekBuka();
   const form = document.getElementById('cekForm');
-  const msg = document.getElementById('cekTutupMsg');
-  const btn = document.getElementById('btnCek');
+  const msg  = document.getElementById('cekTutupMsg');
+  const btn  = document.getElementById('btnCek');
   if(buka) {
     form.style.display = 'flex';
-    msg.style.display = 'none';
-    btn.disabled = false;
+    msg.style.display  = 'none';
+    btn.disabled       = false;
+    btn.style.opacity  = '1';
   } else {
     form.style.display = 'flex';
-    msg.style.display = 'block';
-    btn.disabled = true;
-    btn.style.opacity = '0.5';
+    msg.style.display  = 'block';
+    btn.disabled       = true;
+    btn.style.opacity  = '0.5';
   }
-  // Banner hitung mundur
-  const banner = document.getElementById('bannerHitung');
-  if(!cekTampilCountdown()) {
-    banner.style.display = buka ? 'none' : 'block';
+  const cdGrid   = document.getElementById('cdGrid');
+  const bannerSub  = document.getElementById('bannerSub');
+  const bannerBuka = document.getElementById('bannerBuka');
+  if(buka) {
+    if(cdGrid)    cdGrid.style.display    = 'none';
+    if(bannerSub) bannerSub.style.display = 'none';
+    if(bannerBuka)bannerBuka.style.display= 'block';
+  } else {
+    if(cdGrid)    cdGrid.style.display    = 'inline-flex';
+    if(bannerSub) bannerSub.style.display = 'block';
+    if(bannerBuka)bannerBuka.style.display= 'none';
   }
 }
 
@@ -541,16 +536,6 @@ let _halAktif = 1;
 async function muatPengumuman() {
   const list = document.getElementById('listPengumuman');
   try {
-    const cKey2 = 'cache_peng_list';
-    const cached2 = localStorage.getItem(cKey2);
-    if(cached2) {
-      const obj2 = JSON.parse(cached2);
-      if(Date.now() - obj2.ts < 60000 && obj2.data.length) {
-        window._pengumumanData = obj2.data;
-        renderHalaman(1);
-        return;
-      }
-    }
     const r = await fetch(SCRIPT_URL + '?action=getBerita&max=100&kategori=Pengumuman');
     const d = await r.json();
     const semua = (d.data || d.berita || []).filter(b =>
@@ -562,7 +547,6 @@ async function muatPengumuman() {
       return;
     }
     semua.sort((a,b) => (b.no||0) - (a.no||0)); // terbaru = nomor terbesar
-    localStorage.setItem('cache_peng_list', JSON.stringify({ts:Date.now(), data:semua}));
     window._pengumumanData = semua;
     renderHalaman(1);
   } catch(e) {
