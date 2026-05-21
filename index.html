@@ -564,11 +564,11 @@ function renderProfilBeranda(d){
   const p=d.data;
   const ak=p['identitas_Akreditasi']||p['akreditasi'];
   if(ak){const el=document.getElementById('statAkreditasi');if(el)el.textContent=ak;}
-  if(p.visi){const el=document.getElementById('visiQuote');if(el)el.textContent='"'+p.visi+'"';}
-  if(p.misi){const el=document.getElementById('misiText');if(el)el.textContent='"'+p.misi+'"';}
+  if(p.visi){const el=document.getElementById('visiQuote');if(el)el.innerHTML=p.visi;}
+  if(p.misi){const el=document.getElementById('misiText');if(el)el.innerHTML=p.misi;}
   // Sambutan kepsek
   if(p.kepsek_nama){const el=document.getElementById('sambutanNama');if(el)el.textContent=p.kepsek_nama;}
-  if(p.kepsek_sambutan){const el=document.getElementById('sambutanTeks');if(el)el.textContent=p.kepsek_sambutan;}
+  if(p.kepsek_sambutan){const el=document.getElementById('sambutanTeks');if(el)el.innerHTML=p.kepsek_sambutan;}
   if(p.kepsek_foto){
     const foto=document.getElementById('sambutanFoto');
     const def=document.getElementById('sambutanFotoDefault');
