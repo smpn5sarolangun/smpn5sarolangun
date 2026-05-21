@@ -31,7 +31,7 @@
     left:50%;transform:translateX(-50%) translateY(-8px);
   }
   .dropdown-menu::before{
-    content:'';position:absolute;top:-6px;
+    content:'';position:absolute;top:-6px;left:20px;
     border:6px solid transparent;border-bottom-color:#fff;border-top:none;
     left:50%;transform:translateX(-50%);
   }
@@ -52,7 +52,7 @@
     left:0;transform:translateY(-8px);
   }
   .dropdown-menu::before{
-    content:'';position:absolute;top:-6px;
+    content:'';position:absolute;top:-6px;left:20px;
     border:6px solid transparent;border-bottom-color:#fff;border-top:none;
     /* Default: kiri */
     left:16px;transform:none;
@@ -187,18 +187,6 @@
 
   .peng-item:hover { background: #f8faff; }
   .peng-item { cursor: pointer; transition: background 0.15s; }
-
-@media(max-width:768px){
-  html,body{overflow-x:hidden;}
-  .main{padding:0 16px !important;}
-  #cdGrid{gap:6px !important;}
-  #cdGrid > div{padding:10px 12px !important;min-width:52px !important;}
-  #cdGrid > div > div:first-child{font-size:22px !important;}
-  .peng-item{word-break:break-word;}
-  h1,h2,h3,p{word-break:break-word;}
-  #cekForm{flex-wrap:wrap !important;}
-  #inputNISN,#inputTgl{min-width:100% !important;}
-}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 </head>
@@ -294,7 +282,8 @@
 
   <!-- ═══ BANNER HITUNG MUNDUR ═══ -->
   <div id="bannerHitung" style="background:var(--biru);border-radius:16px;padding:28px 24px;text-align:center;margin-bottom:32px;">
-<div id="bannerHeaderTutup" style="display:none;"><div style="font-size:12px;color:rgba(255,255,255,0.65);letter-spacing:3px;margin-bottom:8px;font-weight:400;font-style:italic;">— Hitung Mundur Menuju —</div></div>
+<div id="bannerHeaderTutup" style="display:none;"><div style="font-size:12px;color:rgba(255,255,255,0.65);letter-spacing:3px;margin-bottom:8px;font-weight:400;font-style:italic;">— Hitung Mundur Menuju —</div>
+</div>
     <div id="bannerLabelKelas" style="font-size:13px;color:rgba(255,255,255,0.8);letter-spacing:2px;margin-bottom:6px;font-weight:500;">PENGUMUMAN KELULUSAN KELAS IX</div>
     <div id="bannerJudulTA" style="font-size:24px;font-weight:700;color:#fff;margin-bottom:16px;letter-spacing:0.5px;">SMP NEGERI 05 SAROLANGUN TA 2025/2026</div>
     <div id="cdGrid" style="display:none;gap:10px;margin-bottom:14px;">
