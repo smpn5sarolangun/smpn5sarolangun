@@ -284,6 +284,7 @@
   <div id="bannerHitung" style="background:var(--biru);border-radius:16px;padding:28px 24px;text-align:center;margin-bottom:32px;">
 <div id="bannerHeaderTutup" style="display:none;"><div style="font-size:12px;color:rgba(255,255,255,0.65);letter-spacing:3px;margin-bottom:8px;font-weight:400;font-style:italic;">— Hitung Mundur Menuju —</div>
     <div style="font-size:14px;color:rgba(255,255,255,0.9);letter-spacing:2px;margin-bottom:8px;font-weight:500;">PENGUMUMAN KELULUSAN KELAS IX</div></div>
+    <div id="bannerLabelKelas" style="font-size:13px;color:rgba(255,255,255,0.8);letter-spacing:2px;margin-bottom:6px;font-weight:500;">PENGUMUMAN KELULUSAN KELAS IX</div>
     <div id="bannerJudulTA" style="font-size:24px;font-weight:700;color:#fff;margin-bottom:16px;letter-spacing:0.5px;">SMP NEGERI 05 SAROLANGUN TA 2025/2026</div>
     <div id="cdGrid" style="display:none;gap:10px;margin-bottom:14px;">
       <div style="background:rgba(255,255,255,0.15);border-radius:10px;padding:12px 18px;min-width:64px;">
@@ -307,7 +308,6 @@
       <div id="infoBannerTgl" style="font-size:12px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;font-weight:600;">PENGUMUMAN RESMI: <strong style="color:#fff;">2 JUNI 2026</strong></div>
     </div>
     <div id="bannerBuka" style="display:none;">
-      <div style="font-size:13px;color:rgba(255,255,255,0.85);letter-spacing:2px;margin-bottom:8px;font-weight:500;">PENGUMUMAN KELULUSAN KELAS IX</div>
       <div style="display:inline-block;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:30px;padding:8px 24px;margin:6px 0 12px;font-size:15px;font-weight:700;color:#fff;letter-spacing:1px;">TELAH DIBUKA RESMI</div>
       <div id="tglBukaInfo" style="font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:18px;"></div>
       <div><button onclick="document.getElementById('sectionCek').scrollIntoView({behavior:'smooth'})" style="background:#fff;color:#0d3b6e;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;">Cek Kelulusan Saya</button></div>
@@ -638,8 +638,8 @@ function renderHalaman(hal) {
   }
 
   list.innerHTML = rows + pagination;
-  list.scrollIntoView({behavior:'smooth', block:'start'});
 }
+
 
 // POPUP //
 function bukaPopup(idx) {
