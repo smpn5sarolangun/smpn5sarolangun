@@ -357,13 +357,25 @@
   </div>
 </div>
 
-<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:40px 0;text-align:center;">
+<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:40px 20px;text-align:center;">
   <p style="font-size:13px;opacity:0.6;">© 2026 SMP Negeri 05 Sarolangun</p>
-  <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+  <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
     <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Beranda</a>
-    <!-- PPDB FOOTER DISEMBUNYIKAN:
-    <a href="ppdb.html" style="color:var(--emas);text-decoration:none;font-size:13px;font-weight:700;">PPDB 2026</a>
-    -->
+    <span style="opacity:0.3;">·</span>
+    <a href="profil.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Profil</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="guru.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Guru & Tendik</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="ekskul.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Ekstrakurikuler</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="galeri.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Galeri</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="berita.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Berita</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="pengumuman.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Pengumuman</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="ppdb.html" style="color:var(--emas);text-decoration:none;font-size:13px;font-weight:700;">PPDB</a>
+    <span style="opacity:0.3;">·</span>
     <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Kontak</a>
   </div>
 </footer>
@@ -561,7 +573,7 @@ async function cekKelulusanIX() {
     if(lulus) setTimeout(tampilSelebrasi,300);
     hasil.innerHTML = '<div style="border-radius:12px;padding:20px;text-align:center;background:'+(lulus?'#e8f5e9':'#fdecea')+';border:1px solid '+(lulus?'#a5d6a7':'#f5c6c2')+';">'
       + '<div style="font-size:17px;font-weight:700;color:#1e2a3a;margin-bottom:4px;">'+(d.namaLengkap||d.nama||'')+'</div>'
-      + '<div style="font-size:13px;color:#5a6a7e;margin-bottom:10px;">NISN: '+(d.nisn||nisn)+' - Kelas '+(d.kelas||'')+'</div>'
+      + '<div style="font-size:13px;color:#5a6a7e;margin-bottom:10px;">NISN: '+(d.nisn||nisn)++'</div>'
       + '<div style="display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:14px;background:'+(lulus?'#1a7a4a':'#e53935')+';color:#fff;">'+(lulus?'LULUS':'TIDAK LULUS')+'</div>'
       + (d.keterangan?'<div style="margin-top:12px;font-size:13px;color:#5a6a7e;">'+d.keterangan+'</div>':'')
       + '</div>';
