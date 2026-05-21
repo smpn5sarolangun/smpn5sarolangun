@@ -150,6 +150,22 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 
 @media(max-width:768px){.vm-wrap{grid-template-columns:1fr;}.fas-grid{grid-template-columns:repeat(2,1fr);}.info-badges{gap:8px;}}
 @media(max-width:480px){.fas-grid{grid-template-columns:repeat(2,1fr);}}
+
+@media(max-width:768px){
+  html,body{overflow-x:hidden;}
+  .profil-inner, .section-inner, .container{padding:0 16px !important; max-width:100% !important;}
+  .profil-grid, .identitas-grid{grid-template-columns:1fr !important;}
+  table{display:block;overflow-x:auto;width:100%;}
+  td,th{word-break:break-word; min-width:80px;}
+  img{max-width:100% !important; height:auto !important;}
+  h1,h2,h3{word-break:break-word;}
+  p{word-break:break-word; text-align:justify;}
+}
+@media(max-width:480px){
+  .tab-bar, .tab-buttons{flex-wrap:wrap !important;}
+  .tab-btn{font-size:12px !important; padding:6px 10px !important;}
+  .fas-grid{grid-template-columns:1fr 1fr !important;}
+}
 </style>
 </head>
 <body>
@@ -288,12 +304,26 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 
 </div>
 
-<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:28px 0;text-align:center;margin-top:20px;">
+<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:28px 20px;text-align:center;margin-top:20px;">
   <p style="font-size:12px;opacity:0.6;">© 2026 SMP Negeri 05 Sarolangun</p>
-  <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-    <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Beranda</a>
-    <a href="guru.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Guru & Tendik</a>
-    <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Kontak</a>
+  <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+    <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Beranda</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="profil.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Profil</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="guru.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Guru &amp; Tendik</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="ekskul.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Ekstrakurikuler</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="galeri.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Galeri</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="berita.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Berita</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="pengumuman.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Pengumuman</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="ppdb.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">PPDB</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Kontak</a>
   </div>
 </footer>
 
@@ -331,11 +361,11 @@ function prosesProfil(d){
     : '<p style="color:var(--teks-sub);font-size:13px;padding:16px 0;">Data identitas belum tersedia.</p>';
 
   // Sejarah
-  document.getElementById('sejarahText').textContent = p.sejarah || '-';
+  document.getElementById('sejarahText').innerHTML = p.sejarah || '-';
 
   // Visi Misi
-  document.getElementById('visiText').textContent = p.visi || '-';
-  document.getElementById('misiText').textContent = p.misi || '-';
+  document.getElementById('visiText').innerHTML = p.visi || '-';
+  document.getElementById('misiText').innerHTML = p.misi || '-';
 
   // Fasilitas
   const fas = Object.entries(p).filter(([k])=>k.startsWith('fasilitas_'));
