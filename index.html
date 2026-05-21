@@ -170,7 +170,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 /* ── VISI MISI & TUJUAN ── */
-.vismis-section{background:#fff;padding:24px 0;}
+.vismis-section{background:#fff;padding:32px 0;}
 .vismis-inner{max-width:1200px;margin:0 auto;padding:0 24px;}
 .vismis-label{display:inline-block;background:rgba(13,59,110,0.08);color:var(--biru-mid);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:6px 16px;border-radius:100px;margin-bottom:12px;}
 .vismis-heading{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--teks);margin-bottom:10px;}
@@ -189,7 +189,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
 .vm-card.visi .vm-body,.vm-card.tujuan .vm-body,.vm-card.kurikulum .vm-body{color:rgba(255,255,255,0.88);}
 .vm-card.misi .vm-body{color:rgba(255,255,255,0.88);}
 .vm-visi-quote{font-family:'Playfair Display',serif;font-size:16px;font-style:italic;line-height:1.7;color:rgba(255,255,255,0.95);border-left:3px solid var(--emas);padding-left:16px;}
-.vm-misi-item{display:flex;flex-direction:column;gap:4px;margin-bottom:18px;align-items:flex-start;}
+.vm-misi-item{display:flex;flex-direction:column;gap:4px;margin-bottom:18px;}
 .vm-misi-item:last-child{margin-bottom:0;}
 .vm-misi-icon{font-size:18px;flex-shrink:0;margin-top:2px;}
 .vm-misi-label{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;}
@@ -209,7 +209,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
   .vm-tujuan-inner{grid-template-columns:1fr;}
 }
 @media(max-width:600px){
-  .vismis-section{padding:24px 0;}
+  .vismis-section{padding:52px 0;}
   .vismis-inner{padding:0 16px;}
   .vismis-heading{font-size:26px;}
   .vismis-grid{gap:16px;margin-top:32px;}
@@ -232,60 +232,10 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
 /* GAP FIX */
 body::before{content:'';display:block;height:96px;background:var(--biru);position:fixed;top:0;width:100%;z-index:-1;pointer-events:none;}
 
-
-/* ── MOBILE FIXES ── */
-@media(max-width:480px){
-  /* Slider penuh di HP kecil */
-  .hero-slider, .slider{width:100vw !important; max-width:100% !important; overflow:hidden;}
-  .slide img{width:100%;height:100%;object-fit:cover;}
-  
-  /* Hero text tidak terpotong */
-  .hero-inner{padding:0 16px !important; overflow:hidden;}
-  .hero-content{max-width:100% !important;}
-  .hero-title{font-size:28px !important; line-height:1.2 !important; word-break:break-word;}
-  .hero-sub{font-size:14px !important;}
-  .hero-desc{font-size:13px !important;}
-  
-  /* Stats */
-  .stats-row{grid-template-columns:repeat(2,1fr) !important; gap:10px !important; padding:0 12px !important;}
-  .stat-card{padding:16px 10px !important;}
-  .stat-num{font-size:28px !important;}
-  
-  /* Section padding */
-  .berita-bg, section{padding-left:12px !important; padding-right:12px !important;}
-  .berita-grid{grid-template-columns:1fr !important;}
-  
-  /* Visi Misi */
-  .vismis-inner{padding:0 12px !important;}
-  .vismis-grid{grid-template-columns:1fr !important;}
-  .vm-card{padding:18px 14px !important;}
-  
-  /* Overflow fix global */
-  body{overflow-x:hidden !important;}
-  *{max-width:100% !important; box-sizing:border-box;}
-  img{max-width:100% !important; height:auto;}
-}
-
 @media(max-width:768px){
-  .hero-title{font-size:32px !important;}
-  .berita-grid{grid-template-columns:1fr !important;}
-  .stats-row{grid-template-columns:repeat(2,1fr) !important;}
-  body{overflow-x:hidden;}
-}
-
-/* Sarolangun tidak terpotong di HP */
-@media(max-width:480px){
-  .hero-title{font-size:26px !important; white-space:normal !important; word-break:break-word !important;}
-  .hero-title span{display:inline !important;}
-  .vm-card{overflow:hidden !important; word-break:break-word !important;}
-  .vm-misi-item{min-width:0 !important; overflow:hidden !important;}
-  .vismis-inner{overflow:hidden !important;}
-  .berita-bg{overflow:hidden !important;}
-}
-
-@media(max-width:768px){
-  html, body{overflow-x:hidden;}
+  html,body{overflow-x:hidden;}
   .hero-title{word-break:break-word;}
+  .vm-card{word-break:break-word;}
 }
 </style>
 </head>
@@ -446,7 +396,7 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
 </section>
 
 <!-- VISI, MISI & TUJUAN -->
-<section class="vismis-section" style="padding-top:16px;padding-bottom:32px;">
+<section class="vismis-section">
   <div class="vismis-inner">
     <div style="text-align:center;margin-bottom:0;">
       <h2 class="vismis-heading">Visi, Misi &amp; Tujuan Pendidikan</h2>
@@ -472,15 +422,15 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
         <div class="vm-title"><span class="vm-icon">🎯</span> Misi Sekolah</div>
         <p id="misiText" style="font-family:'Playfair Display',serif;font-size:15px;font-style:italic;color:rgba(255,255,255,0.92);margin-bottom:20px;line-height:1.8;">"Mengembangkan potensi siswa melalui pembelajaran intrakurikuler, kokurikuler dan ekstrakurikuler sesuai bakat, minat dan kemampuan."</p>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-          <div class="vm-misi-item" style="font-family:'Times New Roman',serif;" style="display:block;">
+          <div class="vm-misi-item" style="display:block;">
             <div class="vm-misi-label" style="display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">🏫</span> Intrakurikuler</div>
             <div class="vm-misi-desc" style="color:rgba(255,255,255,0.82);">Mengembangkan pengetahuan, keterampilan, dan sikap positif siswa dalam proses belajar di kelas.</div>
           </div>
-          <div class="vm-misi-item" style="font-family:'Times New Roman',serif;" style="display:block;">
+          <div class="vm-misi-item" style="display:block;">
             <div class="vm-misi-label" style="display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">🤝</span> Kokurikuler</div>
             <div class="vm-misi-desc" style="color:rgba(255,255,255,0.82);">Menghasilkan karya/proyek nyata yang relevan dengan capaian pembelajaran, mendorong kreativitas dan kolaborasi (termasuk P5 — Proyek Penguatan Profil Pelajar Pancasila).</div>
           </div>
-          <div class="vm-misi-item" style="font-family:'Times New Roman',serif;" style="display:block;">
+          <div class="vm-misi-item" style="display:block;">
             <div class="vm-misi-label" style="display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">⭐</span> Ekstrakurikuler</div>
             <div class="vm-misi-desc" style="color:rgba(255,255,255,0.82);">Mengembangkan minat, bakat, kepemimpinan, dan prestasi siswa di bidang non-akademis.</div>
           </div>
@@ -521,7 +471,7 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
 </section>
 
 <!-- BERITA -->
-<section class="berita-bg" style="margin-top:24px;">
+<section class="berita-bg" style="margin-top:20px;">
   <div style="max-width:1200px;margin:0 auto;padding:0 24px;">
     <div style="text-align:center;margin-bottom:44px;">
       <div style="display:inline-block;background:rgba(13,59,110,0.08);color:var(--biru-mid);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:6px 16px;border-radius:100px;margin-bottom:12px;">Informasi Terkini</div>
@@ -587,5 +537,168 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
   <div class="footer-bottom">© 2026 SMP Negeri 05 Sarolangun — Website Resmi Sekolah</div>
 </footer>
 
+<script>
+const PPDB_URL_I = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
+
+// ── PROFIL ──
+async function muatProfil(){
+  const cached=localStorage.getItem('cache_profil_beranda');
+  if(cached) renderProfilBeranda(JSON.parse(cached));
+  try{
+    const r=await fetch(`${PPDB_URL_I}?action=getProfil`);
+    const d=await r.json();
+    if(!d.ok||!d.data) return;
+    localStorage.setItem('cache_profil_beranda',JSON.stringify(d));
+    renderProfilBeranda(d);
+  }catch(e){}
+}
+function renderProfilBeranda(d){
+  const p=d.data;
+  const ak=p['identitas_Akreditasi']||p['akreditasi'];
+  if(ak){const el=document.getElementById('statAkreditasi');if(el)el.textContent=ak;}
+  if(p.visi){const el=document.getElementById('visiQuote');if(el)el.textContent='"'+p.visi+'"';}
+  if(p.misi){const el=document.getElementById('misiText');if(el)el.textContent='"'+p.misi+'"';}
+  // Sambutan kepsek
+  if(p.kepsek_nama){const el=document.getElementById('sambutanNama');if(el)el.textContent=p.kepsek_nama;}
+  if(p.kepsek_sambutan){const el=document.getElementById('sambutanTeks');if(el)el.textContent=p.kepsek_sambutan;}
+  if(p.kepsek_foto){
+    const foto=document.getElementById('sambutanFoto');
+    const def=document.getElementById('sambutanFotoDefault');
+    if(foto){
+      foto.src=p.kepsek_foto;
+      foto.style.display='block';
+      if(def) def.style.display='none';
+      foto.onerror=()=>{foto.style.display='none';if(def)def.style.display='flex';};
+    }
+  }
+}
+
+// ── TICKER ──
+function renderTicker(data){
+  if(!data?.length) return;
+  const wrap=document.getElementById('tickerWrap');
+  const text=document.getElementById('tickerText');
+  text.innerHTML=data.map(t=>`<span class="ticker-item">${t.teks}</span>`).join('');
+  wrap.style.display='block';
+  document.getElementById('heroSlider').style.marginTop='96px';
+}
+async function muatTicker(){
+  const cached=localStorage.getItem('cache_ticker');
+  if(cached) renderTicker(JSON.parse(cached));
+  try{
+    const r=await fetch(`${PPDB_URL_I}?action=getTicker`);
+    const d=await r.json();
+    if(!d.ok||!d.data?.length) return;
+    localStorage.setItem('cache_ticker',JSON.stringify(d.data));
+    renderTicker(d.data);
+  }catch(e){}
+}
+
+// ── SLIDER ──
+let sliderIdx=0,sliderTotal=0,sliderTimer=null;
+function sliderGo(idx){
+  if(!sliderTotal) return;
+  sliderIdx=(idx+sliderTotal)%sliderTotal;
+  document.getElementById('sliderTrack').style.transform=`translateX(-${sliderIdx*100}%)`;
+  document.querySelectorAll('.slider-dot').forEach((d,i)=>d.classList.toggle('active',i===sliderIdx));
+}
+function sliderNext(){sliderGo(sliderIdx+1);resetSliderTimer();}
+function sliderPrev(){sliderGo(sliderIdx-1);resetSliderTimer();}
+function resetSliderTimer(){
+  if(sliderTimer)clearInterval(sliderTimer);
+  sliderTimer=setInterval(sliderNext,7000);
+}
+async function muatSlider(){
+  const cached=localStorage.getItem('cache_slider');
+  if(cached) renderSlider(JSON.parse(cached));
+  try{
+    const r=await fetch(`${PPDB_URL_I}?action=getSlider`);
+    const d=await r.json();
+    localStorage.setItem('cache_slider',JSON.stringify(d));
+    renderSlider(d);
+  }catch(e){if(!sliderTotal){sliderTotal=1;resetSliderTimer();}}
+}
+function renderSlider(d){
+  if(!d.ok||!d.data||!d.data.length){if(!sliderTotal){sliderTotal=1;resetSliderTimer();}return;}
+  const track=document.getElementById('sliderTrack');
+  const dots=document.getElementById('sliderDots');
+  track.innerHTML='';dots.innerHTML='';
+  d.data.forEach((item,i)=>{
+    const slide=document.createElement('div');
+    slide.className='slider-slide';
+    slide.innerHTML=`<img src="${item.url}" alt="${item.caption||''}" style="width:100%;height:100%;object-fit:cover;object-position:center 60%;" onerror="this.style.display='none'">
+      <div class="slide-overlay"></div>`;
+    track.appendChild(slide);
+    const dot=document.createElement('div');
+    dot.className='slider-dot'+(i===0?' active':'');
+    dot.onclick=()=>{sliderGo(i);resetSliderTimer();};
+    dots.appendChild(dot);
+  });
+  sliderTotal=d.data.length;sliderIdx=0;
+  track.style.transform='translateX(0%)';
+  const el=document.getElementById('heroSlider');
+  if(!el._swipe){
+    el._swipe=true;let x0=null;
+    el.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
+    el.addEventListener('touchend',e=>{
+      if(x0===null)return;
+      const dx=e.changedTouches[0].clientX-x0;
+      if(Math.abs(dx)>40){dx<0?sliderNext():sliderPrev();}
+      x0=null;
+    },{passive:true});
+  }
+  resetSliderTimer();
+}
+
+// ── BERITA & PENGUMUMAN ──
+function buatKartuBerita(b,i,href){
+  const ikon=['📣','🏆','📚','🎓','🌟'];
+  const tgl=b.tanggal?new Date(b.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}):'';
+  const warna=b.kategori==='Pengumuman'?'135deg,var(--biru-mid),#7d3c98':'135deg,var(--biru),var(--biru-mid)';
+  return `<div class="berita-card">
+    <div class="berita-img" style="background:linear-gradient(${warna});">
+      ${b.fotoUrl?`<img src="${b.fotoUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:ikon[i]}
+      <span class="berita-date">${tgl}</span>
+    </div>
+    <div class="berita-body">
+      <div class="berita-cat">${b.kategori||'Berita'}</div>
+      <div class="berita-judul">${b.judul}</div>
+      <div class="berita-excerpt">${(b.isi||'').substring(0,120)}...</div>
+    </div>
+    <div class="berita-footer"><span class="berita-author">${b.penulis||'Admin'}</span><a href="${href}" class="berita-link">Baca →</a></div>
+  </div>`;
+}
+async function muatBerandaBerita(){
+  const cached=localStorage.getItem('cache_berita');
+  if(cached) renderBerita(JSON.parse(cached));
+  try{
+    const r=await fetch(`${PPDB_URL_I}?action=getBerita&max=20`);
+    const d=await r.json();
+    localStorage.setItem('cache_berita',JSON.stringify(d));
+    renderBerita(d);
+  }catch(e){if(!localStorage.getItem('cache_berita'))document.getElementById('berandaBerita').innerHTML=defaultCard();}
+}
+function renderBerita(d){
+  const el=document.getElementById('berandaBerita');
+  if(!d.ok||!d.data?.length){el.innerHTML=defaultCard();return;}
+  const berita=d.data.filter(b=>(b.kategori||'').toLowerCase()!=='pengumuman');
+  const pengumuman=d.data.filter(b=>(b.kategori||'').toLowerCase()==='pengumuman');
+  const k1=berita[0]?buatKartuBerita(berita[0],0,'berita.html'):null;
+  const k2=berita[1]?buatKartuBerita(berita[1],1,'berita.html'):null;
+  const k3=pengumuman[0]?buatKartuBerita(pengumuman[0],2,'pengumuman.html'):(berita[2]?buatKartuBerita(berita[2],2,'berita.html'):null);
+  el.innerHTML=[k1,k2,k3].filter(Boolean).join('')||defaultCard();
+}
+function defaultCard(){
+  return `<div class="berita-card"><div class="berita-img">🏫</div><div class="berita-body"><div class="berita-cat">Selamat Datang</div><div class="berita-judul">Website Resmi SMP Negeri 05 Sarolangun</div><div class="berita-excerpt">Website resmi SMP Negeri 05 Sarolangun telah hadir. Informasi terbaru segera tersedia di sini.</div></div><div class="berita-footer"><span class="berita-author">Admin</span><a href="berita.html" class="berita-link">Selengkapnya →</a></div></div>`;
+}
+
+if(history.scrollRestoration) history.scrollRestoration='manual';
+window.scrollTo(0,0);
+muatSlider();
+muatProfil();
+muatTicker();
+muatBerandaBerita();
+function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}
+</script>
 </body>
 </html>
