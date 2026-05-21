@@ -71,11 +71,10 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 @media(max-width:768px){
   html,body{overflow-x:hidden;}
   .ekskul-grid{grid-template-columns:1fr 1fr !important;}
-  .ekskul-card{word-break:break-word;}
   .page-hero{padding:80px 16px 40px !important;}
-  .main{padding:0 16px !important;}
-  img{max-width:100% !important; height:auto !important;}
-  h1,h2,h3{word-break:break-word;}
+  .main{padding:20px 16px !important;}
+  img{max-width:100% !important;}
+  h1,h2,h3,p{word-break:break-word;}
 }
 @media(max-width:480px){
   .ekskul-grid{grid-template-columns:1fr !important;}
@@ -167,7 +166,20 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
     <a href="kontak.html">Kontak</a>
   </div>
 </nav>
-<div class="page-hero"><footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:28px 20px;text-align:center;margin-top:20px;">
+<div class="page-hero">
+  <h1>🏆 Ekstrakurikuler</h1>
+  <p>Wadah pengembangan bakat, minat, dan potensi siswa SMP Negeri 05 Sarolangun</p>
+</div>
+
+<div class="main">
+  <div class="sec-title">Kegiatan Ekstrakurikuler</div>
+  <div class="sec-sub">Temukan kegiatan yang sesuai dengan minat dan bakatmu. Daftarkan diri ke pembina masing-masing ekskul.</div>
+  <div class="ekskul-grid" id="ekskulGrid">
+    <div class="empty">Memuat data...</div>
+  </div>
+</div>
+
+<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:28px 20px;text-align:center;margin-top:20px;">
   <p style="font-size:12px;opacity:0.6;">© 2026 SMP Negeri 05 Sarolangun</p>
   <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
     <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Beranda</a>
@@ -187,11 +199,6 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
     <a href="ppdb.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">PPDB</a>
     <span style="opacity:0.3;">·</span>
     <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Kontak</a>
-  </div>
-</footer>margin-top:10px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-    <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Beranda</a>
-    <a href="guru.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Guru & Tendik</a>
-    <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Kontak</a>
   </div>
 </footer>
 
