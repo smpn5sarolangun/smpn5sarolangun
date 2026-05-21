@@ -494,8 +494,7 @@ function updateCekUI() {
 // HITUNG MUNDUR //
 function updateCountdown() {
   if(!cekTampilCountdown()) {
-    document.getElementById('bannerHitung').style.display = 'none';
-    return;
+    return; // updateCekUI yang handle tampilan banner
   }
   const diff = TGL_PENGUMUMAN - new Date();
   if(diff <= 0) { updateCekUI(); return; }
