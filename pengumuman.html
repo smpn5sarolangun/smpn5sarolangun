@@ -282,7 +282,7 @@
 
   <!-- ═══ BANNER HITUNG MUNDUR ═══ -->
   <div id="bannerHitung" style="background:var(--biru);border-radius:16px;padding:28px 24px;text-align:center;margin-bottom:32px;">
-    <div id="bannerHeaderTutup"><div style="font-size:12px;color:rgba(255,255,255,0.65);letter-spacing:3px;margin-bottom:8px;font-weight:400;font-style:italic;">— Hitung Mundur Menuju —</div>
+<div id="bannerHeaderTutup"><div style="font-size:12px;color:rgba(255,255,255,0.65);letter-spacing:3px;margin-bottom:8px;font-weight:400;font-style:italic;">— Hitung Mundur Menuju —</div>
     <div style="font-size:14px;color:rgba(255,255,255,0.9);letter-spacing:2px;margin-bottom:8px;font-weight:500;">PENGUMUMAN KELULUSAN KELAS IX</div></div>
     <div id="bannerJudulTA" style="font-size:24px;font-weight:700;color:#fff;margin-bottom:16px;letter-spacing:0.5px;">SMP NEGERI 05 SAROLANGUN TA 2025/2026</div>
     <div id="cdGrid" style="display:inline-flex;gap:10px;margin-bottom:14px;">
@@ -303,20 +303,14 @@
         <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;">Detik</div>
       </div>
     </div>
-    <div id="bannerSub" style="display:block;">
+    <div id="bannerSub">
       <div id="infoBannerTgl" style="font-size:12px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;font-weight:600;">PENGUMUMAN RESMI: <strong style="color:#fff;">2 JUNI 2026</strong></div>
     </div>
     <div id="bannerBuka" style="display:none;">
-      <div style="display:inline-block;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:30px;padding:8px 24px;margin:6px 0 12px;font-size:15px;font-weight:700;color:#fff;letter-spacing:1px;">
-        TELAH DIBUKA RESMI
-      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.85);letter-spacing:2px;margin-bottom:8px;font-weight:500;">PENGUMUMAN KELULUSAN KELAS IX</div>
+      <div style="display:inline-block;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:30px;padding:8px 24px;margin:6px 0 12px;font-size:15px;font-weight:700;color:#fff;letter-spacing:1px;">TELAH DIBUKA RESMI</div>
       <div id="tglBukaInfo" style="font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:18px;"></div>
-      <div>
-        <button onclick="document.getElementById('sectionCek').scrollIntoView({behavior:'smooth'})"
-          style="background:#fff;color:#0d3b6e;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.5px;">
-          Cek Kelulusan Saya
-        </button>
-      </div>
+      <div><button onclick="document.getElementById('sectionCek').scrollIntoView({behavior:'smooth'})" style="background:#fff;color:#0d3b6e;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;">Cek Kelulusan Saya</button></div>
     </div>
   </div>
 
@@ -374,16 +368,37 @@
   </div>
 </footer>
 
-<script>function tampilSelebrasi() {
-  var count = 200, defaults = {origin:{y:0.7}};
-  function fire(ratio, opts) {
-    confetti(Object.assign({}, defaults, opts, {particleCount: Math.floor(count*ratio)}));
+<script>
+function prosesInfo(info) {
+  statusKelulusan = (info.status_pengumuman_kelulusan||'').toUpperCase();
+  const tglStr = info.tgl_pengumuman_kelulusan||'';
+  if(tglStr) {
+    const parsed = new Date(tglStr);
+    TGL_PENGUMUMAN = !isNaN(parsed) ? parsed : new Date(2026,5,2,20,0,0);
+    const opts = {day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'};
+    const tglTampil = TGL_PENGUMUMAN.toLocaleDateString('id-ID',opts).toUpperCase();
+    const el = document.getElementById('infoBannerTgl');
+    if(el) el.innerHTML = 'PENGUMUMAN RESMI: <strong style="color:#fff;">'+tglTampil+'</strong>';
+    const elBuka = document.getElementById('tglBukaInfo');
+    if(elBuka) elBuka.textContent = 'Sejak '+tglTampil+' WIB';
+  } else {
+    TGL_PENGUMUMAN = new Date(2026,5,2,20,0,0);
   }
-  fire(0.25, {spread:26, startVelocity:55});
-  fire(0.2,  {spread:60});
-  fire(0.35, {spread:100, decay:0.91, scalar:0.8});
-  fire(0.1,  {spread:120, startVelocity:25, decay:0.92, scalar:1.2});
-  fire(0.1,  {spread:120, startVelocity:45});
+  const tahun = info.tahun_kelulusan||new Date().getFullYear();
+  const jEl = document.getElementById('bannerJudulTA');
+  if(jEl) jEl.textContent = 'SMP NEGERI 05 SAROLANGUN TA '+tahun;
+  const tEl = document.getElementById('tahunCekJudul');
+  if(tEl) tEl.textContent = tahun;
+}
+
+function tampilSelebrasi() {
+  var count=200, defaults={origin:{y:0.7}};
+  function fire(r,o){confetti(Object.assign({},defaults,o,{particleCount:Math.floor(count*r)}));}
+  fire(0.25,{spread:26,startVelocity:55});
+  fire(0.2,{spread:60});
+  fire(0.35,{spread:100,decay:0.91,scalar:0.8});
+  fire(0.1,{spread:120,startVelocity:25,decay:0.92,scalar:1.2});
+  fire(0.1,{spread:120,startVelocity:45});
 }
 
 
@@ -393,6 +408,23 @@ let statusKelulusan = null; // akan diisi dari GAS
 
 // INISIALISASI //
 async function init() {
+  const cacheInfo = localStorage.getItem('cache_peng_info');
+  if(cacheInfo) {
+    try {
+      const obj = JSON.parse(cacheInfo);
+      if(Date.now() - obj.ts < 60000) {
+        prosesInfo(obj.data);
+        updateCekUI();
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        muatPengumuman();
+        // Update di background
+        muatStatusKelulusan().then(function(){ updateCekUI(); });
+        return;
+      }
+    } catch(e) {}
+  }
+  // Tidak ada cache - tunggu sheet dulu
   await muatStatusKelulusan();
   updateCekUI();
   updateCountdown();
@@ -403,9 +435,16 @@ async function init() {
 // MUAT STATUS DARI GAS //
 async function muatStatusKelulusan() {
   try {
+    const cKey = 'cache_peng_info';
+    const cached = localStorage.getItem(cKey);
+    if(cached) {
+      const obj = JSON.parse(cached);
+      if(Date.now()-obj.ts<60000) { prosesInfo(obj.data); return; }
+    }
     const r = await fetch(SCRIPT_URL + '?action=getPPDBInfo');
     const d = await r.json();
     if(d.ok && d.data) {
+      localStorage.setItem(cKey, JSON.stringify({ts:Date.now(),data:d.data}));
       const info = d.data;
       statusKelulusan = (info.status_pengumuman_kelulusan || '').toUpperCase();
 
@@ -464,38 +503,32 @@ function updateCekUI() {
   const msg  = document.getElementById('cekTutupMsg');
   const btn  = document.getElementById('btnCek');
   if(buka) {
-    form.style.display = 'flex';
-    msg.style.display  = 'none';
-    btn.disabled       = false;
-    btn.style.opacity  = '1';
+    form.style.display='flex'; msg.style.display='none';
+    btn.disabled=false; btn.style.opacity='1';
   } else {
-    form.style.display = 'flex';
-    msg.style.display  = 'block';
-    btn.disabled       = true;
-    btn.style.opacity  = '0.5';
+    form.style.display='flex'; msg.style.display='block';
+    btn.disabled=true; btn.style.opacity='0.5';
   }
-  const cdGrid   = document.getElementById('cdGrid');
+  const cdGrid     = document.getElementById('cdGrid');
   const bannerSub  = document.getElementById('bannerSub');
   const bannerBuka = document.getElementById('bannerBuka');
-  const bannerHeaderTutup = document.getElementById('bannerHeaderTutup');
+  const bannerHdr  = document.getElementById('bannerHeaderTutup');
   if(buka) {
-    if(cdGrid)           cdGrid.style.display           = 'none';
-    if(bannerSub)        bannerSub.style.display        = 'none';
-    if(bannerBuka)       bannerBuka.style.display       = 'block';
-    if(bannerHeaderTutup)bannerHeaderTutup.style.display= 'none';
+    if(cdGrid)    cdGrid.style.display    ='none';
+    if(bannerSub) bannerSub.style.display ='none';
+    if(bannerBuka)bannerBuka.style.display='block';
+    if(bannerHdr) bannerHdr.style.display ='none';
   } else {
-    if(cdGrid)           cdGrid.style.display           = 'inline-flex';
-    if(bannerSub)        bannerSub.style.display        = 'block';
-    if(bannerBuka)       bannerBuka.style.display       = 'none';
-    if(bannerHeaderTutup)bannerHeaderTutup.style.display= 'block';
+    if(cdGrid)    cdGrid.style.display    ='inline-flex';
+    if(bannerSub) bannerSub.style.display ='block';
+    if(bannerBuka)bannerBuka.style.display='none';
+    if(bannerHdr) bannerHdr.style.display ='block';
   }
 }
 
 // HITUNG MUNDUR //
 function updateCountdown() {
-  if(!cekTampilCountdown()) {
-    return; // updateCekUI yang handle tampilan banner
-  }
+  if(!cekTampilCountdown()) return;
   const diff = TGL_PENGUMUMAN - new Date();
   if(diff <= 0) { updateCekUI(); return; }
   document.getElementById('cdHari').textContent  = String(Math.floor(diff/86400000)).padStart(2,'0');
@@ -525,7 +558,7 @@ async function cekKelulusanIX() {
       return;
     }
     const lulus = (d.status||'').toUpperCase() === 'LULUS';
-    if(lulus) setTimeout(tampilSelebrasi, 300);
+    if(lulus) setTimeout(tampilSelebrasi,300);
     hasil.innerHTML = '<div style="border-radius:12px;padding:20px;text-align:center;background:'+(lulus?'#e8f5e9':'#fdecea')+';border:1px solid '+(lulus?'#a5d6a7':'#f5c6c2')+';">'
       + '<div style="font-size:17px;font-weight:700;color:#1e2a3a;margin-bottom:4px;">'+(d.namaLengkap||d.nama||'')+'</div>'
       + '<div style="font-size:13px;color:#5a6a7e;margin-bottom:10px;">NISN: '+(d.nisn||nisn)+' - Kelas '+(d.kelas||'')+'</div>'
@@ -552,6 +585,9 @@ let _halAktif = 1;
 async function muatPengumuman() {
   const list = document.getElementById('listPengumuman');
   try {
+    const cKey2='cache_peng_list';
+    const cached2=localStorage.getItem(cKey2);
+    if(cached2){const obj2=JSON.parse(cached2);if(Date.now()-obj2.ts<60000&&obj2.data.length){window._pengumumanData=obj2.data;renderHalaman(1);return;}}
     const r = await fetch(SCRIPT_URL + '?action=getBerita&max=100&kategori=Pengumuman');
     const d = await r.json();
     const semua = (d.data || d.berita || []).filter(b =>
@@ -563,6 +599,7 @@ async function muatPengumuman() {
       return;
     }
     semua.sort((a,b) => (b.no||0) - (a.no||0)); // terbaru = nomor terbesar
+    localStorage.setItem('cache_peng_list',JSON.stringify({ts:Date.now(),data:semua}));
     window._pengumumanData = semua;
     renderHalaman(1);
   } catch(e) {
