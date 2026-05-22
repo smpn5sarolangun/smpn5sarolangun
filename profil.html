@@ -166,6 +166,13 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
   .tab-btn{font-size:12px !important; padding:6px 10px !important;}
   .fas-grid{grid-template-columns:1fr 1fr !important;}
 }
+
+  .mob-parent-row{display:flex;align-items:center;justify-content:space-between;}
+  .mob-parent-row .mob-parent{flex:1;padding:9px 12px;}
+  .mob-arrow{padding:9px 14px;cursor:pointer;color:rgba(255,255,255,0.7);font-size:13px;transition:transform 0.2s;}
+  .mob-arrow.open{transform:rotate(180deg);color:#fff;}
+  .mob-sub{display:none;flex-direction:column;}
+  .mob-sub.open{display:flex;}
 </style>
 </head>
 <body>
@@ -229,29 +236,38 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
   </div>
   <div class="mobile-menu" id="mobileMenu">
     <a href="index.html">Beranda</a>
-    <a href="profil.html" class="mob-parent">▸ Profil</a>
+    <div class="mob-parent-row"><a href="profil.html" class="mob-parent">Profil</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="profil.html#sejarah" class="mob-child">— Sejarah Sekolah</a>
     <a href="profil.html#visi-misi" class="mob-child">— Visi &amp; Misi</a>
     <a href="profil.html#fasilitas" class="mob-child">— Fasilitas</a>
     <a href="profil.html#struktur" class="mob-child">— Struktur Organisasi</a>
-    <a href="guru.html" class="mob-parent">▸ Guru &amp; Tendik</a>
+</div>
+    <div class="mob-parent-row"><a href="guru.html" class="mob-parent">Guru &amp; Tendik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="guru.html#guru" class="mob-child">— Guru</a>
     <a href="guru.html#tendik" class="mob-child">— Tenaga Kependidikan</a>
-    <a href="ekskul.html" class="mob-parent">▸ Ekstrakurikuler</a>
+</div>
+    <div class="mob-parent-row"><a href="ekskul.html" class="mob-parent">Ekstrakurikuler</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="ekskul.html#pramuka" class="mob-child">— Pramuka</a>
     <a href="ekskul.html#pmr" class="mob-child">— PMR</a>
     <a href="ekskul.html#drumband" class="mob-child">— Drumband</a>
     <a href="ekskul.html" class="mob-child">— Lihat Semua</a>
+</div>
     <a href="galeri.html">Galeri</a>
     <a href="berita.html">Berita</a>
     <a href="pengumuman.html">Pengumuman</a>
-    <a href="ppdb.html" class="mob-parent">▸ PPDB</a>
+    <div class="mob-parent-row"><a href="ppdb.html" class="mob-parent">PPDB</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="ppdb.html#info" class="mob-child">— Informasi &amp; Syarat</a>
     <a href="ppdb.html#registrasi" class="mob-child">— Registrasi Online</a>
     <a href="ppdb.html#cek" class="mob-child">— Cek Status</a>
+</div>
     <a href="akademik/login.html">🎓 Akademik</a>
     <a href="kontak.html">Kontak</a>
   </div>
+
 </nav>
 <div class="page-hero">
   <h1>🏫 Profil Sekolah</h1>
@@ -327,7 +343,23 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
   </div>
 </footer>
 
-<script>
+<script>function toggleMobSub(arrow) {
+  var sub = arrow.parentElement.nextElementSibling;
+  var isOpen = arrow.classList.contains('open');
+  // Tutup semua dulu
+  document.querySelectorAll('.mob-arrow.open').forEach(function(a) {
+    a.classList.remove('open');
+    var s = a.parentElement.nextElementSibling;
+    if(s && s.classList.contains('mob-sub')) s.classList.remove('open');
+  });
+  // Kalau sebelumnya tutup, buka yang ini
+  if(!isOpen && sub && sub.classList.contains('mob-sub')) {
+    arrow.classList.add('open');
+    sub.classList.add('open');
+  }
+}
+
+
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
 
 const FAS_IKON = {
