@@ -72,6 +72,31 @@
   h1,h2,h3,p{word-break:break-word;}
   .kontak-desc, .contact-desc, p{text-align:justify;}
 }
+
+@media(max-width:768px){
+  .kontak-wrap, .kontak-grid, .contact-wrap{
+    grid-template-columns:1fr !important;
+    display:block !important;
+  }
+  .kontak-form, .form-wrap, .pesan-form{
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    padding:16px !important;
+  }
+  .kontak-form input, .kontak-form textarea, 
+  .pesan-form input, .pesan-form textarea,
+  input[type="text"], input[type="email"], 
+  input[type="tel"], select, textarea{
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+  .maps-wrap, iframe{
+    width:100% !important;
+    max-width:100% !important;
+  }
+}
 </style>
 </head>
 <body>
