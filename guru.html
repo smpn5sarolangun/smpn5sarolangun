@@ -139,6 +139,27 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 @media(max-width:1000px){.guru-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:768px){.guru-grid{grid-template-columns:repeat(2,1fr);}.kepsek-wrap{flex-direction:column;text-align:center;}.stat-box{grid-template-columns:1fr 1fr;}}
 @media(max-width:480px){.guru-grid{grid-template-columns:1fr;}}
+
+  .mob-parent-row{display:flex;align-items:center;justify-content:space-between;}
+  .mob-parent-row .mob-parent{flex:1;padding:9px 12px;}
+  .mob-arrow{padding:9px 14px;cursor:pointer;color:rgba(255,255,255,0.7);font-size:13px;transition:transform 0.2s;}
+  .mob-arrow.open{transform:rotate(180deg);color:#fff;}
+  .mob-sub{display:none;flex-direction:column;}
+  .mob-sub.open{display:flex;}
+
+@media(max-width:768px){
+  html,body{overflow-x:hidden;}
+  .guru-grid{grid-template-columns:1fr 1fr !important;}
+  .page-hero{padding:80px 16px 40px !important;}
+  .main, .guru-inner{padding:0 16px !important; max-width:100% !important;}
+  img{max-width:100% !important; height:auto !important;}
+  h1,h2,h3,p{word-break:break-word;}
+  .guru-desc, .guru-bio{text-align:justify;}
+  table{display:block;overflow-x:auto;width:100%;}
+}
+@media(max-width:480px){
+  .guru-grid{grid-template-columns:1fr !important;}
+}
 </style>
 </head>
 <body>
@@ -203,29 +224,38 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
   </div>
   <div class="mobile-menu" id="mobileMenu">
     <a href="index.html">Beranda</a>
-    <a href="profil.html" class="mob-parent">▸ Profil</a>
+    <div class="mob-parent-row"><a href="profil.html" class="mob-parent">Profil</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="profil.html#sejarah" class="mob-child">— Sejarah Sekolah</a>
     <a href="profil.html#visi-misi" class="mob-child">— Visi &amp; Misi</a>
     <a href="profil.html#fasilitas" class="mob-child">— Fasilitas</a>
     <a href="profil.html#struktur" class="mob-child">— Struktur Organisasi</a>
-    <a href="guru.html" class="mob-parent">▸ Guru &amp; Tendik</a>
+</div>
+    <div class="mob-parent-row"><a href="guru.html" class="mob-parent">Guru &amp; Tendik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="guru.html#guru" class="mob-child">— Guru</a>
     <a href="guru.html#tendik" class="mob-child">— Tenaga Kependidikan</a>
-    <a href="ekskul.html" class="mob-parent">▸ Ekstrakurikuler</a>
+</div>
+    <div class="mob-parent-row"><a href="ekskul.html" class="mob-parent">Ekstrakurikuler</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="ekskul.html#pramuka" class="mob-child">— Pramuka</a>
     <a href="ekskul.html#pmr" class="mob-child">— PMR</a>
     <a href="ekskul.html#drumband" class="mob-child">— Drumband</a>
     <a href="ekskul.html" class="mob-child">— Lihat Semua</a>
+</div>
     <a href="galeri.html">Galeri</a>
     <a href="berita.html">Berita</a>
     <a href="pengumuman.html">Pengumuman</a>
-    <a href="ppdb.html" class="mob-parent">▸ PPDB</a>
+    <div class="mob-parent-row"><a href="ppdb.html" class="mob-parent">PPDB</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="ppdb.html#info" class="mob-child">— Informasi &amp; Syarat</a>
     <a href="ppdb.html#registrasi" class="mob-child">— Registrasi Online</a>
     <a href="ppdb.html#cek" class="mob-child">— Cek Status</a>
+</div>
     <a href="akademik/login.html">🎓 Akademik</a>
     <a href="kontak.html">Kontak</a>
   </div>
+
 </nav>
 
 <div class="page-hero">
@@ -288,16 +318,46 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
   </div>
 </div>
 
-<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0;text-align:center;margin-top:52px;">
+<footer style="background:var(--biru);color:rgba(255,255,255,0.8);padding:28px 20px;text-align:center;margin-top:20px;">
   <p style="font-size:12px;opacity:0.6;">© 2026 SMP Negeri 05 Sarolangun</p>
-  <div style="margin-top:12px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-    <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Beranda</a>
-    <a href="ppdb.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">PPDB</a>
-    <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:12px;">Kontak</a>
+  <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+    <a href="index.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Beranda</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="profil.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Profil</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="guru.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Guru &amp; Tendik</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="ekskul.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Ekstrakurikuler</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="galeri.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Galeri</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="berita.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Berita</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="pengumuman.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Pengumuman</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="ppdb.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">PPDB</a>
+    <span style="opacity:0.3;">·</span>
+    <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Kontak</a>
   </div>
 </footer>
 
-<script>
+<script>function toggleMobSub(arrow) {
+  var sub = arrow.parentElement.nextElementSibling;
+  var isOpen = arrow.classList.contains('open');
+  // Tutup semua dulu
+  document.querySelectorAll('.mob-arrow.open').forEach(function(a) {
+    a.classList.remove('open');
+    var s = a.parentElement.nextElementSibling;
+    if(s && s.classList.contains('mob-sub')) s.classList.remove('open');
+  });
+  // Kalau sebelumnya tutup, buka yang ini
+  if(!isOpen && sub && sub.classList.contains('mob-sub')) {
+    arrow.classList.add('open');
+    sub.classList.add('open');
+  }
+}
+
+
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
 let allGuru = [], allTendik = [];
 
