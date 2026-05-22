@@ -444,10 +444,12 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
   </div>
 
   <!-- ═══ LIST PENGUMUMAN ═══ -->
+  <div id="sectionPengumuman">
   <h2 style="font-size:18px;font-weight:700;color:var(--biru);margin:0 0 4px;">📋 Pengumuman</h2>
   <p style="font-size:13px;color:var(--teks-sub);margin:0 0 16px;">Klik judul untuk membaca isi pengumuman.</p>
   <div id="listPengumuman" style="background:#fff;border:1px solid #e8ecf0;border-radius:16px;overflow:hidden;">
     <div style="text-align:center;padding:32px;color:var(--teks-sub);">⏳ Memuat pengumuman...</div>
+  </div>
   </div>
 
 </div>
@@ -766,7 +768,9 @@ async function muatPengumuman() {
       ((b.kategori||'').toLowerCase().includes('pengumuman') || !b.kategori)
     );
     if(!semua.length) {
-      list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--teks-sub);">Belum ada pengumuman.</div>';
+      var secPeng = document.getElementById('sectionPengumuman');
+      if(secPeng) secPeng.style.display = 'none';
+      return;
       return;
     }
     semua.sort((a,b) => (b.no||0) - (a.no||0)); // terbaru = nomor terbesar
