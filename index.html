@@ -189,7 +189,7 @@ footer{background:var(--biru);color:rgba(255,255,255,0.8);padding:32px 0 0;}
 .vm-card.visi .vm-body,.vm-card.tujuan .vm-body,.vm-card.kurikulum .vm-body{color:rgba(255,255,255,0.88);}
 .vm-card.misi .vm-body{color:rgba(255,255,255,0.88);}
 .vm-visi-quote{font-family:'Playfair Display',serif;font-size:16px;font-style:italic;line-height:1.7;color:rgba(255,255,255,0.95);border-left:3px solid var(--emas);padding-left:16px;}
-.vm-misi-item{display:flex;flex-direction:column;gap:4px;margin-bottom:18px;}
+.vm-misi-item{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
 .vm-misi-item:last-child{margin-bottom:0;}
 .vm-misi-icon{font-size:18px;flex-shrink:0;margin-top:2px;}
 .vm-misi-label{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;}
@@ -256,8 +256,9 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
 @media(max-width:768px){
   .vm-card.misi > div[style*="display:grid"]{
     grid-template-columns:1fr !important;
-    gap:16px !important;
+    gap:12px !important;
   }
+  .vm-misi-item{margin-bottom:8px !important;}
   .vm-misi-item{
     font-size:15px !important;
   }
@@ -483,7 +484,7 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
       <!-- TUJUAN -->
       <div class="vm-card tujuan">
         <div class="vm-title"><span class="vm-icon">🏆</span> Tujuan Pendidikan</div>
-        <div id="tujuanText" class="vm-tujuan-inner" style="font-family:'Times New Roman',serif;">
+        <div id="tujuanText" class="vm-tujuan-inner">
           <div class="vm-tujuan-group">
             <div class="vm-tujuan-group-title">Jangka Panjang</div>
             <ul id="tujuanPanjang" class="vm-tujuan-list">
