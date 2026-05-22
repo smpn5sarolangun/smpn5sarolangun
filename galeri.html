@@ -113,7 +113,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .album-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
 .album-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.07);cursor:pointer;transition:all 0.3s;}
 .album-card:hover{transform:translateY(-5px);box-shadow:0 12px 32px rgba(0,0,0,0.13);}
-.album-cover{height:200px;position:relative;overflow:hidden;}
+.album-cover{height:160px;position:relative;overflow:hidden;}
 .album-cover img{width:100%;height:100%;object-fit:cover;transition:transform 0.4s;}
 .album-card:hover .album-cover img{transform:scale(1.07);}
 .album-cover-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;}
@@ -154,13 +154,21 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 @media(max-width:768px){
   html,body{overflow-x:hidden;}
   .galeri-grid{grid-template-columns:1fr 1fr !important;}
-  .page-hero{padding:80px 16px 40px !important;}
+  .main{margin-top:20px !important;}
+  .page-hero{padding:120px 16px 40px !important;}
   .main, .galeri-inner{padding:0 16px !important; max-width:100% !important;}
   img{max-width:100% !important; height:auto !important;}
   h1,h2,h3,p{word-break:break-word; text-align:justify;}
 }
 @media(max-width:480px){
   .galeri-grid{grid-template-columns:1fr !important;}
+}
+
+@media(max-width:480px){
+  .album-grid{grid-template-columns:1fr 1fr !important;}
+  .album-cover{height:120px !important;}
+  .album-cover img{width:100% !important;height:100% !important;object-fit:cover !important;display:block !important;}
+  .album-card{border-radius:10px !important;}
 }
 </style>
 </head>
