@@ -303,10 +303,10 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
         </div>
       </div>
       <div class="nav-dropdown dd-right">
-        <a href="akademik/login.html" class="nav-link">Akademik <span class="dd-arrow">▾</span></a>
+        <a href="#" onclick="return false;" class="nav-link" style="cursor:default;">Akademik <span class="dd-arrow">▾</span></a>
         <div class="dropdown-menu">
-          <a href="akademik/login.html">🪪 Absensi Siswa</a>
-          <a href="GANTI_URL_ERAPOR" target="_blank">📊 e-Raport</a>
+          <a href="akademik/login.html">Absensi Siswa</a>
+          <a href="https://rapor-smp5sarolangun.raportku.com" target="_blank">e-Raport</a>
         </div>
       </div>
       <a href="kontak.html" class="nav-link ">Kontak</a>
@@ -343,7 +343,11 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
     <a href="ppdb.html#registrasi" class="mob-child">— Registrasi Online</a>
     <a href="ppdb.html#cek" class="mob-child">— Cek Status</a>
 </div>
-    <a href="akademik/login.html">🎓 Akademik</a>
+    <div class="mob-parent-row"><a href="#" onclick="return false;" class="mob-parent" style="cursor:default;">Akademik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
+    <a href="akademik/login.html" class="mob-child">— Absensi Siswa</a>
+    <a href="https://rapor-smp5sarolangun.raportku.com" target="_blank" class="mob-child">— e-Rapor</a>
+</div>
     <a href="kontak.html">Kontak</a>
   </div>
 
