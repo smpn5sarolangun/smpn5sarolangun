@@ -354,6 +354,13 @@
 }
 /* Override kartu di screen - tidak batasi layout */
 .kartu { width: 100%; max-width: 750px; margin: 0 auto; }
+
+  .mob-parent-row{display:flex;align-items:center;justify-content:space-between;}
+  .mob-parent-row .mob-parent{flex:1;padding:9px 12px;}
+  .mob-arrow{padding:9px 14px;cursor:pointer;color:rgba(255,255,255,0.7);font-size:13px;transition:transform 0.2s;}
+  .mob-arrow.open{transform:rotate(180deg);color:#fff;}
+  .mob-sub{display:none;flex-direction:column;}
+  .mob-sub.open{display:flex;}
 </style>
 
 <style>
@@ -587,29 +594,38 @@ select.f-input{appearance:auto;}
   </div>
   <div class="mobile-menu" id="mobileMenu">
     <a href="index.html">Beranda</a>
-    <a href="profil.html" class="mob-parent">▸ Profil</a>
+    <div class="mob-parent-row"><a href="profil.html" class="mob-parent">Profil</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="profil.html#sejarah" class="mob-child">— Sejarah Sekolah</a>
     <a href="profil.html#visi-misi" class="mob-child">— Visi &amp; Misi</a>
     <a href="profil.html#fasilitas" class="mob-child">— Fasilitas</a>
     <a href="profil.html#struktur" class="mob-child">— Struktur Organisasi</a>
-    <a href="guru.html" class="mob-parent">▸ Guru &amp; Tendik</a>
+</div>
+    <div class="mob-parent-row"><a href="guru.html" class="mob-parent">Guru &amp; Tendik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="guru.html#guru" class="mob-child">— Guru</a>
     <a href="guru.html#tendik" class="mob-child">— Tenaga Kependidikan</a>
-    <a href="ekskul.html" class="mob-parent">▸ Ekstrakurikuler</a>
+</div>
+    <div class="mob-parent-row"><a href="ekskul.html" class="mob-parent">Ekstrakurikuler</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="ekskul.html#pramuka" class="mob-child">— Pramuka</a>
     <a href="ekskul.html#pmr" class="mob-child">— PMR</a>
     <a href="ekskul.html#drumband" class="mob-child">— Drumband</a>
     <a href="ekskul.html" class="mob-child">— Lihat Semua</a>
+</div>
     <a href="galeri.html">Galeri</a>
     <a href="berita.html">Berita</a>
     <a href="pengumuman.html">Pengumuman</a>
-    <a href="ppdb.html" class="mob-parent">▸ PPDB</a>
+    <div class="mob-parent-row"><a href="ppdb.html" class="mob-parent">PPDB</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
     <a href="ppdb.html#info" class="mob-child">— Informasi &amp; Syarat</a>
     <a href="ppdb.html#registrasi" class="mob-child">— Registrasi Online</a>
     <a href="ppdb.html#cek" class="mob-child">— Cek Status</a>
+</div>
     <a href="akademik/login.html">🎓 Akademik</a>
     <a href="kontak.html">Kontak</a>
   </div>
+
 </nav>
 <div class="page-hero">
   <h1 id="judulPPDB"><span id="kuotaNum" style="display:none">—</span>📋 PPDB 2026/2027</h1>
@@ -1176,13 +1192,13 @@ select.f-input{appearance:auto;}
       <div id="kTgl2" style="color:#555;"></div>
       <div style="color:#555;">Orang Tua / Wali Peserta</div>
       <div style="height:50px;"></div>
-      <div style="padding-top:4px;">( _________________ )</div>
+      <div style="border-top:1px solid #333;padding-top:4px;">( _________________ )</div>
     </div>
     <div>
       <div id="kTgl3" style="color:#555;"></div>
       <div style="color:#555;">Kepala SMP Negeri 05 Sarolangun</div>
       <div style="height:50px;"></div>
-      <div style="padding-top:4px;">Sukardiman, M.Pd.</div>
+      <div style="border-top:1px solid #333;padding-top:4px;">Sukardiman, M.Pd.</div>
     </div>
   </div>
 
@@ -1234,7 +1250,23 @@ select.f-input{appearance:auto;}
   </div>
 </footer>
 
-<script>
+<script>function toggleMobSub(arrow) {
+  var sub = arrow.parentElement.nextElementSibling;
+  var isOpen = arrow.classList.contains('open');
+  // Tutup semua dulu
+  document.querySelectorAll('.mob-arrow.open').forEach(function(a) {
+    a.classList.remove('open');
+    var s = a.parentElement.nextElementSibling;
+    if(s && s.classList.contains('mob-sub')) s.classList.remove('open');
+  });
+  // Kalau sebelumnya tutup, buka yang ini
+  if(!isOpen && sub && sub.classList.contains('mob-sub')) {
+    arrow.classList.add('open');
+    sub.classList.add('open');
+  }
+}
+
+
 const PPDB_SCRIPT = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
 let ppdbStatus = 'TUTUP';
 
@@ -1248,11 +1280,6 @@ function switchTab(tab, btn) {
   const tabEl = document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
   if(tabEl) tabEl.style.display = 'block';
   btn.classList.add('active');
-  // Clear result cek status saat pindah tab
-  const rc = document.getElementById('resultCard');
-  if(rc) { rc.innerHTML = ''; rc.classList.remove('show'); rc.style.display = 'none'; }
-  const ci = document.getElementById('cekInput');
-  if(ci) ci.value = '';
 }
 
 // ── DROPDOWN LAINNYA ──
@@ -1279,35 +1306,24 @@ function toggleWaliSection() {
 
 // ── MUAT INFO PPDB ──
 async function muatPPDBInfo() {
-  const CACHE_KEY = 'cache_ppdb_info';
-  const CACHE_TTL = 10 * 60 * 1000; // 10 menit
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const { data, ts } = JSON.parse(cached);
-      renderPPDBInfo(data);
-      // Cache masih fresh, skip fetch server
-      if (Date.now() - ts < CACHE_TTL) return;
-    }
-  } catch(e) {}
-  // Fetch server (background refresh / pertama kali)
+  const cached = localStorage.getItem('cache_ppdb_info');
+  if(cached) renderPPDBInfo(JSON.parse(cached));
   try {
     const r = await fetch(`${PPDB_SCRIPT}?action=getPPDBInfo`);
     const d = await r.json();
     if (!d.ok || !d.data) return;
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data: d, ts: Date.now() }));
+    localStorage.setItem('cache_ppdb_info', JSON.stringify(d));
     renderPPDBInfo(d);
   } catch(e) {}
 }
 
 function renderPPDBInfo(d) {
   const p = d.data || d;
-  // Ikut 100% dari sheet, tidak ada default fallback
-  ppdbStatus = p.status ? p.status.toUpperCase() : '';
+  ppdbStatus = (p.status||'TUTUP').toUpperCase();
 
-  // Cek status pengumuman - disable input hanya kalau sheet bilang TUTUP secara eksplisit
+  // Cek status pengumuman - disable input kalau tutup
   const cekInput = document.getElementById('cekInput');
-  const statusPengumuman = p.status_pengumuman ? p.status_pengumuman.toUpperCase() : '';
+  const statusPengumuman = (p.status_pengumuman||'TUTUP').toUpperCase();
   if(statusPengumuman === 'TUTUP' && cekInput) {
     cekInput.disabled = true;
     cekInput.placeholder = 'Informasi hasil seleksi belum dibuka';
@@ -1661,66 +1677,33 @@ async function cekStatus() {
   const input = document.getElementById('cekInput').value.trim();
   if (!input) { alert('Masukkan nomor pendaftaran atau NISN.'); return; }
   const result = document.getElementById('resultCard');
-  const btn = document.querySelector('#tabCek button');
-
-  function tampilHasil(p) {
-    const statusLabel = {
-      'Terdaftar':      '⏳ Menunggu Verifikasi',
-      'Verifikasi':     '🔍 Sedang Diverifikasi',
-      'Diterima':       '✅ Diterima',
-      'Tidak Diterima': '❌ Tidak Diterima',
-      '':               '⏳ Menunggu Verifikasi'
-    };
-    const statusClass = {
-      'Terdaftar':      'status-PENDING',
-      'Verifikasi':     'status-PENDING',
-      'Diterima':       'status-DITERIMA',
-      'Tidak Diterima': 'status-DITOLAK',
-      '':               'status-PENDING'
-    };
-    const label = statusLabel[p.status] !== undefined ? statusLabel[p.status] : p.status;
-    const cls   = statusClass[p.status]  || 'status-PENDING';
-    result.innerHTML = `
-      <div style="font-size:13px;color:var(--teks-sub);">No. Pendaftaran</div>
-      <div style="font-size:20px;font-weight:800;color:var(--biru);margin-bottom:4px;">${p.nomor}</div>
-      <div style="font-size:16px;font-weight:700;">${p.nama}</div>
-      <div style="font-size:12px;color:var(--teks-sub);margin-bottom:8px;">Mendaftar: ${p.tgl}</div>
-      <div class="result-status ${cls}">${label}</div>`;
-    result.style.display = 'block';
-    result.classList.add('show');
-  }
-
-  // Disable tombol 10 detik untuk cegah spam
-  if (btn) {
-    btn.disabled = true;
-    let sisa = 10;
-    const oriTeks = btn.textContent;
-    btn.textContent = `Tunggu ${sisa}s`;
-    const interval = setInterval(() => {
-      sisa--;
-      if (sisa <= 0) {
-        clearInterval(interval);
-        btn.disabled = false;
-        btn.textContent = oriTeks;
-      } else {
-        btn.textContent = `Tunggu ${sisa}s`;
-      }
-    }, 1000);
-  }
-
-  // Tampil loading
   result.classList.remove('show');
   result.style.display = 'block';
   result.innerHTML = '<p style="color:var(--teks-sub);font-size:13px;">⏳ Mencari data...</p>';
   result.classList.add('show');
 
-  // Selalu fetch dari server (tidak pakai cache)
+  // Cek cache lokal dulu
+  const cached = localStorage.getItem('ppdb_terkirim_' + input);
+  if(cached){
+    try{
+      const info = JSON.parse(cached);
+      result.innerHTML = `<div style="background:#e8f5e9;border-radius:10px;padding:16px;">
+        <div style="font-size:16px;font-weight:700;color:#1b5e20;margin-bottom:8px;">✅ Pendaftaran Ditemukan (Cache)</div>
+        <div style="font-size:14px;">Nomor: <strong>${info.nomor}</strong></div>
+        <div style="font-size:13px;color:#666;margin-top:4px;">Waktu daftar: ${info.tgl}</div>
+        <div style="font-size:12px;color:#888;margin-top:8px;">Hubungi panitia untuk konfirmasi status resmi.</div>
+      </div>`;
+      return;
+    }catch(e){}
+  }
+
+  // Pakai GET query string - tidak kena CORS
   try {
     const qs = new URLSearchParams({action:'cekStatusPPDB', nomor: input}).toString();
     const r = await fetch(`${PPDB_SCRIPT}?${qs}`);
     const d = await r.json();
 
-    // Pengumuman belum dibuka (dari server)
+    // Cek apakah pengumuman belum dibuka
     if (d.ok && d.data && d.data.tutup) {
       result.innerHTML = `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:16px 20px;text-align:center;color:#856404;">
         <div style="font-size:24px;margin-bottom:8px;">🔔</div>
@@ -1734,8 +1717,23 @@ async function cekStatus() {
       result.innerHTML = '<p style="color:var(--merah);font-size:14px;">Nomor pendaftaran tidak ditemukan. Periksa kembali nomor Anda.</p>';
       return;
     }
-
-    tampilHasil(d.data);
+    const p = d.data;
+    const statusLabel = {PENDING:'⏳ Menunggu Verifikasi',TERDAFTAR:'✅ Terdaftar',DITERIMA:'✅ Diterima',DITOLAK:'❌ Tidak Diterima',DAFTAR_ULANG:'📝 Silakan Daftar Ulang','':'⏳ Menunggu Verifikasi'};
+    document.getElementById('rNomor').textContent = p.nomor;
+    document.getElementById('rNama').textContent = p.nama;
+    document.getElementById('rTgl').textContent = 'Mendaftar: ' + p.tgl;
+    const statusEl = document.getElementById('rStatus');
+    statusEl.textContent = statusLabel[p.status] || p.status;
+    statusEl.className = 'result-status status-' + p.status;
+    result.innerHTML = '';
+    result.classList.add('show');
+    // Re-append content
+    document.getElementById('resultCard').innerHTML = `
+      <div style="font-size:13px;color:var(--teks-sub);">No. Pendaftaran</div>
+      <div style="font-size:20px;font-weight:800;color:var(--biru);margin-bottom:4px;">${p.nomor}</div>
+      <div style="font-size:16px;font-weight:700;">${p.nama}</div>
+      <div style="font-size:12px;color:var(--teks-sub);margin-bottom:8px;">Mendaftar: ${p.tgl}</div>
+      <div class="result-status status-${p.status}">${statusLabel[p.status]||p.status}</div>`;
   } catch(e) {
     result.innerHTML = '<p style="color:var(--merah);">Gagal mengambil data. Coba lagi.</p>';
   }
