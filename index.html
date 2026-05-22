@@ -252,6 +252,21 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
   .mob-arrow.open{transform:rotate(180deg);color:#fff;}
   .mob-sub{display:none;flex-direction:column;}
   .mob-sub.open{display:flex;}
+
+@media(max-width:768px){
+  .vm-card.misi > div[style*="display:grid"]{
+    grid-template-columns:1fr !important;
+    gap:16px !important;
+  }
+  .vm-misi-item{
+    font-size:15px !important;
+  }
+  .vm-misi-desc{
+    font-size:14px !important;
+    text-align:justify !important;
+  }
+  .hero-sub{text-align:justify !important;}
+}
 </style>
 </head>
 <body>
@@ -383,7 +398,7 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
     <div>
       <h1 class="hero-title" style="white-space:nowrap;">SMP NEGERI 05 <em>SAROLANGUN</em></h1>
       <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:rgba(255,255,255,0.9);font-weight:600;margin:-4px 0 16px;">Unggul &amp; Berkarakter</h2>
-      <p class="hero-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;">Mewujudkan generasi cerdas, berakhlak mulia, dan berdaya saing tinggi di Kabupaten Sarolangun, Provinsi Jambi.</p>
+      <p class="hero-sub" style="font-size:14px;text-align:justify;">Mewujudkan generasi cerdas, berakhlak mulia, dan berdaya saing tinggi di Kabupaten Sarolangun, Provinsi Jambi.</p>
     </div>
     <!-- HITUNG MUNDUR — tersembunyi, aktifkan saat PPDB -->
     <!--
@@ -452,15 +467,15 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
           <div class="vm-misi-item" style="display:block;">
             <div class="vm-misi-label" style="display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">🏫</span> Intrakurikuler</div>
-            <div class="vm-misi-desc" style="color:rgba(255,255,255,0.82);">Mengembangkan pengetahuan, keterampilan, dan sikap positif siswa dalam proses belajar di kelas.</div>
+            <div id="misiIntra" class="vm-misi-desc" style="color:rgba(255,255,255,0.82);text-align:justify;">Mengembangkan pengetahuan, keterampilan, dan sikap positif siswa dalam proses belajar di kelas.</div>
           </div>
           <div class="vm-misi-item" style="display:block;">
             <div class="vm-misi-label" style="display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">🤝</span> Kokurikuler</div>
-            <div class="vm-misi-desc" style="color:rgba(255,255,255,0.82);">Menghasilkan karya/proyek nyata yang relevan dengan capaian pembelajaran, mendorong kreativitas dan kolaborasi (termasuk P5 — Proyek Penguatan Profil Pelajar Pancasila).</div>
+            <div id="misiKoku" class="vm-misi-desc" style="color:rgba(255,255,255,0.82);text-align:justify;">Menghasilkan karya/proyek nyata yang relevan dengan capaian pembelajaran, mendorong kreativitas dan kolaborasi (termasuk P5 — Proyek Penguatan Profil Pelajar Pancasila).</div>
           </div>
           <div class="vm-misi-item" style="display:block;">
             <div class="vm-misi-label" style="display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">⭐</span> Ekstrakurikuler</div>
-            <div class="vm-misi-desc" style="color:rgba(255,255,255,0.82);">Mengembangkan minat, bakat, kepemimpinan, dan prestasi siswa di bidang non-akademis.</div>
+            <div id="misiEkstra" class="vm-misi-desc" style="color:rgba(255,255,255,0.82);text-align:justify;">Mengembangkan minat, bakat, kepemimpinan, dan prestasi siswa di bidang non-akademis.</div>
           </div>
         </div>
       </div>
@@ -468,23 +483,23 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
       <!-- TUJUAN -->
       <div class="vm-card tujuan">
         <div class="vm-title"><span class="vm-icon">🏆</span> Tujuan Pendidikan</div>
-        <div class="vm-tujuan-inner" style="font-family:'Times New Roman',serif;">
+        <div id="tujuanText" class="vm-tujuan-inner" style="font-family:'Times New Roman',serif;">
           <div class="vm-tujuan-group">
             <div class="vm-tujuan-group-title">Jangka Panjang</div>
-            <ul class="vm-tujuan-list">
+            <ul id="tujuanPanjang" class="vm-tujuan-list">
               <li>Meningkatkan kecerdasan, kepribadian, akhlak mulia, dan keterampilan hidup mandiri siswa secara seimbang.</li>
             </ul>
           </div>
           <div class="vm-tujuan-group">
             <div class="vm-tujuan-group-title">Jangka Menengah</div>
-            <ul class="vm-tujuan-list">
+            <ul id="tujuanMenengah" class="vm-tujuan-list">
               <li>Menghasilkan lulusan berkarakter Profil Pelajar Pancasila.</li>
               <li>Menghasilkan lulusan yang mampu melanjutkan ke jenjang pendidikan lebih tinggi.</li>
             </ul>
           </div>
           <div class="vm-tujuan-group">
             <div class="vm-tujuan-group-title">Jangka Pendek (TA 2025/2026)</div>
-            <ul class="vm-tujuan-list">
+            <ul id="tujuanPendek" class="vm-tujuan-list">
               <li>Pembelajaran bermakna, berdiferensiasi, dan berpihak pada siswa.</li>
               <li>Penyelenggaraan ekstrakurikuler pengembangan bakat &amp; minat.</li>
               <li>Penguatan budaya positif sekolah.</li>
@@ -625,6 +640,19 @@ function renderProfilBeranda(d){
   if(ak){const el=document.getElementById('statAkreditasi');if(el)el.textContent=ak;}
   if(p.visi){const el=document.getElementById('visiQuote');if(el)el.innerHTML=p.visi;}
   if(p.misi){const el=document.getElementById('misiText');if(el)el.innerHTML=p.misi;}
+  if(p.tujuan){const el=document.getElementById('tujuanText');if(el)el.innerHTML=p.tujuan;}
+  if(p.misi_intrakurikuler){const el=document.getElementById('misiIntra');if(el)el.innerHTML=p.misi_intrakurikuler;}
+  if(p.misi_kokurikuler){const el=document.getElementById('misiKoku');if(el)el.innerHTML=p.misi_kokurikuler;}
+  if(p.misi_ekstrakurikuler){const el=document.getElementById('misiEkstra');if(el)el.innerHTML=p.misi_ekstrakurikuler;}
+  function renderTujuan(id, val){
+    if(!val) return;
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.innerHTML=val.split('\n').filter(function(s){return s.trim();}).map(function(s){return '<li>'+s.trim()+'</li>';}).join('');
+  }
+  renderTujuan('tujuanPanjang', p.tujuan_jangka_panjang);
+  renderTujuan('tujuanMenengah', p.tujuan_jangka_menengah);
+  renderTujuan('tujuanPendek', p.tujuan_jangka_pendek);
   // Sambutan kepsek
   if(p.kepsek_nama){const el=document.getElementById('sambutanNama');if(el)el.textContent=p.kepsek_nama;}
   if(p.kepsek_sambutan){const el=document.getElementById('sambutanTeks');if(el)el.innerHTML=p.kepsek_sambutan;}
