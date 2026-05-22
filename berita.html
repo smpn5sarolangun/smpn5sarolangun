@@ -240,7 +240,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
         </div>
       </div>
       <div class="nav-dropdown dd-right">
-        <a href="#" onclick="return false;" class="nav-link" style="cursor:default;">Akademik <span class="dd-arrow">▾</span></a>
+        <a href="#" onclick="toggleDropdown(this);return false;" class="nav-link">Akademik <span class="dd-arrow">▾</span></a>
         <div class="dropdown-menu">
           <a href="akademik/login.html">Absensi Siswa</a>
           <a href="https://rapor-smp5sarolangun.raportku.com" target="_blank">e-Raport</a>
@@ -280,7 +280,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
     <a href="ppdb.html#registrasi" class="mob-child">— Registrasi Online</a>
     <a href="ppdb.html#cek" class="mob-child">— Cek Status</a>
 </div>
-    <div class="mob-parent-row"><a href="#" onclick="return false;" class="mob-parent" style="cursor:default;">Akademik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+    <div class="mob-parent-row"><a href="#" onclick="toggleMobSub(this.parentElement.querySelector('.mob-arrow'));return false;" class="mob-parent">Akademik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
 <div class="mob-sub">
     <a href="akademik/login.html" class="mob-child">— Absensi Siswa</a>
     <a href="https://rapor-smp5sarolangun.raportku.com" target="_blank" class="mob-child">— e-Rapor</a>
@@ -336,7 +336,30 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
   </div>
 </footer>
 
-<script>function toggleMobSub(arrow) {
+<script>
+function toggleDropdown(el) {
+  var menu = el.nextElementSibling;
+  if(!menu) return;
+  var isOpen = menu.style.opacity === '1';
+  // Tutup semua dropdown dulu
+  document.querySelectorAll('.dropdown-menu').forEach(function(m){
+    m.style.opacity=''; m.style.visibility=''; m.style.transform='';
+  });
+  if(!isOpen) {
+    menu.style.opacity='1';
+    menu.style.visibility='visible';
+    menu.style.transform='translateY(0)';
+  }
+}
+// Tutup dropdown saat klik di luar
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.nav-dropdown')){
+    document.querySelectorAll('.dropdown-menu').forEach(function(m){
+      m.style.opacity=''; m.style.visibility=''; m.style.transform='';
+    });
+  }
+});
+function toggleMobSub(arrow) {
   var sub = arrow.parentElement.nextElementSibling;
   var isOpen = arrow.classList.contains('open');
   // Tutup semua dulu
