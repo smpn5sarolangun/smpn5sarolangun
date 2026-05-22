@@ -649,7 +649,11 @@ function renderProfilBeranda(d){
     if(!val) return;
     const el=document.getElementById(id);
     if(!el) return;
-    el.innerHTML=val.split('\n').filter(function(s){return s.trim();}).map(function(s){return '<li>'+s.trim()+'</li>';}).join('');
+    // GAS formatTeks() konversi \n ke <br> dan \n\n ke <p>
+    // Kita strip tag HTML dulu, lalu split per baris
+    var plain = val.replace(/<br\s*\/?>/gi,'\n').replace(/<\/?p[^>]*>/gi,'\n').replace(/<[^>]+>/g,'');
+    var items = plain.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length>0;});
+    el.innerHTML = items.map(function(s){return '<li>'+s+'</li>';}).join('');
   }
   renderTujuan('tujuanPanjang', p.tujuan_jangka_panjang);
   renderTujuan('tujuanMenengah', p.tujuan_jangka_menengah);
