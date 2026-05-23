@@ -9,6 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --teal:#0a7566;--teal2:#0d9a88;--merah:#c0392b;
@@ -120,7 +121,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 /* NISN STRIPE dalam area hijau, pendek */
 .kd-nisn-stripe{
   position:absolute;top:84px;left:121px;right:0;height:26px;
-  background:var(--merah);display:flex;align-items:center;padding:0 0 0 14px;z-index:1;
+  background:var(--merah);display:flex;align-items:center;justify-content:flex-end;padding:0 14px 0 14px;z-index:1;
 }
 .pustaka .kd-nisn-stripe{background:var(--putaka);}
 .kd-nisn-no{font-size:16px;font-weight:800;color:#fff;letter-spacing:2px;}
@@ -199,13 +200,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .pustaka .kb-footer::before{background:var(--putaka);}
 /* Miring hijau kanan bawah - arah ke kanan (dari kiri-atas ke kanan-bawah) */
 .kb-footer::after{
-  content:'';position:absolute;bottom:0;right:0;
-  width:0;height:0;
-  border-style:solid;
-  border-width:0 0 50px 110px;
-  border-color:transparent transparent var(--teal) transparent;
+  display:none;
 }
-.pustaka .kb-footer::after{border-bottom-color:var(--putaka2);}
+.pustaka .kb-footer::after{display:none;}
 
 .kb-footer-name{position:relative;z-index:1;font-size:10px;font-weight:800;color:#fff;text-transform:uppercase;padding:8px 14px 1px;}
 .kb-footer-addr{position:relative;z-index:1;font-size:6.5px;color:rgba(255,255,255,0.88);padding:0 14px;}
@@ -280,6 +277,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
     <input type="text" id="inputCari" placeholder="Nama atau NISN..." style="width:190px;" oninput="filterSiswa()">
   </div>
   <button class="btn btn-print no-print" onclick="window.print()">&#x1F5A8; Print</button>
+  <button class="btn no-print" style="background:#8e44ad;color:#fff;" onclick="downloadPDF()">&#x1F4C4; PDF A4</button>
 </div>
 
 <div class="zip-panel no-print">
@@ -591,6 +589,60 @@ async function downloadZip() {
   const url = URL.createObjectURL(zipBlob);
   const a = document.createElement('a'); a.href = url; a.download = 'kartu-' + tipeKartu + '-smpn05.zip'; a.click();
   URL.revokeObjectURL(url);
+  setTimeout(() => prog.classList.remove('show'), 1200);
+}
+
+async function downloadPDF() {
+  const target = selectedSet.size > 0
+    ? tampilSiswa.filter(s => selectedSet.has(String(s.nisn)))
+    : tampilSiswa;
+  if (!target.length) { alert('Tidak ada kartu.'); return; }
+  const prog = document.getElementById('zipProgress');
+  const bar = document.getElementById('zipBarFill');
+  const msg = document.getElementById('zipMsg');
+  const sub = document.getElementById('zipSub');
+  prog.classList.add('show');
+  bar.style.width = '0%';
+  msg.textContent = 'Menyiapkan PDF...';
+  sub.textContent = '';
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const marginLeft = 12;
+  const marginTop  = 12;
+  const cardW      = 86;
+  const cardH      = 54;
+  const gapX       = 4;
+  const gapY       = 5;
+  const nisnToIdx = {};
+  tampilSiswa.forEach((s, i) => { nisnToIdx[String(s.nisn)] = i; });
+  for (let t = 0; t < target.length; t++) {
+    const rowOnPage = t % 4;
+    if (t > 0 && rowOnPage === 0) pdf.addPage();
+    const s = target[t];
+    const i = nisnToIdx[String(s.nisn)];
+    bar.style.width = Math.round(t / target.length * 95) + '%';
+    msg.textContent = 'Render ' + (t+1) + ' / ' + target.length;
+    sub.textContent = s.nama;
+    const elD = document.getElementById('depan-' + i);
+    const elB = document.getElementById('belakang-' + i);
+    if (!elD) continue;
+    const unit = elD.closest('.kartu-unit');
+    const noprint = unit.querySelectorAll('.no-print');
+    noprint.forEach(e => e.style.visibility = 'hidden');
+    try {
+      const yPos = marginTop + rowOnPage * (cardH + gapY);
+      const canvasD = await html2canvas(elD, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#f0ede8' });
+      pdf.addImage(canvasD.toDataURL('image/jpeg', 0.95), 'JPEG', marginLeft, yPos, cardW, cardH);
+      if (elB) {
+        const canvasB = await html2canvas(elB, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#f0ede8' });
+        pdf.addImage(canvasB.toDataURL('image/jpeg', 0.95), 'JPEG', marginLeft + cardW + gapX, yPos, cardW, cardH);
+      }
+    } catch(e) { console.error(s.nama, e); }
+    noprint.forEach(e => e.style.visibility = '');
+    await new Promise(r => setTimeout(r, 10));
+  }
+  bar.style.width = '100%'; msg.textContent = 'Menyimpan PDF...';
+  pdf.save('kartu-pelajar-smpn05.pdf');
   setTimeout(() => prog.classList.remove('show'), 1200);
 }
 </script>
