@@ -287,7 +287,12 @@ let TOKEN = sessionStorage.getItem('absensi_token') || localStorage.getItem('abs
 let allSiswa = [], tampilSiswa = [], tipeKartu = 'pelajar';
 const fotoMap = {}, selectedSet = new Set();
 
-if (!TOKEN) { window.location.href = 'login.html'; }
+if (!TOKEN) {
+  TOKEN = localStorage.getItem('absensi_token_shared');
+}
+if (!TOKEN) {
+  window.location.href = 'login.html';
+}
 window.addEventListener('load', async () => { await muatSiswa(); });
 
 function formatTgl(tgl) {
