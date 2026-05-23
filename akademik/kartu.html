@@ -74,7 +74,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 
 /* ════ KARTU DEPAN 323x204px ════ */
 .kartu-depan{
-  width:323px;height:204px;border-radius:10px;overflow:hidden;
+  width:323px;height:204px;border-radius:0;overflow:hidden;
   box-shadow:0 4px 18px rgba(0,0,0,0.15);position:relative;
   background:var(--krem);flex-shrink:0;
 }
@@ -99,7 +99,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .kd-header-txt .sekolah{font-size:13px;font-weight:800;color:#fff;line-height:1.2;margin-top:2px;}
 .kd-header-txt .alamat{font-size:7px;color:rgba(255,255,255,0.82);line-height:1.4;margin-top:2px;}
 
-.kd-divider{width:1.5px;height:62px;background:rgba(255,255,255,0.4);flex-shrink:0;margin-right:12px;align-self:flex-start;margin-top:6px;}
+.kd-divider{width:3px;height:22px;background:rgba(255,255,255,0.7);flex-shrink:0;margin-right:12px;align-self:center;margin-top:0;}
 
 /* Logo kanan mix-blend-mode multiply */
 .kd-logo-right{width:76px;height:76px;flex-shrink:0;align-self:flex-start;padding-top:12px;}
@@ -151,7 +151,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .kd-sekolah .tahun{font-size:7px;color:#999;}
 
 .kartu-depan{
-  width:430px;height:270px;border-radius:12px;overflow:hidden;
+  width:430px;height:270px;border-radius:0;overflow:hidden;
   box-shadow:0 4px 18px rgba(0,0,0,0.15);position:relative;
   background:var(--krem);flex-shrink:0;
 }
@@ -159,7 +159,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 
 /* ════ KARTU BELAKANG ════ */
 .kartu-belakang{
-  width:430px;height:270px;border-radius:12px;overflow:hidden;
+  width:430px;height:270px;border-radius:0;overflow:hidden;
   box-shadow:0 4px 18px rgba(0,0,0,0.15);
   background:var(--krem);display:flex;flex-direction:column;flex-shrink:0;
 }
@@ -615,8 +615,8 @@ async function downloadPDF() {
   sub.textContent = '';
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const marginLeft = 0;
-  const marginTop  = 0;
+  const marginLeft = 19;
+  const marginTop  = 8;
   const cardW      = 86;
   const cardH      = 54;
   const gapX       = 0;
