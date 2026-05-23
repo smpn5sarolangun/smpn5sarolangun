@@ -259,6 +259,124 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f4f8;color:var(--t
   cursor:pointer;transition:all 0.2s;white-space:nowrap;
 }
 .btn-upload-foto:hover{background:#219a52;}
+
+/* ── KARTU 86x54mm ── */
+.kartu-unit{display:inline-block;vertical-align:top;margin:4px;}
+.kartu-label{font-size:11px;font-weight:600;color:#5a6a7e;text-align:center;margin-bottom:4px;}
+
+/* DEPAN */
+.kartu-depan{
+  width:323px;height:204px;
+  border-radius:10px;overflow:hidden;
+  position:relative;background:#f0ede8;
+  box-shadow:0 3px 12px rgba(0,0,0,0.15);
+}
+/* Header teal miring */
+.kd-header{
+  position:absolute;top:0;left:0;right:0;height:76px;
+  background:linear-gradient(135deg,#0d7377 0%,#0a5e62 100%);
+  clip-path:polygon(0 0,100% 0,100% 68%,0 100%);
+  display:flex;align-items:flex-start;padding:8px 10px;gap:6px;
+}
+.kd-header::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(135deg,rgba(255,255,255,0.04) 0,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 9px);
+}
+.kd-logos{display:flex;gap:4px;align-items:center;z-index:1;}
+.kd-logos img{width:36px;height:36px;object-fit:contain;border-radius:50%;border:1.5px solid rgba(255,255,255,0.4);background:#fff;}
+.kd-header-txt{z-index:1;flex:1;}
+.kd-header-txt .judul{font-size:10px;font-weight:800;color:#f0a500;letter-spacing:0.5px;}
+.kd-header-txt .sekolah{font-size:9px;font-weight:700;color:#fff;line-height:1.3;}
+.kd-header-txt .alamat{font-size:6.5px;color:rgba(255,255,255,0.8);line-height:1.4;margin-top:1px;}
+/* Stripe merah */
+.kd-stripe{
+  position:absolute;top:60px;right:0;
+  width:180px;height:22px;
+  background:#c0392b;
+  display:flex;align-items:center;padding:0 10px;
+  clip-path:polygon(12px 0,100% 0,100% 100%,0 100%);
+}
+.kd-nisn-stripe{font-size:12px;font-weight:700;color:#fff;letter-spacing:1px;}
+/* Foto */
+.kd-foto{
+  position:absolute;top:78px;left:10px;
+  width:62px;height:78px;
+  border:2px solid #ddd;background:#e8edf5;
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+}
+.kd-foto img{width:100%;height:100%;object-fit:cover;}
+.kd-foto .avatar{font-size:22px;font-weight:800;color:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+/* Data siswa */
+.kd-data{position:absolute;top:88px;left:82px;right:8px;}
+.kd-nama{font-size:11px;font-weight:800;color:#0d7377;line-height:1.2;margin-bottom:3px;}
+.kd-ttl{font-size:8.5px;color:#333;line-height:1.7;}
+.kd-kelas{display:inline-block;background:#0d7377;color:#fff;font-size:7.5px;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:3px;}
+/* Info sekolah kanan bawah */
+.kd-sekolah{
+  position:absolute;bottom:28px;right:8px;
+  text-align:right;font-size:7px;color:#555;line-height:1.5;
+}
+.kd-sekolah strong{display:block;color:#0d3b6e;font-size:7.5px;}
+/* Barcode */
+.kd-barcode{
+  position:absolute;bottom:5px;left:82px;right:72px;height:24px;
+}
+.kd-barcode svg{width:100%;height:100%;}
+/* QR */
+.kd-qr{
+  position:absolute;bottom:4px;right:6px;
+  width:52px;height:52px;
+}
+.kd-qr img,.kd-qr canvas{width:100%;height:100%;}
+
+/* BELAKANG */
+.kartu-belakang{
+  width:323px;height:204px;
+  border-radius:10px;overflow:hidden;
+  position:relative;background:#f0ede8;
+  box-shadow:0 3px 12px rgba(0,0,0,0.15);
+  margin-top:8px;
+}
+.kb-top-bar{position:absolute;top:0;left:0;right:0;height:12px;background:linear-gradient(135deg,#0d7377,#0a5e62);}
+.kb-red-bar{position:absolute;top:8px;left:0;right:0;height:5px;background:#c0392b;}
+.kb-watermark{
+  position:absolute;top:10px;left:-15px;
+  font-size:90px;font-weight:900;
+  color:rgba(13,115,119,0.07);
+  line-height:1;pointer-events:none;user-select:none;
+  font-family:serif;
+}
+.kb-logo{
+  position:absolute;top:18px;left:50%;transform:translateX(-50%);
+  width:50px;height:50px;border-radius:50%;
+  border:2px solid #ccc;background:#fff;overflow:hidden;
+}
+.kb-logo img{width:100%;height:100%;object-fit:contain;}
+.kb-rules{
+  position:absolute;top:72px;left:14px;right:14px;
+  font-size:7.5px;color:#333;text-align:center;line-height:1.8;
+}
+.kb-rules p{margin-bottom:2px;}
+.kb-rules .nama-sekolah{font-weight:700;color:#0d3b6e;}
+.kb-kontak{
+  position:absolute;bottom:30px;right:10px;
+  font-size:6.5px;color:#666;text-align:right;line-height:1.6;
+}
+.kb-kontak strong{display:block;font-size:7.5px;color:#0d3b6e;}
+.kb-footer{
+  position:absolute;bottom:0;left:0;right:0;
+  background:#c0392b;padding:5px 10px;
+}
+.kb-footer-name{font-size:8.5px;font-weight:800;color:#fff;}
+.kb-footer-addr{font-size:6.5px;color:rgba(255,255,255,0.85);}
+
+/* PRINT */
+@media print{
+  html,body{margin:0;padding:0;background:#fff;}
+  .topbar,.kontrol,.kartu-label,.no-print{display:none!important;}
+  .kartu-unit{display:inline-flex!important;flex-direction:column;margin:2mm;page-break-inside:avoid;}
+  .kartu-depan,.kartu-belakang{width:86mm!important;height:54mm!important;box-shadow:none!important;border-radius:0!important;}
+}
 </style>
 </head>
 <body>
@@ -316,6 +434,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f4f8;color:var(--t
 <div id="qrTemp" style="display:none;"></div>
 
 <script>
+function formatTgl(tgl) {
+  if (!tgl) return '';
+  const bln = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const d = new Date(tgl);
+  if (!isNaN(d.getTime())) return d.getDate() + ' ' + bln[d.getMonth()] + ' ' + d.getFullYear();
+  return tgl;
+}
+
 // ── FOTO MAP (NISN → dataURL) ──
 const fotoMap = {};
 
@@ -463,22 +589,18 @@ function renderKartu(data) {
 }
 
 function buatKartuHTML(s, i) {
-  // Inisial untuk avatar
   const inisial = s.nama.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-  const warnasAvatar = ['#0a7e8c','#0d3b6e','#1a7a4a','#7d3c98','#c0392b','#e67e22'];
-  const wAvatar = warnasAvatar[s.nisn.charCodeAt(s.nisn.length-1) % warnasAvatar.length];
+  const warnaAvatar = ['#0a7e8c','#0d3b6e','#1a7a4a','#7d3c98','#c0392b','#e67e22'];
+  const wAvatar = warnaAvatar[s.nisn.charCodeAt(s.nisn.length-1) % warnaAvatar.length];
   
   const nisnStr = String(s.nisn||'');
   const fotoSrc = fotoMap[nisnStr] || fotoMap[nisnStr.replace(/^0+/,'')] || s.fotoUrl || '';
   const fotoHtml = fotoSrc
-    ? `<img src="${fotoSrc}" alt="${s.nama}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
-    + `<div class="avatar" style="background:${wAvatar};display:none;">${inisial}</div>`
+    ? `<img src="${fotoSrc}" alt="${s.nama}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+       <div class="avatar" style="background:${wAvatar};display:none;">${inisial}</div>`
     : `<div class="avatar" style="background:${wAvatar};">${inisial}</div>`;
 
-  const judulKartu = tipeKartu === 'pelajar' ? 'KARTU PELAJAR' : 'KARTU PUSTAKA';
-  const rulesExtra = tipeKartu === 'pelajar'
-    ? '<p class="bold">Kartu Pelajar ini wajib dibawa setiap hari untuk proses absensi.</p>'
-    : '<p class="bold">Kartu ini wajib dibawa setiap berkunjung ke perpustakaan.</p>';
+  const ttl = (s.tempatLahir ? s.tempatLahir + ', ' : '') + (formatTgl(s.tglLahir) || s.tglLahir || '');
 
   return `
   <div class="kartu-unit">
@@ -486,71 +608,66 @@ function buatKartuHTML(s, i) {
 
     <!-- DEPAN -->
     <div class="kartu-depan">
-      <div class="kd-deko"></div>
-
-      <!-- Header -->
+      <!-- Header teal -->
       <div class="kd-header">
-        <div class="kd-header-logos">
+        <div class="kd-logos">
           <img src="${TWH_URL}" alt="TWH">
           <img src="${LOGO_URL}" alt="Logo">
         </div>
-        <div class="kd-header-text">
-          <div class="judul">${judulKartu}</div>
-          <div class="sub">SMP NEGERI 05 SAROLANGUN</div>
-          <div class="sub">TA. 2025/2026</div>
+        <div class="kd-header-txt">
+          <div class="judul">KARTU PELAJAR</div>
+          <div class="sekolah">SMP NEGERI 05 SAROLANGUN</div>
+          <div class="alamat">Jl. Diponegoro No. 01 Desa Bukit Talang Mas, Kec. Singkut, Kab.<br>Sarolangun Prov. Jambi</div>
         </div>
       </div>
-      <div class="kd-stripe"></div>
-
+      <!-- NISN banner merah -->
+      <div class="kd-stripe">
+        <span class="kd-nisn-stripe">${s.nisn}</span>
+      </div>
       <!-- Foto -->
       <div class="kd-foto">${fotoHtml}</div>
-
       <!-- Data -->
       <div class="kd-data">
-        <div class="kd-nisn-badge">${s.nisn}</div>
         <div class="kd-nama">${s.nama}</div>
         <div class="kd-ttl">
-          ${s.tempatLahir ? s.tempatLahir + ', ' : ''}${s.tglLahir || ''}<br>
-          SMP Negeri 05 Sarolangun
+          ${s.nisn}<br>
+          ${ttl}
         </div>
         <div class="kd-kelas">Kelas ${s.kelas}</div>
       </div>
-
-      <!-- Info sekolah kanan bawah -->
+      <!-- Info sekolah -->
       <div class="kd-sekolah">
         <strong>SMP NEGERI 05 SAROLANGUN</strong>
         smpn5sarolangun@gmail.com
       </div>
-
-      <!-- QR Code -->
+      <!-- QR -->
       <div class="kd-qr" id="qr-${i}"></div>
-
       <!-- Barcode -->
-      <div class="kd-barcode">
-        <svg id="bc-${i}"></svg>
-      </div>
+      <div class="kd-barcode"><svg id="bc-${i}"></svg></div>
     </div>
 
     <!-- BELAKANG -->
     <div class="kartu-belakang">
-      <div class="kb-header"></div>
-      <div class="kb-stripe"></div>
-      <div class="kb-body">
-        <div class="kb-watermark"><img src="${TWH_URL}" alt=""></div>
-        <img class="kb-logo" src="${TWH_URL}" alt="TWH">
-        <div class="kb-rules">
-          ${rulesExtra}
-          <p>Kartu ini berlaku selama pemilik berstatus sebagai siswa<br>
-            <span class="nama-sekolah">SMP NEGERI 5 SAROLANGUN</span>
-          </p>
-          <p style="margin-top:4px;">Kartu ini tidak boleh berpindah milik.</p>
-          <p>Apabila Anda kehilangan atau menemukan kartu ini, mohon untuk<br>
-            segera menghubungi nomor telepon atau kontak sekolah yang tersedia.</p>
-        </div>
+      <div class="kb-top-bar"></div>
+      <div class="kb-red-bar"></div>
+      <div class="kb-watermark">TUT</div>
+      <div class="kb-logo"><img src="${TWH_URL}" alt="Logo"></div>
+      <div class="kb-rules">
+        <p>Kartu Pelajar ini wajib dibawa setiap hari untuk proses absensi.</p>
+        <p>Kartu Pelajar ini berlaku selama pemilik berstatus sebagai siswa<br>
+          <span class="nama-sekolah">SMP NEGERI 5 SAROLANGUN</span>
+        </p>
+        <p>Kartu Pelajar ini tidak boleh berpindah milik.</p>
+        <p>Apabila Anda kehilangan atau menemukan kartu ini, mohon untuk<br>
+          segera menghubungi nomor telepon atau kontak sekolah yang tersedia.</p>
+      </div>
+      <div class="kb-kontak">
+        <strong>SMP NEGERI 05 SAROLANGUN</strong>
+        Contact Us<br>-<br>smpn5sarolangun@gmail.com
       </div>
       <div class="kb-footer">
-        <strong>SMP NEGERI 5 SAROLANGUN</strong>
-        <span>Jalan Diponegoro No 1 Desa Bukit Talang Mas, Kecamatan Singkut, Kabupaten Sarolangun</span>
+        <div class="kb-footer-name">SMP NEGERI 5 SAROLANGUN</div>
+        <div class="kb-footer-addr">Jalan Diponegoro No 1 Desa Bukit Talang Mas, Kecamatan Singkut, Kabupaten Sarolangun</div>
       </div>
     </div>
   </div>`;
