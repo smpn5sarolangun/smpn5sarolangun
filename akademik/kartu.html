@@ -81,95 +81,76 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 
 /* HEADER */
 .kd-header{
-  position:absolute;top:0;left:0;right:0;height:72px;
-  display:flex;align-items:center;padding:0 12px;gap:0;overflow:visible;
+  position:absolute;top:0;left:0;right:0;height:96px;
+  display:flex;align-items:center;padding:0 12px;gap:0;overflow:hidden;
 }
 .pelajar .kd-header{background:linear-gradient(135deg,#0a7566 0%,#0d9a88 55%,#0a6e5e 100%);}
 .pustaka .kd-header{background:linear-gradient(135deg,#7b3fa0 0%,#9b59b6 55%,#6c3483 100%);}
-.kd-header::before{
-  content:'';position:absolute;right:90px;top:-10px;
-  width:50px;height:100px;background:rgba(255,255,255,0.06);
-  transform:rotate(12deg);pointer-events:none;
-}
-.kd-header::after{
-  content:'';position:absolute;right:50px;top:-10px;
-  width:28px;height:100px;background:rgba(255,255,255,0.03);
-  transform:rotate(12deg);pointer-events:none;
-}
+.kd-header::before{content:'';position:absolute;right:80px;top:-10px;width:50px;height:120px;background:rgba(255,255,255,0.05);transform:rotate(12deg);pointer-events:none;}
+.kd-header::after{content:'';position:absolute;right:50px;top:-10px;width:28px;height:120px;background:rgba(255,255,255,0.04);transform:rotate(12deg);pointer-events:none;}
 
-/* Teks header - rata kanan */
+/* Dekorasi miring kiri atas via pseudo tidak bisa multiple, pakai div */
+.kd-deko-kiri{position:absolute;top:0;left:0;width:0;height:0;pointer-events:none;}
+.kd-deko-kiri::before{content:'';position:absolute;top:0;left:0;width:0;height:0;border-style:solid;border-width:96px 0 0 130px;border-color:transparent transparent transparent rgba(255,255,255,0.07);}
+
 .kd-header-txt{flex:1;text-align:right;padding:0 10px 0 0;}
-.kd-header-txt .judul{font-size:10px;font-weight:800;color:#f8c400;letter-spacing:1.5px;text-transform:uppercase;}
+.kd-header-txt .judul{font-size:13px;font-weight:900;color:#f8c400;letter-spacing:2px;text-transform:uppercase;}
 .kd-header-txt .sekolah{font-size:11px;font-weight:800;color:#fff;line-height:1.2;margin-top:1px;}
 .kd-header-txt .alamat{font-size:5.8px;color:rgba(255,255,255,0.82);line-height:1.4;margin-top:2px;}
 
-/* Divider vertikal */
 .kd-divider{width:1.5px;height:52px;background:rgba(255,255,255,0.4);flex-shrink:0;margin-right:10px;}
 
-/* Logo kanan - mix-blend-mode multiply agar bg putih hilang */
-.kd-logo-right{
-  width:56px;height:56px;flex-shrink:0;
-  mix-blend-mode:multiply;
-}
+/* Logo kanan mix-blend-mode multiply */
+.kd-logo-right{width:54px;height:54px;flex-shrink:0;mix-blend-mode:multiply;}
 .kd-logo-right img{width:100%;height:100%;object-fit:contain;}
 
-/* FOTO - overlap naik ke dalam header */
+/* FOTO overlap naik ke header */
 .kd-foto{
-  position:absolute;top:40px;left:8px;
-  width:90px;height:110px;
+  position:absolute;top:50px;left:14px;
+  width:80px;height:106px;
   background:#c8d0da;overflow:hidden;
   display:flex;align-items:center;justify-content:center;
-  border:2px solid #fff;
-  box-shadow:0 2px 8px rgba(0,0,0,0.2);
-  z-index:2;
+  border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.2);z-index:2;
 }
 .kd-foto img{width:100%;height:100%;object-fit:cover;object-position:top center;}
-.kd-foto .avatar{font-size:26px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
+.kd-foto .avatar{font-size:24px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
 .pelajar .kd-foto .avatar{background:linear-gradient(135deg,var(--teal),#0d3b6e);}
 .pustaka .kd-foto .avatar{background:linear-gradient(135deg,var(--putaka),#4a235a);}
 
-/* NISN STRIPE - dalam area hijau, kanan foto */
+/* NISN STRIPE dalam area hijau, pendek */
 .kd-nisn-stripe{
-  position:absolute;top:46px;left:108px;right:0;height:28px;
-  background:var(--merah);display:flex;align-items:center;padding:0 12px;
-  z-index:1;
+  position:absolute;top:72px;left:104px;right:0;height:22px;
+  background:var(--merah);display:flex;align-items:center;padding:0 12px;z-index:1;
 }
 .pustaka .kd-nisn-stripe{background:var(--putaka);}
-.kd-nisn-no{font-size:15px;font-weight:800;color:#fff;letter-spacing:2px;}
+.kd-nisn-no{font-size:14px;font-weight:800;color:#fff;letter-spacing:2px;}
 
-/* NAMA, NISN, TTL - bawah foto */
-.kd-data{
-  position:absolute;top:156px;left:8px;right:160px;
-}
-.kd-nama{font-size:11.5px;font-weight:800;line-height:1.2;margin-bottom:3px;text-transform:uppercase;}
+/* NAMA NISN TTL bawah foto */
+.kd-data{position:absolute;top:162px;left:14px;right:160px;}
+.kd-nama{font-size:12px;font-weight:800;line-height:1.2;margin-bottom:4px;text-transform:uppercase;}
 .pelajar .kd-nama{color:var(--teal);}
 .pustaka .kd-nama{color:var(--putaka);}
-.kd-nisn-txt{font-size:8px;color:#333;margin-bottom:2px;font-weight:600;}
+.kd-nisn-txt{font-size:8.5px;color:#333;margin-bottom:2px;font-weight:600;}
 .kd-ttl{font-size:8px;color:#555;line-height:1.4;}
 
-/* BARCODE - bawah nama, tidak menimpa */
-.kd-barcode{
-  position:absolute;bottom:5px;left:6px;width:150px;height:26px;
-}
+/* BARCODE lebih besar */
+.kd-barcode{position:absolute;bottom:4px;left:12px;width:160px;height:30px;}
 .kd-barcode svg{width:100%;height:100%;}
 
-/* QR - kanan, naik ke atas */
-.kd-qr{
-  position:absolute;right:5px;top:78px;
-  width:70px;height:70px;
-}
+/* QR geser bawah */
+.kd-qr{position:absolute;right:5px;top:102px;width:70px;height:70px;}
 .kd-qr canvas,.kd-qr img{width:70px!important;height:70px!important;}
 
-/* INFO SEKOLAH - kanan, di bawah QR */
+/* INFO SEKOLAH hampir sejajar barcode, ada jarak dengan QR */
 .kd-sekolah{
-  position:absolute;right:8px;bottom:8px;
+  position:absolute;right:8px;bottom:6px;
   text-align:right;font-size:6.5px;color:#555;line-height:1.7;
 }
 .kd-sekolah strong{display:block;font-size:7px;color:#0d3b6e;font-weight:800;}
+.kd-sekolah .tahun{font-size:6px;color:#999;}
 
-/* Kartu depan ukuran */
 .kartu-depan{
-  width:360px;height:227px;border-radius:10px;overflow:hidden;
+  width:370px;height:234px;border-radius:10px;overflow:hidden;
   box-shadow:0 4px 18px rgba(0,0,0,0.15);position:relative;
   background:var(--krem);flex-shrink:0;
 }
@@ -183,7 +164,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 }
 .pustaka .kartu-belakang{background:#f8f5fc;}
 
-.kb-strip-top{height:18px;}
+.kb-strip-top{height:20px;}
 .pelajar .kb-strip-top{background:linear-gradient(135deg,#0a7566,#0d9a88);}
 .pustaka .kb-strip-top{background:linear-gradient(135deg,#7b3fa0,#9b59b6);}
 .kb-strip-red{height:5px;background:var(--merah);}
@@ -199,26 +180,46 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   mix-blend-mode:multiply;
 }
 .kb-watermark img{width:100%;height:100%;object-fit:contain;}
-
-.kb-logo{
-  width:38px;height:38px;object-fit:contain;
-  margin-bottom:6px;mix-blend-mode:multiply;
-}
-
+.kb-logo{width:38px;height:38px;object-fit:contain;margin-bottom:6px;mix-blend-mode:multiply;}
 .kb-rules{text-align:center;font-size:7px;color:#3a4a5a;line-height:1.85;}
 .kb-rules p{margin-bottom:2px;}
 .kb-rules .bold{display:block;font-weight:800;margin-top:1px;}
 .pelajar .kb-rules .bold{color:var(--teal);}
 .pustaka .kb-rules .bold{color:var(--putaka);}
 
-/* Footer: strip teal tipis + merah */
-.kb-footer-teal{height:6px;}
-.pelajar .kb-footer-teal{background:var(--teal);}
-.pustaka .kb-footer-teal{background:var(--putaka);}
-.kb-footer{background:var(--merah);padding:7px 12px;}
-.pustaka .kb-footer{background:var(--putaka);}
-.kb-footer-name{font-size:9px;font-weight:800;color:#fff;text-transform:uppercase;}
-.kb-footer-addr{font-size:6.5px;color:rgba(255,255,255,0.88);}
+/* Footer: hijau full, merah di kiri tidak sampai kanan */
+.kb-footer{position:relative;height:44px;background:var(--teal);overflow:hidden;}
+.pustaka .kb-footer{background:var(--putaka2);}
+/* Merah di kiri */
+.kb-footer::before{
+  content:'';position:absolute;top:0;left:0;bottom:0;width:300px;
+  background:var(--merah);
+}
+.pustaka .kb-footer::before{background:var(--putaka);}
+/* Miring hijau kanan bawah - arah ke kanan (dari kiri-atas ke kanan-bawah) */
+.kb-footer::after{
+  content:'';position:absolute;top:0;right:0;
+  width:0;height:0;
+  border-style:solid;
+  border-width:0 0 44px 90px;
+  border-color:transparent transparent var(--teal) transparent;
+}
+.pustaka .kb-footer::after{border-bottom-color:var(--putaka2);}
+
+.kb-footer-name{position:relative;z-index:1;font-size:9px;font-weight:800;color:#fff;text-transform:uppercase;padding:7px 12px 1px;}
+.kb-footer-addr{position:relative;z-index:1;font-size:6.5px;color:rgba(255,255,255,0.88);padding:0 12px;}
+
+/* Strip hijau tipis bawah */
+.kb-footer-bottom{height:5px;}
+.pelajar .kb-footer-bottom{background:var(--teal);}
+.pustaka .kb-footer-bottom{background:var(--putaka);}
+
+.kartu-belakang{
+  width:370px;height:234px;border-radius:10px;overflow:hidden;
+  box-shadow:0 4px 18px rgba(0,0,0,0.15);
+  background:var(--krem);display:flex;flex-direction:column;flex-shrink:0;
+}
+.pustaka .kartu-belakang{background:#f8f5fc;}
 
 /* PRINT */
 @media print{
@@ -445,6 +446,7 @@ function buatKartuHTML(s, i) {
     : `<div class="avatar">${inisial}</div>`;
   const ttl = (s.tempatLahir ? s.tempatLahir + ', ' : '') + (formatTgl(s.tglLahir) || s.tglLahir || '');
   const isChecked = selectedSet.has(nisnStr) ? 'checked' : '';
+  const tahun = new Date().getFullYear();
 
   return `
   <div class="kartu-unit ${cls}" data-nisn="${nisnStr}">
@@ -456,8 +458,8 @@ function buatKartuHTML(s, i) {
 
       <!-- DEPAN -->
       <div class="kartu-depan" id="depan-${i}">
-        <!-- HEADER: teks rata kanan | divider | logo multiply kanan -->
         <div class="kd-header">
+          <div class="kd-deko-kiri"></div>
           <div class="kd-header-txt">
             <div class="judul">${labelKartu}</div>
             <div class="sekolah">SMP NEGERI 05 SAROLANGUN</div>
@@ -466,32 +468,19 @@ function buatKartuHTML(s, i) {
           <div class="kd-divider"></div>
           <div class="kd-logo-right"><img src="${LOGO_URL}" alt="Logo"></div>
         </div>
-
-        <!-- FOTO overlap naik ke header -->
         <div class="kd-foto">${fotoHtml}</div>
-
-        <!-- NISN STRIPE dalam area hijau -->
-        <div class="kd-nisn-stripe">
-          <span class="kd-nisn-no">${s.nisn}</span>
-        </div>
-
-        <!-- QR naik ke atas kanan -->
+        <div class="kd-nisn-stripe"><span class="kd-nisn-no">${s.nisn}</span></div>
         <div class="kd-qr" id="qr-${i}"></div>
-
-        <!-- INFO SEKOLAH kanan bawah -->
         <div class="kd-sekolah">
           <strong>SMP NEGERI 05 SAROLANGUN</strong>
-          Contact Us<br>-<br>smpn5sarolangun@gmail.com
+          smpn5sarolangun@gmail.com<br>
+          <span class="tahun">@${tahun}</span>
         </div>
-
-        <!-- NAMA, NISN, TTL bawah foto -->
         <div class="kd-data">
           <div class="kd-nama">${s.nama}</div>
           <div class="kd-nisn-txt">${s.nisn}</div>
           <div class="kd-ttl">${ttl}</div>
         </div>
-
-        <!-- BARCODE bawah kiri -->
         <div class="kd-barcode"><svg id="bc-${i}"></svg></div>
       </div>
 
@@ -509,11 +498,11 @@ function buatKartuHTML(s, i) {
             <p>Apabila Anda kehilangan atau menemukan kartu ini, mohon segera menghubungi nomor telepon atau kontak sekolah yang tersedia.</p>
           </div>
         </div>
-        <div class="kb-footer-teal"></div>
         <div class="kb-footer">
           <div class="kb-footer-name">SMP NEGERI 05 SAROLANGUN</div>
           <div class="kb-footer-addr">Jalan Diponegoro No 1 Desa Bukit Talang Mas, Kecamatan Singkut, Kabupaten Sarolangun</div>
         </div>
+        <div class="kb-footer-bottom"></div>
       </div>
 
     </div>
