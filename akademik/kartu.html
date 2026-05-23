@@ -91,17 +91,17 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 
 /* Dekorasi miring kiri atas via pseudo tidak bisa multiple, pakai div */
 .kd-deko-kiri{position:absolute;top:0;left:0;width:0;height:0;pointer-events:none;}
-.kd-deko-kiri::before{content:'';position:absolute;top:0;left:0;width:0;height:0;border-style:solid;border-width:96px 0 0 130px;border-color:transparent transparent transparent rgba(255,255,255,0.07);}
+.kd-deko-kiri::before{content:'';position:absolute;top:0;left:0;width:0;height:0;border-style:solid;border-width:96px 130px 0 0;border-color:transparent rgba(255,255,255,0.07) transparent transparent;}
 
-.kd-header-txt{flex:1;text-align:right;padding:0 10px 0 0;align-self:flex-start;padding-top:8px;}
+.kd-header-txt{flex:1;text-align:right;padding:0 10px 0 0;align-self:flex-start;padding-top:5px;}
 .kd-header-txt .judul{font-size:14px;font-weight:900;color:#f8c400;letter-spacing:2px;text-transform:uppercase;line-height:1.15;}
-.kd-header-txt .sekolah{font-size:11.5px;font-weight:800;color:#fff;line-height:1.2;margin-top:3px;}
-.kd-header-txt .alamat{font-size:6px;color:rgba(255,255,255,0.82);line-height:1.4;margin-top:3px;}
+.kd-header-txt .sekolah{font-size:11.5px;font-weight:800;color:#fff;line-height:1.2;margin-top:1px;}
+.kd-header-txt .alamat{font-size:6px;color:rgba(255,255,255,0.82);line-height:1.4;margin-top:2px;}
 
-.kd-divider{width:1.5px;height:52px;background:rgba(255,255,255,0.4);flex-shrink:0;margin-right:10px;}
+.kd-divider{width:1.5px;height:40px;background:rgba(255,255,255,0.4);flex-shrink:0;margin-right:10px;}
 
 /* Logo kanan mix-blend-mode multiply */
-.kd-logo-right{width:56px;height:56px;flex-shrink:0;align-self:flex-start;padding-top:6px;}
+.kd-logo-right{width:62px;height:62px;flex-shrink:0;align-self:flex-start;padding-top:4px;}
 .kd-logo-right img{width:100%;height:100%;object-fit:contain;}
 
 /* FOTO overlap naik ke header */
@@ -134,7 +134,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .kd-ttl{font-size:8px;color:#555;line-height:1.4;}
 
 /* BARCODE lebih besar */
-.kd-barcode{position:absolute;bottom:4px;left:14px;width:110px;height:22px;}
+.kd-barcode{position:absolute;bottom:4px;left:14px;width:130px;height:22px;}
 .kd-barcode svg{width:100%;height:100%;}
 
 /* QR geser bawah */
@@ -164,7 +164,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 }
 .pustaka .kartu-belakang{background:#f8f5fc;}
 
-.kb-strip-top{height:20px;}
+.kb-strip-top{height:20px;position:relative;overflow:hidden;}
+.kb-strip-top::before{content:'';position:absolute;top:0;left:0;width:0;height:0;border-style:solid;border-width:20px 60px 0 0;border-color:transparent rgba(255,255,255,0.08) transparent transparent;}
+.kb-strip-top::after{content:'';position:absolute;top:0;right:80px;width:30px;height:30px;background:rgba(255,255,255,0.05);transform:rotate(12deg);transform-origin:top center;}
 .pelajar .kb-strip-top{background:linear-gradient(135deg,#0a7566,#0d9a88);}
 .pustaka .kb-strip-top{background:linear-gradient(135deg,#7b3fa0,#9b59b6);}
 .kb-strip-red{height:5px;background:var(--merah);}
@@ -180,7 +182,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   
 }
 .kb-watermark img{width:100%;height:100%;object-fit:contain;}
-.kb-logo{width:38px;height:38px;object-fit:contain;margin-bottom:6px;}
+.kb-logo{width:46px;height:46px;object-fit:contain;margin-bottom:6px;}
 .kb-rules{text-align:center;font-size:7px;color:#3a4a5a;line-height:1.85;}
 .kb-rules p{margin-bottom:2px;}
 .kb-rules .bold{display:block;font-weight:800;margin-top:1px;}
@@ -428,7 +430,7 @@ function renderKartu(data) {
     }
     const bcEl = document.getElementById('bc-' + i);
     if (bcEl) {
-      try { JsBarcode(bcEl, String(s.nisn), { format: 'CODE128', width: 1.0, height: 24, displayValue: false, margin: 0, lineColor: '#1e2a3a' }); } catch(e) {}
+      try { JsBarcode(bcEl, String(s.nisn), { format: 'CODE128', width: 1.4, height: 22, displayValue: false, margin: 0, lineColor: '#1e2a3a' }); } catch(e) {}
     }
   });
   updateSel();
