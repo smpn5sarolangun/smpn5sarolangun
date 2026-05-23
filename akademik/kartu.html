@@ -251,6 +251,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f4f8;color:var(--t
   }
   @page{margin:10mm;size:A4;}
 }
+
+.btn-upload-foto{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;background:#27ae60;color:#fff;
+  border-radius:8px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all 0.2s;white-space:nowrap;
+}
+.btn-upload-foto:hover{background:#219a52;}
 </style>
 </head>
 <body>
@@ -262,6 +270,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f4f8;color:var(--t
     <strong>Cetak Kartu — SMP Negeri 05 Sarolangun</strong>
     <span>Kartu Pelajar & Kartu Pustaka</span>
   </div>
+  <label class="btn-upload-foto" for="inputFoto" title="Upload foto siswa (nama file = NISN)">
+    📷 Upload Foto
+    <input type="file" id="inputFoto" accept="image/*" multiple style="display:none" onchange="handleUploadFoto(this)">
+  </label>
+  <span id="infoFoto" style="font-size:12px;color:rgba(255,255,255,0.7);"></span>
   <a href="absensi.html">← Kembali ke Absensi</a>
 </div>
 
@@ -303,6 +316,46 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f4f8;color:var(--t
 <div id="qrTemp" style="display:none;"></div>
 
 <script>
+// ── FOTO MAP (NISN → dataURL) ──
+const fotoMap = {};
+
+function handleUploadFoto(input) {
+  const files = Array.from(input.files);
+  let loaded = 0;
+  const info = document.getElementById('infoFoto');
+  info.textContent = '⏳ Memuat ' + files.length + ' foto...';
+  
+  files.forEach(file => {
+    // Nama file tanpa ekstensi = NISN
+    const nisn = file.name.replace(/\.[^.]+$/, '').trim();
+    const reader = new FileReader();
+    reader.onload = e => {
+      fotoMap[nisn] = e.target.result;
+      loaded++;
+      if (loaded === files.length) {
+        info.textContent = '✅ ' + Object.keys(fotoMap).length + ' foto siap';
+        // Re-render kartu dengan foto baru
+        const filtered = getFilteredSiswa();
+        renderKartu(filtered);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = ''; // reset input
+}
+
+
+function getFilteredSiswa() {
+  const kelas = document.getElementById('filterKelas') ? document.getElementById('filterKelas').value : '';
+  const cari  = document.getElementById('inputCari') ? document.getElementById('inputCari').value.toLowerCase() : '';
+  return allSiswa.filter(s => {
+    if (kelas && s.kelas !== kelas) return false;
+    if (cari && !s.nama.toLowerCase().includes(cari) && !String(s.nisn).includes(cari)) return false;
+    return true;
+  });
+}
+
+
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
 let TOKEN = sessionStorage.getItem('absensi_token') || localStorage.getItem('absensi_token_shared') || '';
 const TWH_URL = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIj4KICA8Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI1OCIgZmlsbD0iIzE1NjVjMCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI1MCIgZmlsbD0iIzE5NzZkMiIvPgogIDwhLS0gQnVrdSAtLT4KICA8cmVjdCB4PSIzNSIgeT0iNjUiIHdpZHRoPSI1MCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC45Ii8+CiAgPHBhdGggZD0iTTYwIDQ1IEw0MCA2NSBMODAgNjUgWiIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC44NSIvPgogIDwhLS0gQXBpIC0tPgogIDxlbGxpcHNlIGN4PSI2MCIgY3k9IjQyIiByeD0iNSIgcnk9IjgiIGZpbGw9IiNmZmQ2MDAiLz4KICA8ZWxsaXBzZSBjeD0iNjAiIGN5PSI0MCIgcng9IjMiIHJ5PSI1IiBmaWxsPSIjZmY4ZjAwIi8+CiAgPCEtLSBCdXJ1bmcga2lyaSAtLT4KICA8cGF0aCBkPSJNMjUgNTAgUTM1IDQyIDQ1IDQ4IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMi41IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8cGF0aCBkPSJNMjAgNDQgUTMwIDM2IDQyIDQ0IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPCEtLSBCdXJ1bmcga2FuYW4gLS0+CiAgPHBhdGggZD0iTTk1IDUwIFE4NSA0MiA3NSA0OCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTEwMCA0NCBROTAgMzYgNzggNDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8IS0tIFRla3MgLS0+CiAgPHRleHQgeD0iNjAiIHk9Ijg4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIiBmb250LXNpemU9IjciIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPlRVVCBXVVJJPC90ZXh0PgogIDx0ZXh0IHg9IjYwIiB5PSI5NyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZiIgZm9udC1zaXplPSI3IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtd2VpZ2h0PSJib2xkIj5IQU5EQVlBTkk8L3RleHQ+Cjwvc3ZnPg==';
@@ -415,8 +468,10 @@ function buatKartuHTML(s, i) {
   const warnasAvatar = ['#0a7e8c','#0d3b6e','#1a7a4a','#7d3c98','#c0392b','#e67e22'];
   const wAvatar = warnasAvatar[s.nisn.charCodeAt(s.nisn.length-1) % warnasAvatar.length];
   
-  const fotoHtml = s.fotoUrl
-    ? `<img src="${s.fotoUrl}" alt="${s.nama}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
+  const nisnStr = String(s.nisn||'');
+  const fotoSrc = fotoMap[nisnStr] || fotoMap[nisnStr.replace(/^0+/,'')] || s.fotoUrl || '';
+  const fotoHtml = fotoSrc
+    ? `<img src="${fotoSrc}" alt="${s.nama}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
     + `<div class="avatar" style="background:${wAvatar};display:none;">${inisial}</div>`
     : `<div class="avatar" style="background:${wAvatar};">${inisial}</div>`;
 
