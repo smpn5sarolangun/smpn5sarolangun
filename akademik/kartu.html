@@ -103,7 +103,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 
 /* Logo kanan mix-blend-mode multiply */
 .kd-logo-right{width:76px;height:76px;flex-shrink:0;align-self:flex-start;padding-top:12px;}
-.kd-logo-right img{width:100%;height:100%;object-fit:contain;}
+.kd-logo-right img{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;display:block;margin:auto;}
 
 /* FOTO overlap naik ke header */
 .kd-foto{
@@ -615,12 +615,12 @@ async function downloadPDF() {
   sub.textContent = '';
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const marginLeft = 12;
-  const marginTop  = 12;
+  const marginLeft = 0;
+  const marginTop  = 0;
   const cardW      = 86;
   const cardH      = 54;
-  const gapX       = 4;
-  const gapY       = 5;
+  const gapX       = 0;
+  const gapY       = 0;
   const nisnToIdx = {};
   tampilSiswa.forEach((s, i) => { nisnToIdx[String(s.nisn)] = i; });
   for (let t = 0; t < target.length; t++) {
@@ -639,10 +639,10 @@ async function downloadPDF() {
     noprint.forEach(e => e.style.visibility = 'hidden');
     try {
       const yPos = marginTop + rowOnPage * (cardH + gapY);
-      const canvasD = await html2canvas(elD, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#f0ede8' });
+      const canvasD = await html2canvas(elD, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#f0ede8', imageTimeout: 0 });
       pdf.addImage(canvasD.toDataURL('image/jpeg', 0.95), 'JPEG', marginLeft, yPos, cardW, cardH);
       if (elB) {
-        const canvasB = await html2canvas(elB, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#f0ede8' });
+        const canvasB = await html2canvas(elB, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#f0ede8', imageTimeout: 0 });
         pdf.addImage(canvasB.toDataURL('image/jpeg', 0.95), 'JPEG', marginLeft + cardW + gapX, yPos, cardW, cardH);
       }
     } catch(e) { console.error(s.nama, e); }
