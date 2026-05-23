@@ -410,72 +410,68 @@ function buatKartuHTML(s, i) {
   const nisnStr = String(s.nisn || '');
   const fotoSrc = fotoMap[nisnStr] || fotoMap[nisnStr.replace(/^0+/, '')] || s.fotoUrl || '';
   const fotoHtml = fotoSrc
-    ? '<img src="' + fotoSrc + '" alt="' + s.nama + '" onerror="this.style.display='none';this.nextSibling.style.display='flex'">' +
-      '<div class="avatar" style="display:none;">' + inisial + '</div>'
-    : '<div class="avatar">' + inisial + '</div>';
+    ? `<img src="${fotoSrc}" alt="foto" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar" style="display:none;">${inisial}</div>`
+    : `<div class="avatar">${inisial}</div>`;
   const ttl = (s.tempatLahir ? s.tempatLahir + ', ' : '') + (formatTgl(s.tglLahir) || s.tglLahir || '');
   const isChecked = selectedSet.has(nisnStr) ? 'checked' : '';
 
-  return [
-    '<div class="kartu-unit ' + cls + '" data-nisn="' + nisnStr + '">',
-    '  <div class="kartu-unit-header no-print">',
-    '    <input type="checkbox" class="cb-siswa" ' + isChecked + ' onchange="toggleSiswa('' + nisnStr + '',this.checked)">',
-    '    <span>' + s.nama + ' &middot; ' + s.kelas + '</span>',
-    '  </div>',
-    '  <div class="kartu-pair">',
-    '    <!-- DEPAN -->',
-    '    <div class="kartu-depan" id="depan-' + i + '">',
-    '      <div class="kd-header">',
-    '        <div class="kd-logo"><img src="' + LOGO_URL + '" alt="Logo"></div>',
-    '        <div class="kd-header-txt">',
-    '          <div class="judul">' + labelKartu + '</div>',
-    '          <div class="sekolah">SMP NEGERI 05 SAROLANGUN</div>',
-    '          <div class="alamat">Jl. Diponegoro No. 01 Desa Bukit Talang Mas, Kec. Singkut,<br>Kab. Sarolangun Prov. Jambi</div>',
-    '        </div>',
-    '        <div class="kd-divider"></div>',
-    '        <div class="kd-header-right"></div>',
-    '      </div>',
-    '      <div class="kd-foto">' + fotoHtml + '</div>',
-    '      <div class="kd-nisn-stripe"><span class="kd-nisn-no">' + s.nisn + '</span></div>',
-    '      <div class="kd-data">',
-    '        <div class="kd-nama">' + s.nama + '</div>',
-    '        <div class="kd-nisn-txt">' + s.nisn + '</div>',
-    '        <div class="kd-ttl">' + ttl + '</div>',
-    '        <div class="kd-kelas">Kelas ' + s.kelas + '</div>',
-    '      </div>',
-    '      <div class="kd-sekolah">',
-    '        <strong>SMP NEGERI 05 SAROLANGUN</strong>',
-    '        Contact Us<br>smpn5sarolangun@gmail.com',
-    '      </div>',
-    '      <div class="kd-barcode"><svg id="bc-' + i + '"></svg></div>',
-    '      <div class="kd-qr" id="qr-' + i + '"></div>',
-    '    </div>',
-    '    <!-- BELAKANG -->',
-    '    <div class="kartu-belakang" id="belakang-' + i + '">',
-    '      <div class="kb-strip-top"></div>',
-    '      <div class="kb-strip-red"></div>',
-    '      <div class="kb-body">',
-    '        <div class="kb-watermark"><img src="' + LOGO_URL + '" alt="wm"></div>',
-    '        <img class="kb-logo" src="' + LOGO_URL + '" alt="Logo">',
-    '        <div class="kb-rules">',
-    '          <p>Kartu ' + (cls === 'pelajar' ? 'Pelajar' : 'Pustaka') + ' ini wajib dibawa setiap hari untuk proses ' + labelAktif + '.</p>',
-    '          <p>Kartu ini berlaku selama pemilik berstatus sebagai siswa <span class="bold">SMP NEGERI 05 SAROLANGUN</span></p>',
-    '          <p>Kartu ini tidak boleh berpindah milik.</p>',
-    '          <p>Apabila Anda kehilangan atau menemukan kartu ini, mohon segera<br>menghubungi nomor telepon atau kontak sekolah yang tersedia.</p>',
-    '        </div>',
-    '      </div>',
-    '      <div class="kb-footer">',
-    '        <div class="kb-footer-name">SMP NEGERI 05 SAROLANGUN</div>',
-    '        <div class="kb-footer-addr">Jalan Diponegoro No 1 Desa Bukit Talang Mas, Kecamatan Singkut, Kabupaten Sarolangun</div>',
-    '      </div>',
-    '    </div>',
-    '  </div>',
-    '  <div class="dl-row no-print">',
-    '    <button class="btn-dl btn-dl-d" onclick="dlSatu(' + i + ',false)">&#x2B07; Depan</button>',
-    '    <button class="btn-dl btn-dl-db" onclick="dlSatu(' + i + ',true)">&#x2B07; Depan+Belakang</button>',
-    '  </div>',
-    '</div>'
-  ].join('\n');
+  return `
+  <div class="kartu-unit ${cls}" data-nisn="${nisnStr}">
+    <div class="kartu-unit-header no-print">
+      <input type="checkbox" class="cb-siswa" ${isChecked} onchange="toggleSiswa('${nisnStr}',this.checked)">
+      <span>${s.nama} &middot; ${s.kelas}</span>
+    </div>
+    <div class="kartu-pair">
+      <div class="kartu-depan" id="depan-${i}">
+        <div class="kd-header">
+          <div class="kd-logo"><img src="${LOGO_URL}" alt="Logo"></div>
+          <div class="kd-header-txt">
+            <div class="judul">${labelKartu}</div>
+            <div class="sekolah">SMP NEGERI 05 SAROLANGUN</div>
+            <div class="alamat">Jl. Diponegoro No. 01 Desa Bukit Talang Mas, Kec. Singkut,<br>Kab. Sarolangun Prov. Jambi</div>
+          </div>
+          <div class="kd-divider"></div>
+          <div class="kd-header-right"></div>
+        </div>
+        <div class="kd-foto">${fotoHtml}</div>
+        <div class="kd-nisn-stripe"><span class="kd-nisn-no">${s.nisn}</span></div>
+        <div class="kd-data">
+          <div class="kd-nama">${s.nama}</div>
+          <div class="kd-nisn-txt">${s.nisn}</div>
+          <div class="kd-ttl">${ttl}</div>
+          <div class="kd-kelas">Kelas ${s.kelas}</div>
+        </div>
+        <div class="kd-sekolah">
+          <strong>SMP NEGERI 05 SAROLANGUN</strong>
+          Contact Us<br>smpn5sarolangun@gmail.com
+        </div>
+        <div class="kd-barcode"><svg id="bc-${i}"></svg></div>
+        <div class="kd-qr" id="qr-${i}"></div>
+      </div>
+      <div class="kartu-belakang" id="belakang-${i}">
+        <div class="kb-strip-top"></div>
+        <div class="kb-strip-red"></div>
+        <div class="kb-body">
+          <div class="kb-watermark"><img src="${LOGO_URL}" alt="wm"></div>
+          <img class="kb-logo" src="${LOGO_URL}" alt="Logo">
+          <div class="kb-rules">
+            <p>Kartu ${cls === 'pelajar' ? 'Pelajar' : 'Pustaka'} ini wajib dibawa setiap hari untuk proses ${labelAktif}.</p>
+            <p>Kartu ini berlaku selama pemilik berstatus sebagai siswa <span class="bold">SMP NEGERI 05 SAROLANGUN</span></p>
+            <p>Kartu ini tidak boleh berpindah milik.</p>
+            <p>Apabila Anda kehilangan atau menemukan kartu ini, mohon segera menghubungi nomor telepon atau kontak sekolah yang tersedia.</p>
+          </div>
+        </div>
+        <div class="kb-footer">
+          <div class="kb-footer-name">SMP NEGERI 05 SAROLANGUN</div>
+          <div class="kb-footer-addr">Jalan Diponegoro No 1 Desa Bukit Talang Mas, Kecamatan Singkut, Kabupaten Sarolangun</div>
+        </div>
+      </div>
+    </div>
+    <div class="dl-row no-print">
+      <button class="btn-dl btn-dl-d" onclick="dlSatu(${i},false)">&#x2B07; Depan</button>
+      <button class="btn-dl btn-dl-db" onclick="dlSatu(${i},true)">&#x2B07; Depan+Belakang</button>
+    </div>
+  </div>`;
 }
 
 async function dlSatu(i, withBelakang) {
