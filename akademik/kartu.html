@@ -93,15 +93,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .kd-deko-kiri{position:absolute;top:0;left:0;width:0;height:0;pointer-events:none;}
 .kd-deko-kiri::before{content:'';position:absolute;top:0;left:0;width:0;height:0;border-style:solid;border-width:96px 0 0 130px;border-color:transparent transparent transparent rgba(255,255,255,0.07);}
 
-.kd-header-txt{flex:1;text-align:right;padding:0 10px 0 0;align-self:flex-start;padding-top:6px;}
-.kd-header-txt .judul{font-size:13px;font-weight:900;color:#f8c400;letter-spacing:2px;text-transform:uppercase;}
-.kd-header-txt .sekolah{font-size:11px;font-weight:800;color:#fff;line-height:1.2;margin-top:1px;}
-.kd-header-txt .alamat{font-size:5.8px;color:rgba(255,255,255,0.82);line-height:1.4;margin-top:2px;}
+.kd-header-txt{flex:1;text-align:right;padding:0 10px 0 0;align-self:flex-start;padding-top:8px;}
+.kd-header-txt .judul{font-size:14px;font-weight:900;color:#f8c400;letter-spacing:2px;text-transform:uppercase;line-height:1.15;}
+.kd-header-txt .sekolah{font-size:11.5px;font-weight:800;color:#fff;line-height:1.2;margin-top:3px;}
+.kd-header-txt .alamat{font-size:6px;color:rgba(255,255,255,0.82);line-height:1.4;margin-top:3px;}
 
 .kd-divider{width:1.5px;height:52px;background:rgba(255,255,255,0.4);flex-shrink:0;margin-right:10px;}
 
 /* Logo kanan mix-blend-mode multiply */
-.kd-logo-right{width:54px;height:54px;flex-shrink:0;align-self:flex-start;padding-top:4px;}
+.kd-logo-right{width:56px;height:56px;flex-shrink:0;align-self:flex-start;padding-top:6px;}
 .kd-logo-right img{width:100%;height:100%;object-fit:contain;}
 
 /* FOTO overlap naik ke header */
@@ -134,16 +134,16 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .kd-ttl{font-size:8px;color:#555;line-height:1.4;}
 
 /* BARCODE lebih besar */
-.kd-barcode{position:absolute;bottom:4px;left:12px;width:110px;height:22px;}
+.kd-barcode{position:absolute;bottom:4px;left:14px;width:110px;height:22px;}
 .kd-barcode svg{width:100%;height:100%;}
 
 /* QR geser bawah */
-.kd-qr{position:absolute;right:5px;top:102px;width:70px;height:70px;}
+.kd-qr{position:absolute;right:14px;top:102px;width:70px;height:70px;}
 .kd-qr canvas,.kd-qr img{width:70px!important;height:70px!important;}
 
 /* INFO SEKOLAH hampir sejajar barcode, ada jarak dengan QR */
 .kd-sekolah{
-  position:absolute;right:8px;bottom:6px;
+  position:absolute;right:14px;bottom:6px;
   text-align:right;font-size:6.5px;color:#555;line-height:1.7;
 }
 .kd-sekolah strong{display:block;font-size:7px;color:#0d3b6e;font-weight:800;}
