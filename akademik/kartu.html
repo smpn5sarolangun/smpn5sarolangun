@@ -82,7 +82,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 
 /* HEADER */
 .kd-header{
-  position:absolute;top:0;left:0;right:0;height:118px;
+  position:absolute;top:0;left:0;right:0;height:110px;
   display:flex;align-items:center;padding:0 14px;gap:0;overflow:hidden;
 }
 .pelajar .kd-header{background:linear-gradient(135deg,#0a7566 0%,#0d9a88 55%,#0a6e5e 100%);}
@@ -445,7 +445,6 @@ function buatKartuHTML(s, i) {
   const labelAktif = cls === 'pelajar' ? 'absensi' : 'peminjaman buku';
   const inisial = s.nama.split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase();
   const nisnStr = String(s.nisn || '');
-  const noPustaka = s.noPustaka ? String(s.noPustaka) : nisnStr;
   const fotoSrc = fotoMap[nisnStr] || fotoMap[nisnStr.replace(/^0+/, '')] || s.fotoUrl || '';
   const fotoHtml = fotoSrc
     ? `<img src="${fotoSrc}" alt="foto" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar" style="display:none;">${inisial}</div>`
