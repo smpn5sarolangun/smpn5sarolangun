@@ -13,7 +13,7 @@
 <style>
 :root{
   --teal:#0a7566;--teal2:#0d9a88;--merah:#c0392b;
-  --putaka:#7b3fa0;--putaka2:#9b59b6;--krem:#f0ede8;
+  --putaka:#3a7f8f;--putaka2:#4a90a4;--krem:#f0ede8;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a;}
@@ -82,7 +82,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 
 /* HEADER */
 .kd-header{
-  position:absolute;top:0;left:0;right:0;height:84px;
+  position:absolute;top:0;left:0;right:0;height:110px;
   display:flex;align-items:center;padding:0 14px;gap:0;overflow:hidden;
 }
 .pelajar .kd-header{background:linear-gradient(135deg,#0a7566 0%,#0d9a88 55%,#0a6e5e 100%);}
@@ -445,6 +445,7 @@ function buatKartuHTML(s, i) {
   const labelAktif = cls === 'pelajar' ? 'absensi' : 'peminjaman buku';
   const inisial = s.nama.split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase();
   const nisnStr = String(s.nisn || '');
+  const noPustaka = s.noPustaka ? String(s.noPustaka) : nisnStr;
   const fotoSrc = fotoMap[nisnStr] || fotoMap[nisnStr.replace(/^0+/, '')] || s.fotoUrl || '';
   const fotoHtml = fotoSrc
     ? `<img src="${fotoSrc}" alt="foto" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="avatar" style="display:none;">${inisial}</div>`
@@ -474,7 +475,7 @@ function buatKartuHTML(s, i) {
           <div class="kd-logo-right"><img src="${LOGO_URL}" alt="Logo"></div>
         </div>
         <div class="kd-foto">${fotoHtml}</div>
-        <div class="kd-nisn-stripe"><span class="kd-nisn-no">${s.nisn}</span></div>
+        <div class="kd-nisn-stripe"><span class="kd-nisn-no">${cls === 'pustaka' && s.noPustaka ? s.noPustaka : s.nisn}</span></div>
         <div class="kd-qr" id="qr-${i}"></div>
         <div class="kd-sekolah">
           <strong>SMP NEGERI 05 SAROLANGUN</strong>
