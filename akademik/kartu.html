@@ -270,9 +270,17 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   </div>
   <div class="fg">
     <label>Filter Kelas</label>
-    <select id="filterKelas" onchange="filterSiswa()">
-      <option value="">Semua Kelas</option>
-    </select>
+    <div style="position:relative;display:inline-block;">
+      <button class="btn" id="btnFilterKelas" onclick="toggleDropdownKelas(event)" style="background:#1a2a3a;color:#9aabb8;border:1px solid #2a3a4a;min-width:140px;text-align:left;padding:6px 10px;">
+        Semua Kelas &#x25BC;
+      </button>
+      <div id="dropdownKelas" style="display:none;position:absolute;top:100%;left:0;background:#1a2a3a;border:1px solid #2a3a4a;border-radius:6px;z-index:999;min-width:160px;max-height:260px;overflow-y:auto;padding:6px 0;box-shadow:0 4px 12px rgba(0,0,0,0.5);">
+        <label style="display:flex;align-items:center;gap:6px;padding:5px 12px;cursor:pointer;font-size:12px;color:#9aabb8;border-bottom:1px solid #2a3a4a;">
+          <input type="checkbox" id="cbKelasSemua" checked onchange="toggleKelasSemua(this)"> Semua Kelas
+        </label>
+        <div id="listKelasCheckbox"></div>
+      </div>
+    </div>
   </div>
   <div class="fg">
     <label>Cari Siswa</label>
@@ -298,9 +306,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   <div class="info-sel" id="infoSel"></div>
 </div>
 <div class="cb-panel no-print">
-  <label><input type="checkbox" id="cekSemua" onchange="toggleSemua(this)"> Pilih Semua Tampil</label>
+  <button class="btn" onclick="cekSemuaTampil()" style="background:#1a2a3a;color:#9aabb8;border:1px solid #2a3a4a;font-size:12px;padding:4px 10px;">&#x2713; Cek Semua</button>
+  <button class="btn" onclick="uncekSemuaTampil()" style="background:#1a2a3a;color:#9aabb8;border:1px solid #2a3a4a;font-size:12px;padding:4px 10px;">&#x2715; Uncek Semua</button>
   <span style="color:#ccc;">|</span>
-  <span style="font-size:11px;color:#9aabb8;">Centang untuk ZIP selektif &middot; Unduh 1 kartu pakai tombol di bawah kartu</span>
+  <span style="font-size:11px;color:#9aabb8;">Centang untuk ZIP/PDF selektif</span>
 </div>
 
 <div class="kartu-area" id="kartuArea">
@@ -362,11 +371,13 @@ async function muatSiswa() {
     const d = await r.json();
     if (!d.ok) { window.location.href = 'login.html'; return; }
     allSiswa = d.data;
-    const kelas = [...new Set(allSiswa.map(s => s.kelas).filter(Boolean))].sort();
-    const sel = document.getElementById('filterKelas');
-    kelas.forEach(k => {
-      const opt = document.createElement('option');
-      opt.value = k; opt.textContent = k; sel.appendChild(opt);
+    const kelasList = [...new Set(allSiswa.map(s => s.kelas).filter(Boolean))].sort();
+    const listDiv = document.getElementById('listKelasCheckbox');
+    kelasList.forEach(k => {
+      const lbl = document.createElement('label');
+      lbl.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 12px;cursor:pointer;font-size:12px;color:#ccc;';
+      lbl.innerHTML = '<input type="checkbox" class="cb-kelas" value="' + k + '" checked onchange="onKelasChange()"> ' + k;
+      listDiv.appendChild(lbl);
     });
     tampilSiswa = allSiswa;
     renderKartu(tampilSiswa);
@@ -382,13 +393,58 @@ function setTipe(tipe) {
   renderKartu(tampilSiswa);
 }
 
+// --- DROPDOWN KELAS MULTI-SELECT ---
+let dropdownOpen = false;
+function toggleDropdownKelas(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('dropdownKelas');
+  dropdownOpen = !dropdownOpen;
+  dd.style.display = dropdownOpen ? 'block' : 'none';
+}
+document.addEventListener('click', () => {
+  if (dropdownOpen) {
+    document.getElementById('dropdownKelas').style.display = 'none';
+    dropdownOpen = false;
+  }
+});
+function getKelasChecked() {
+  return [...document.querySelectorAll('.cb-kelas:checked')].map(c => c.value);
+}
+function onKelasChange() {
+  const all = document.querySelectorAll('.cb-kelas');
+  const checked = document.querySelectorAll('.cb-kelas:checked');
+  document.getElementById('cbKelasSemua').checked = (checked.length === all.length);
+  updateBtnFilterKelas();
+  filterSiswa();
+}
+function toggleKelasSemua(cb) {
+  document.querySelectorAll('.cb-kelas').forEach(c => c.checked = cb.checked);
+  updateBtnFilterKelas();
+  filterSiswa();
+}
+function updateBtnFilterKelas() {
+  const all = document.querySelectorAll('.cb-kelas');
+  const checked = document.querySelectorAll('.cb-kelas:checked');
+  const btn = document.getElementById('btnFilterKelas');
+  if (checked.length === 0) btn.textContent = 'Pilih Kelas ▼';
+  else if (checked.length === all.length) btn.textContent = 'Semua Kelas ▼';
+  else if (checked.length === 1) btn.textContent = checked[0].value + ' ▼';
+  else btn.textContent = checked.length + ' Kelas ▼';
+}
+
+// --- FILTER: hasil pencarian ∪ selectedSet ---
 function filterSiswa() {
   const q = document.getElementById('inputCari').value.toLowerCase();
-  const kelas = document.getElementById('filterKelas').value;
-  tampilSiswa = allSiswa.filter(s =>
-    (!q || s.nama.toLowerCase().includes(q) || String(s.nisn).includes(q)) &&
-    (!kelas || s.kelas === kelas)
+  const kelasDipilih = getKelasChecked();
+  // Siswa yang lolos filter kelas + pencarian
+  const hasilCari = allSiswa.filter(s =>
+    (kelasDipilih.length === 0 || kelasDipilih.includes(s.kelas)) &&
+    (!q || s.nama.toLowerCase().includes(q) || String(s.nisn).includes(q))
   );
+  // Union: tampilkan hasil cari + yang sudah dicentang (agar tidak hilang saat mengetik)
+  const semuaNisnTampil = new Set(hasilCari.map(s => String(s.nisn)));
+  selectedSet.forEach(nisn => semuaNisnTampil.add(nisn));
+  tampilSiswa = allSiswa.filter(s => semuaNisnTampil.has(String(s.nisn)));
   renderKartu(tampilSiswa);
 }
 
@@ -396,12 +452,14 @@ function toggleSiswa(nisn, checked) {
   if (checked) selectedSet.add(nisn); else selectedSet.delete(nisn);
   updateSel();
 }
-function toggleSemua(cb) {
-  tampilSiswa.forEach(s => {
-    if (cb.checked) selectedSet.add(String(s.nisn));
-    else selectedSet.delete(String(s.nisn));
-  });
-  document.querySelectorAll('.cb-siswa').forEach(c => c.checked = cb.checked);
+function cekSemuaTampil() {
+  tampilSiswa.forEach(s => selectedSet.add(String(s.nisn)));
+  document.querySelectorAll('.cb-siswa').forEach(c => c.checked = true);
+  updateSel();
+}
+function uncekSemuaTampil() {
+  tampilSiswa.forEach(s => selectedSet.delete(String(s.nisn)));
+  document.querySelectorAll('.cb-siswa').forEach(c => c.checked = false);
   updateSel();
 }
 function updateSel() {
