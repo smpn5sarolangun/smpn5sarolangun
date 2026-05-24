@@ -87,12 +87,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 }
 .pelajar .kd-header{background:linear-gradient(135deg,#0a7566 0%,#0d9a88 55%,#0a6e5e 100%);}
 .pustaka .kd-header{background:linear-gradient(135deg,var(--putaka) 0%,var(--putaka2) 55%,#2d6b7a 100%);}
-.kd-header::before{content:'';position:absolute;right:90px;top:-10px;width:58px;height:100px;background:rgba(255,255,255,0.05);transform:rotate(-12deg);pointer-events:none;}
-.kd-header::after{content:'';position:absolute;right:58px;top:-10px;width:32px;height:100px;background:rgba(255,255,255,0.04);transform:rotate(-12deg);pointer-events:none;}
+
+
 
 /* Dekorasi miring kiri atas via pseudo tidak bisa multiple, pakai div */
 .kd-deko-kiri{position:absolute;top:0;left:0;width:0;height:0;pointer-events:none;}
-.kd-deko-kiri::before{content:'';position:absolute;top:0;left:-20px;width:90px;height:130px;background:rgba(255,255,255,0.06);transform:skewX(-20deg);transform-origin:bottom right;pointer-events:none;}
+.kd-deko-kiri::before{content:'';position:absolute;top:0;left:-10px;width:600px;height:100%;background:rgba(255,255,255,0.1);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
+.kd-deko-kiri::after{content:'';position:absolute;top:0;left:-70px;width:60px;height:100%;background:rgba(255,255,255,0.18);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 
 .kd-header-txt{flex:1;text-align:right;padding:0 12px 0 0;padding-top:8px;}
 .kd-header-txt .judul{font-size:16px;font-weight:900;color:#f8c400;letter-spacing:2px;text-transform:uppercase;line-height:1.15;}
@@ -166,8 +167,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .pustaka .kartu-belakang{background:#f8f5fc;}
 
 .kb-strip-top{height:26px;position:relative;overflow:hidden;}
-.kb-strip-top::before{content:'';position:absolute;top:0;right:100px;width:40px;height:30px;background:rgba(255,255,255,0.08);transform:skewX(-20deg);pointer-events:none;}
-.kb-strip-top::after{content:'';position:absolute;top:0;right:60px;width:22px;height:30px;background:rgba(255,255,255,0.05);transform:skewX(-20deg);pointer-events:none;}
+.kb-strip-top::before{content:'';position:absolute;top:0;left:-10px;width:400px;height:100%;background:rgba(255,255,255,0.1);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
+.kb-strip-top::after{content:'';position:absolute;top:0;left:-70px;width:60px;height:100%;background:rgba(255,255,255,0.18);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .pelajar .kb-strip-top{background:linear-gradient(135deg,#0a7566,#0d9a88);}
 .pustaka .kb-strip-top{background:linear-gradient(135deg,var(--putaka),var(--putaka2));}
 .kb-strip-red{height:6px;background:var(--merah);}
@@ -175,7 +176,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 
 .kb-body{
   flex:1;display:flex;flex-direction:column;
-  align-items:center;padding:6px 24px 4px;position:relative;overflow:hidden;
+  align-items:center;padding:14px 24px 4px;position:relative;overflow:hidden;
 }
 .kb-watermark{
   position:absolute;top:10px;left:-60px;
@@ -208,19 +209,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 /* Strip hijau tipis bawah */
 
 /* Stripe di area teal kanan footer */
-.kb-footer-teal-stripe{
-  position:absolute;top:0;right:45px;
-  width:22px;height:100%;
-  background:rgba(255,255,255,0.1);
-  transform:skewX(-20deg);
-  pointer-events:none;z-index:2;
-}
-.kb-footer-teal-stripe::after{
-  content:'';position:absolute;top:0;left:28px;
-  width:14px;height:100%;
-  background:rgba(255,255,255,0.06);
-  transform:skewX(0deg);
-}
+.kb-footer-teal-stripe{position:absolute;top:0;right:-10px;width:400px;height:100%;background:rgba(255,255,255,0.1);transform:skewX(-60deg);transform-origin:bottom right;pointer-events:none;z-index:2;}
+.kb-footer-teal-stripe::after{content:'';position:absolute;top:0;right:-70px;width:60px;height:100%;background:rgba(255,255,255,0.18);transform:skewX(-60deg);transform-origin:bottom right;}
 
 
 
