@@ -506,14 +506,15 @@ function renderKartu(data) {
   }
   area.innerHTML = data.map((s, i) => buatKartuHTML(s, i)).join('');
   data.forEach((s, i) => {
+    const kodeKartu = (tipeKartu === 'pustaka' && s.noPustaka) ? String(s.noPustaka) : String(s.nisn);
     const qrEl = document.getElementById('qr-' + i);
     if (qrEl) {
       qrEl.innerHTML = '';
-      new QRCode(qrEl, { text: String(s.nisn), width: 80, height: 80, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
+      new QRCode(qrEl, { text: kodeKartu, width: 80, height: 80, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
     }
     const bcEl = document.getElementById('bc-' + i);
     if (bcEl) {
-      try { JsBarcode(bcEl, String(s.nisn), { format: 'CODE128', width: 1.6, height: 26, displayValue: false, margin: 0, lineColor: '#1e2a3a' }); } catch(e) {}
+      try { JsBarcode(bcEl, kodeKartu, { format: 'CODE128', width: 1.6, height: 26, displayValue: false, margin: 0, lineColor: '#1e2a3a' }); } catch(e) {}
     }
   });
   updateSel();
