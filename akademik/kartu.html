@@ -125,7 +125,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   position:absolute;top:88px;right:0;height:22px;width:auto;
   background:var(--merah);display:inline-flex;align-items:center;padding:0 18px;z-index:1;
 }
-.pustaka .kd-nisn-stripe{background:var(--putaka);}
 .kd-nisn-no{font-size:16px;font-weight:800;color:#fff;letter-spacing:2px;}
 
 /* NAMA NISN TTL bawah foto */
@@ -457,19 +456,24 @@ function filterSiswaDebounced() {
   _filterTimer = setTimeout(filterSiswa, 80);
 }
 
-// --- FILTER: hasil pencarian ∪ selectedSet ---
+// --- FILTER: hasil pencarian muncul di atas, selectedSet di bawah ---
 function filterSiswa() {
   const q = document.getElementById('inputCari').value.toLowerCase();
   const kelasDipilih = new Set(getKelasChecked());
-  // Siswa yang lolos filter kelas + pencarian
+
   const hasilCari = allSiswa.filter(s =>
     (kelasDipilih.size === 0 || kelasDipilih.has(s.kelas)) &&
     (!q || s.nama.toLowerCase().includes(q) || String(s.nisn).includes(q))
   );
-  // Union: tampilkan hasil cari + yang sudah dicentang (agar tidak hilang saat mengetik)
-  const semuaNisnTampil = new Set(hasilCari.map(s => String(s.nisn)));
-  selectedSet.forEach(nisn => semuaNisnTampil.add(nisn));
-  tampilSiswa = allSiswa.filter(s => semuaNisnTampil.has(String(s.nisn)));
+
+  const hasilNisn = new Set(hasilCari.map(s => String(s.nisn)));
+
+  // Yang dicentang tapi tidak masuk hasil cari → ditaruh di bawah
+  const selected_not_in_search = allSiswa.filter(s =>
+    selectedSet.has(String(s.nisn)) && !hasilNisn.has(String(s.nisn))
+  );
+
+  tampilSiswa = [...hasilCari, ...selected_not_in_search];
   renderKartu(tampilSiswa);
 }
 
