@@ -93,7 +93,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 /* Dekorasi miring kiri atas via pseudo tidak bisa multiple, pakai div */
 .kd-deko-kiri{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
 .kd-stripe-a{position:absolute;top:0;left:-70px;width:60px;height:100%;background:rgba(255,255,255,0.25);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
-.kd-stripe-b{position:absolute;top:0;left:-10px;width:800px;height:100%;background:rgba(255,255,255,0.18);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
+.kd-stripe-b{position:absolute;top:0;left:-10px;width:500px;height:100%;background:rgba(255,255,255,0.18);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kd-stripe-c{position:absolute;top:0;right:20px;width:50px;height:100%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 
 .kd-header-txt{flex:1;text-align:right;padding:0 12px 0 0;padding-top:8px;}
@@ -168,12 +168,12 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .pustaka .kartu-belakang{background:#f8f5fc;}
 
 .kb-strip-top{height:26px;position:relative;overflow:visible;}
-.kb-strip-top::before{content:'';position:absolute;top:0;left:-10px;width:500px;height:200%;background:rgba(255,255,255,0.12);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
+.kb-strip-top::before{content:'';position:absolute;top:0;left:-10px;width:300px;height:200%;background:rgba(255,255,255,0.12);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kb-strip-top::after{content:'';position:absolute;top:0;left:-55px;width:100px;height:200%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kb-strip-top-right{position:absolute;top:0;right:20px;width:50px;height:200%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .pelajar .kb-strip-top{background:linear-gradient(135deg,#0a7566,#0d9a88);}
 .pustaka .kb-strip-top{background:linear-gradient(135deg,var(--putaka),var(--putaka2));}
-.kb-strip-red{height:6px;background:var(--merah);}
+.kb-strip-red{height:6px;background:var(--merah);position:relative;z-index:10;}
 .pustaka .kb-strip-red{background:var(--putaka);}
 
 .kb-body{
@@ -198,15 +198,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 /* Merah di kiri */
 .kb-footer::before{
   content:'';position:absolute;top:0;left:0;bottom:8px;width:78%;
-  background:var(--merah);
+  background:var(--merah);z-index:5;
 }
 .pustaka .kb-footer::before{background:var(--putaka);}
 .kb-footer::after{display:none;}
 .pustaka .kb-footer::after{display:none;}
 
 
-.kb-footer-name{position:relative;z-index:2;font-size:11.5px;font-weight:800;color:#fff;text-transform:uppercase;padding:8px 14px 1px;}
-.kb-footer-addr{position:relative;z-index:2;font-size:7.5px;color:rgba(255,255,255,0.88);padding:0 14px 8px;}
+.kb-footer-name{position:relative;z-index:10;font-size:11.5px;font-weight:800;color:#fff;text-transform:uppercase;padding:8px 14px 1px;}
+.kb-footer-addr{position:relative;z-index:10;font-size:7.5px;color:rgba(255,255,255,0.88);padding:0 14px 8px;}
 
 /* Strip hijau tipis bawah */
 
