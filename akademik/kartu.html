@@ -174,7 +174,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .pelajar .kb-strip-top{background:linear-gradient(135deg,#0a7566,#0d9a88);}
 .pustaka .kb-strip-top{background:linear-gradient(135deg,var(--putaka),var(--putaka2));}
 .kb-strip-red{height:6px;background:var(--merah);position:relative;z-index:10;}
-.pustaka .kb-strip-red{background:var(--putaka);}
+.pustaka .kb-strip-red{background:var(--merah);}
 
 .kb-body{
   flex:1;display:flex;flex-direction:column;
@@ -200,7 +200,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   content:'';position:absolute;top:0;left:0;bottom:8px;width:78%;
   background:var(--merah);z-index:5;
 }
-.pustaka .kb-footer::before{background:var(--putaka);}
+.pustaka .kb-footer::before{background:var(--merah);}
 .kb-footer::after{display:none;}
 .pustaka .kb-footer::after{display:none;}
 
@@ -284,8 +284,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   </div>
   <div class="fg">
     <label>Cari Siswa</label>
-    <input type="text" id="inputCari" placeholder="Nama atau NISN..." style="width:170px;" oninput="filterSiswa()">
-    <button class="btn" onclick="clearFilter()" title="Reset semua filter" style="background:#1a2a3a;color:#9aabb8;border:1px solid #2a3a4a;font-size:12px;padding:4px 8px;margin-left:4px;">&#x2716; Clear</button>
+    <input type="text" id="inputCari" placeholder="Nama atau NISN..." style="width:190px;" oninput="filterSiswa()">
   </div>
   <button class="btn btn-print no-print" onclick="window.print()">&#x1F5A8; Print</button>
   <button class="btn no-print" style="background:#8e44ad;color:#fff;" onclick="downloadPDF()">&#x1F4C4; PDF A4</button>
@@ -309,6 +308,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 <div class="cb-panel no-print">
   <button class="btn" onclick="cekSemuaTampil()" style="background:#1a2a3a;color:#9aabb8;border:1px solid #2a3a4a;font-size:12px;padding:4px 10px;">&#x2713; Cek Semua</button>
   <button class="btn" onclick="uncekSemuaTampil()" style="background:#1a2a3a;color:#9aabb8;border:1px solid #2a3a4a;font-size:12px;padding:4px 10px;">&#x2715; Uncek Semua</button>
+  <button class="btn" onclick="clearFilter()" style="background:#1a2a3a;color:#c0392b;border:1px solid #2a3a4a;font-size:12px;padding:4px 10px;">&#x21BA; Clear Filter</button>
   <span style="color:#ccc;">|</span>
   <span style="font-size:11px;color:#9aabb8;">Centang untuk ZIP/PDF selektif</span>
 </div>
@@ -443,6 +443,10 @@ function clearFilter() {
   document.querySelectorAll('.cb-kelas').forEach(c => c.checked = true);
   document.getElementById('cbKelasSemua').checked = true;
   updateBtnFilterKelas();
+  // Sekalian uncek semua pilihan kartu
+  selectedSet.clear();
+  document.querySelectorAll('.cb-siswa').forEach(c => c.checked = false);
+  updateSel();
   filterSiswa();
 }
 
