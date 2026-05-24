@@ -83,7 +83,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 /* HEADER */
 .kd-header{
   position:absolute;top:0;left:0;right:0;height:110px;
-  display:flex;align-items:flex-start;padding:6px 14px 0;gap:0;overflow:hidden;
+  display:flex;align-items:flex-start;padding:6px 14px 0;gap:0;overflow:visible;
 }
 .pelajar .kd-header{background:linear-gradient(135deg,#0a7566 0%,#0d9a88 55%,#0a6e5e 100%);}
 .pustaka .kd-header{background:linear-gradient(135deg,var(--putaka) 0%,var(--putaka2) 55%,#2d6b7a 100%);}
@@ -167,7 +167,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 }
 .pustaka .kartu-belakang{background:#f8f5fc;}
 
-.kb-strip-top{height:26px;position:relative;overflow:hidden;}
+.kb-strip-top{height:26px;position:relative;overflow:visible;}
 .kb-strip-top::before{content:'';position:absolute;top:0;left:-10px;width:500px;height:200%;background:rgba(255,255,255,0.12);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kb-strip-top::after{content:'';position:absolute;top:0;left:-55px;width:100px;height:200%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kb-strip-top-right{position:absolute;top:0;right:-30px;width:50px;height:200%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom right;pointer-events:none;}
@@ -193,12 +193,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .pustaka .kb-rules .bold{color:var(--putaka);}
 
 /* Footer: hijau full, merah di kiri tidak sampai kanan */
-.kb-footer{position:relative;height:56px;overflow:hidden;background:var(--teal);width:100%;}
+.kb-footer{position:relative;height:56px;overflow:visible;background:var(--teal);width:100%;}
 .pustaka .kb-footer{background:var(--putaka2);}
 /* Merah di kiri */
 .kb-footer::before{
-  content:'';position:absolute;top:0;left:0;bottom:8px;width:78%;
+  content:'';position:absolute;top:0;left:0;bottom:0;width:78%;
   background:var(--merah);
+  opacity:1;
 }
 .pustaka .kb-footer::before{background:var(--putaka);}
 .kb-footer::after{display:none;}
