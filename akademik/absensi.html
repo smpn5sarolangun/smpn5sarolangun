@@ -1736,7 +1736,7 @@ function ambilCacheAbsen() {
     const obj = JSON.parse(localStorage.getItem(ABSEN_CACHE_KEY)||'null');
     if (!obj) return null;
     // Expired jika beda hari ATAU lebih dari 5 menit
-    if (obj.tgl !== getTglHariIni() || (Date.now() - (obj.ts||0)) > 5*60*1000) {
+    if (obj.tgl !== getTglHariIni()) { // expired jika beda hari
       localStorage.removeItem(ABSEN_CACHE_KEY);
       return null;
     }
@@ -1754,7 +1754,7 @@ function ambilCacheDashboard() {
   try {
     const obj = JSON.parse(localStorage.getItem(DASHBOARD_CACHE_KEY)||'null');
     if (!obj) return null;
-    if (obj.tgl !== getTglHariIni() || (Date.now() - (obj.ts||0)) > 5*60*1000) {
+    if (obj.tgl !== getTglHariIni()) { // expired jika beda hari
       localStorage.removeItem(DASHBOARD_CACHE_KEY);
       return null;
     }
@@ -1821,16 +1821,27 @@ async function refreshDashboardDanTabel() {
 
 async function loadTabelAbsenHariIni() {
   const today = getTglHariIni();
-  const r = await apiGet('getAbsensiHari', {tanggal: today});
-  if (!r.ok || !r.data) return;
-  renderTabelAbsenHariIni(r.data);
-  // Merge cache - jaga data quick yang belum confirmed server
+  // Tampilkan cache dulu agar tidak kosong
   const cacheAda = ambilCacheAbsen() || [];
-  const serverNisn = new Set(r.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
-  const quickData = cacheAda.filter(function(x){
-    return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
-  });
-  simpanCacheAbsen(r.data.concat(quickData));
+  if (cacheAda.length) {
+    renderTabelAbsenHariIni(cacheAda);
+  }
+  // Fetch server di background
+  try {
+    const r = await apiGet('getAbsensiHari', {tanggal: today});
+    if (!r.ok || !r.data) return;
+    // Merge cache dengan data server
+    const serverNisn = new Set(r.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
+    const quickData = cacheAda.filter(function(x){
+      return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
+    });
+    const merged = r.data.concat(quickData);
+    simpanCacheAbsen(merged);
+    renderTabelAbsenHariIni(merged);
+  } catch(e) {
+    // Fetch gagal - tabel sudah tampil dari cache, tidak apa-apa
+    console.log('loadTabelAbsenHariIni error:', e);
+  }
 }
 
 async function refreshStatistikSaja() {
