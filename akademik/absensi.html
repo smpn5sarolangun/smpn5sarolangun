@@ -1279,6 +1279,19 @@ window.addEventListener('load', async () => {
   if (cacheAbsen) renderTabelAbsenHariIni(cacheAbsen, true);
 
   // Fetch server di background (update data terbaru)
+  // Clear cache jika beda hari sebelum load apapun
+  try {
+    var cacheRaw = localStorage.getItem('absensi_hari_ini_v6');
+    if (cacheRaw) {
+      var cacheObj = JSON.parse(cacheRaw);
+      if (cacheObj.tgl !== getTglHariIni()) {
+        localStorage.removeItem('absensi_hari_ini_v6');
+        localStorage.removeItem('dashboard_hari_ini_v6');
+        console.log('Cache lama dihapus, ganti hari baru');
+      }
+    }
+  } catch(e) {}
+
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   fokusNisn();
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
