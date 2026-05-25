@@ -2222,6 +2222,9 @@ function pilihMdStatus(i, st) {
 }
 async function simpanMdStatus(i, nisn, nama, kelas) {
   var st = _mdStatus[i]; if (!st) return;
+  // Cegah klik ganda - disable tombol Simpan
+  var btnSave = document.getElementById('mdsave' + i);
+  if (btnSave) { if (btnSave.disabled) return; btnSave.disabled = true; btnSave.textContent = 'Menyimpan...'; }
 
   // Cari NISN valid dari dataSiswa
   var nisnFinal = (nisn && nisn !== 'undefined') ? nisn : '';
@@ -2985,14 +2988,23 @@ let jadwalPerHari = {
 
 // ── TOGGLE ALPA OTOMATIS ─────────────────────────────────────────
 async function loadToggleAlpa() {
-  // Baca dari localStorage - tidak perlu fetch server setiap load
   var lokal = localStorage.getItem('alpa_otomatis');
-  // Default ON jika belum pernah diset
-  var aktif = lokal === null ? true : lokal === 'true';
-  _alpaOtomatisAktif = aktif;
-  // Apply ke slider dengan delay untuk pastikan DOM sudah ready
-  setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 50);
-  setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 300);
+  if (lokal !== null) {
+    // Sudah pernah diset - pakai localStorage
+    _alpaOtomatisAktif = lokal === 'true';
+    setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 50);
+  } else {
+    // Belum pernah diset - fetch dari server
+    apiGet('getAlpaOtomatis').then(function(r) {
+      var aktif = r.ok ? (r.aktif !== false) : true;
+      _alpaOtomatisAktif = aktif;
+      localStorage.setItem('alpa_otomatis', aktif ? 'true' : 'false');
+      setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 50);
+    }).catch(function() {
+      _alpaOtomatisAktif = true;
+      setTimeout(function() { updateSliderAlpa(_alpaOtomatisAktif); }, 50);
+    });
+  }
 }
 
 
