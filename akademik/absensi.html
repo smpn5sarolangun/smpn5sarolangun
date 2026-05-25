@@ -1858,7 +1858,14 @@ async function loadTabelAbsenHariIni() {
     });
     const merged = r.data.concat(quickData);
     simpanCacheAbsen(merged);
-    renderTabelAbsenHariIni(merged);
+    // Hanya render ulang kalau tabel masih kosong (belum ada scan berjalan)
+    var tbodyRows = document.getElementById('tabelAbsenHariIni')?.querySelectorAll('tr[data-nisn]') || [];
+    if (tbodyRows.length === 0) {
+      renderTabelAbsenHariIni(merged);
+    } else if (merged.length > tbodyRows.length) {
+      // Ada data baru dari server yang belum di tabel - render
+      renderTabelAbsenHariIni(merged);
+    }
   } catch(e) {
     // Fetch gagal - tabel sudah tampil dari cache, tidak apa-apa
     console.log('loadTabelAbsenHariIni error:', e);
