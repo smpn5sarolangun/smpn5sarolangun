@@ -1279,6 +1279,9 @@ window.addEventListener('load', async () => {
   if (cacheAbsen) renderTabelAbsenHariIni(cacheAbsen, true);
 
   // Fetch server di background (update data terbaru)
+  // Ping server untuk warm up (cegah cold start delay)
+  apiGet('ping').catch(function(){}); 
+
   // Clear cache jika beda hari sebelum load apapun
   try {
     var cacheRaw = localStorage.getItem('absensi_hari_ini_v6');
