@@ -2120,18 +2120,15 @@ function bukаModalDetail(status) {
   var siswaList = [];
 
   if (status === 'belumMasuk') {
-    // Pakai NISN + cache untuk perbandingan yang akurat
+    // Pakai NISN dari cache - normalisasi strip leading zero
     var cacheAbsen = ambilCacheAbsen() || [];
+    var normNisn = function(n) { return String(n||'').trim().replace(/\.0$/, '').replace(/^0+/, ''); };
     var sudahNisn = new Set();
-    // Dari DOM tabel
-    dataDOM.forEach(function(d) {
-      var tr = document.querySelector('[data-nisn="' + d.nisn + '"]');
-      if (tr) sudahNisn.add(String(tr.dataset.nisn||'').trim());
+    cacheAbsen.forEach(function(d) { 
+      if (d.nisn) sudahNisn.add(normNisn(d.nisn));
     });
-    // Dari cache (lebih reliable)
-    cacheAbsen.forEach(function(d) { sudahNisn.add(String(d.nisn||'').trim()); });
     siswaList = dataSiswa
-      .filter(function(s){ return !sudahNisn.has(String(s.nisn||'').trim()); })
+      .filter(function(s){ return !sudahNisn.has(normNisn(s.nisn)); })
       .map(function(s){ return {nisn: s.nisn, nama: s.nama, kelas: s.kelas, info: 'Belum absen'}; });
 
   } else if (status === 'belumPulang') {
