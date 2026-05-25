@@ -2078,16 +2078,7 @@ function tampilNotif(icon, nama, detail, isError) {
 }
 
 function filterTabel(status) {
-  if (status === 'belumMasuk') {
-    // Refresh tabel dulu agar data terkini sebelum hitung belum masuk
-    loadTabelAbsenHariIni().then(function() {
-      bukаModalDetail(status);
-    }).catch(function() {
-      bukаModalDetail(status);
-    });
-  } else {
-    bukаModalDetail(status);
-  }
+  bukаModalDetail(status);
 }
 
 function bukаModalDetail(status) {
@@ -2265,8 +2256,14 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   var elSt = document.getElementById(st==='Izin'?'stIzin':st==='Sakit'?'stSakit':'stAlpa');
   if (elSt) elSt.textContent = parseInt(elSt.textContent||0) + 1;
 
+  // Tambah ke cache lokal
+  var cacheNow = ambilCacheAbsen() || [];
+  var tglHariIni = getTglHariIni();
+  cacheNow.push({tanggal:tglHariIni, nisn:nisnFinal, nama:nama, kelas:kelas, jamMasuk:'', jamPulang:'', status:st, ket:''});
+  simpanCacheAbsen(cacheNow);
+
   // Kirim ke server di background
-  apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:getTglHariIni()})
+  apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni})
     .catch(function() {});
 }
 
