@@ -2078,7 +2078,16 @@ function tampilNotif(icon, nama, detail, isError) {
 }
 
 function filterTabel(status) {
-  bukаModalDetail(status);
+  if (status === 'belumMasuk') {
+    // Refresh tabel dulu agar data terkini sebelum hitung belum masuk
+    loadTabelAbsenHariIni().then(function() {
+      bukаModalDetail(status);
+    }).catch(function() {
+      bukаModalDetail(status);
+    });
+  } else {
+    bukаModalDetail(status);
+  }
 }
 
 function bukаModalDetail(status) {
@@ -2120,9 +2129,18 @@ function bukаModalDetail(status) {
   var siswaList = [];
 
   if (status === 'belumMasuk') {
-    const sudahNama = new Set(dataDOM.map(function(d){ return d.nama; }));
+    // Pakai NISN + cache untuk perbandingan yang akurat
+    var cacheAbsen = ambilCacheAbsen() || [];
+    var sudahNisn = new Set();
+    // Dari DOM tabel
+    dataDOM.forEach(function(d) {
+      var tr = document.querySelector('[data-nisn="' + d.nisn + '"]');
+      if (tr) sudahNisn.add(String(tr.dataset.nisn||'').trim());
+    });
+    // Dari cache (lebih reliable)
+    cacheAbsen.forEach(function(d) { sudahNisn.add(String(d.nisn||'').trim()); });
     siswaList = dataSiswa
-      .filter(function(s){ return !sudahNama.has(s.nama); })
+      .filter(function(s){ return !sudahNisn.has(String(s.nisn||'').trim()); })
       .map(function(s){ return {nisn: s.nisn, nama: s.nama, kelas: s.kelas, info: 'Belum absen'}; });
 
   } else if (status === 'belumPulang') {
