@@ -1574,6 +1574,14 @@ async function prosesAbsen() {
 
 async function prosesAbsenNisn(nisn) {
   if (!nisn) return;
+  // Cegah scan ganda - flag per NISN
+  var nisnKey = String(nisn).trim().replace(/\.0$/, '');
+  if (window._sedangDiproses && window._sedangDiproses[nisnKey]) {
+    tampilNotif('⚠️', 'Sedang diproses...', 'Harap tunggu sebentar', true);
+    return;
+  }
+  if (!window._sedangDiproses) window._sedangDiproses = {};
+  window._sedangDiproses[nisnKey] = true;
   const nisnBersih = String(nisn).trim().replace(/[.]0$/, '').replace(/^0+/, '');
   var siswa = dataSiswa.find(function(s) {
     var sn = String(s.nisn||'').replace(/[.]0$/, '').replace(/^0+/, '');
@@ -1603,6 +1611,8 @@ async function prosesAbsenNisn(nisn) {
   if (MODE_SCAN === 'quick') {
     await konfirmasiAbsen();
   }
+  // Reset flag setelah selesai
+  if (window._sedangDiproses) delete window._sedangDiproses[nisnKey];
 }
 
 
@@ -1766,14 +1776,22 @@ function renderTabelAbsenHariIni(data, dariCache) {
   // Simpan ke cache hanya jika data dari server (bukan dari cache)
   if (!dariCache) simpanCacheAbsen(data);
 
-  tbody.innerHTML = data.slice().reverse().map(r => `
-    <tr>
-      <td style="font-weight:600">${r.nama}</td>
-      <td>${r.kelas}</td>
-      <td>${fmtJam(r.jamMasuk)}</td>
-      <td>${fmtJam(r.jamPulang)}</td>
-      <td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','')}">${r.status}</span></td>
-    </tr>`).join('');
+  // Hitung duplikat NISN
+  var nisnCount = {};
+  data.forEach(function(r){ var n=String(r.nisn||r.nama); nisnCount[n]=(nisnCount[n]||0)+1; });
+  tbody.innerHTML = data.slice().reverse().map(r => {
+    var nisnKey = String(r.nisn||r.nama);
+    var isDuplikat = nisnCount[nisnKey] > 1;
+    var namaStyle = isDuplikat ? 'font-weight:700;color:#e53935;' : 'font-weight:600;';
+    var dupBadge = isDuplikat ? ' <span style="font-size:10px;color:#fff;background:#e53935;border-radius:4px;padding:1px 5px;">GANDA</span>' : '';
+    return '<tr data-nisn="' + (r.nisn||'') + '">' +
+      '<td style="' + namaStyle + '">' + r.nama + dupBadge + '</td>' +
+      '<td>' + r.kelas + '</td>' +
+      '<td>' + fmtJam(r.jamMasuk) + '</td>' +
+      '<td>' + fmtJam(r.jamPulang) + '</td>' +
+      '<td><span class="badge badge-' + (r.status||'').toLowerCase().replace(' ','') + '">' + r.status + '</span></td>' +
+      '</tr>';
+  }).join('');
   // Update counter total absen
   var elTotal = document.getElementById('totalAbsenHariIni');
   if (elTotal && data && data.length) elTotal.textContent = data.length;
@@ -1901,7 +1919,8 @@ function resetInputAbsen() {
   document.getElementById('cariHasil').classList.remove('show');
   document.getElementById('siswaPreview').classList.remove('show');
   document.getElementById('btnAbsen').disabled = true;
-  siswaYangDipilih = null;  fokusNisn();
+  siswaYangDipilih = null;  window._sedangDiproses = {}; // reset semua flag
+  fokusNisn();
 }
 
 
