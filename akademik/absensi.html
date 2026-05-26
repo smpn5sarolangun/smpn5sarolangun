@@ -1639,25 +1639,25 @@ function cekSudahAbsenHariIni(nisn) {
     const nisnBersih = String(nisn||'').trim().replace(/\.0$/, '');
     const nisnNoZero = nisnBersih.replace(/^0+/, '');
     const today      = getTglHariIni();
-    const namaSiswa  = siswaYangDipilih ? siswaYangDipilih.nama : '';
 
-    // Cek 1: dari cache - semua status (bukan hanya yang punya jamMasuk)
+    // Cek 1: dari cache - pakai NISN saja, bukan nama
     const cache = ambilCacheAbsen() || [];
-    const dariCache = cache.find(x => {
+    const dariCache = cache.find(function(x) {
       const xn = String(x.nisn||'').trim().replace(/\.0$/, '').replace(/^0+/, '');
-      return (xn === nisnBersih || xn === nisnNoZero || x.nama === namaSiswa) &&
-             x.tanggal === today;
+      return (xn === nisnBersih || xn === nisnNoZero) && x.tanggal === today;
     });
     if (dariCache) return dariCache;
 
-    // Cek 2: dari tabel absensi hari ini
+    // Cek 2: dari tabel DOM - pakai data-nisn bukan nama
     const tbody = document.getElementById('tabelAbsenHariIni');
-    if (tbody && namaSiswa) {
-      for (const row of tbody.querySelectorAll('tr')) {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 3 && cells[0].textContent.trim() === namaSiswa) {
-          return { jamMasuk: cells[2].textContent.trim() || '—' };
-        }
+    if (tbody && nisn) {
+      var found = Array.from(tbody.querySelectorAll('tr[data-nisn]')).find(function(row) {
+        var rn = String(row.dataset.nisn||'').replace(/\.0$/, '').replace(/^0+/, '');
+        return rn === nisnBersih || rn === nisnNoZero;
+      });
+      if (found) {
+        var cells = found.querySelectorAll('td');
+        return { jamMasuk: cells[2] ? cells[2].textContent.trim() : '—' };
       }
     }
     return null;
