@@ -740,7 +740,7 @@ tr:hover td{background:#f8fafc;}
     <div style="overflow-x:auto;">
       <table>
         <thead><tr>
-          <th>Kelas</th><th>Total Siswa</th><th>Hadir</th><th>Persentase</th><th>Status</th>
+          <th>Kelas</th><th>Total</th><th>Belum</th><th>Hadir</th><th>%</th>
         </tr></thead>
         <tbody id="tabelKelas">
           <tr><td colspan="5" class="loading">Memuat...</td></tr>
@@ -1428,6 +1428,7 @@ function _updateDashboardUI(d) {
       <tr>
         <td style="font-weight:700">${k.kelas}</td>
         <td>${k.totalSiswa}</td>
+        <td style="color:${k.belumHadir>0?'#e65100':'#9aabb8'};font-weight:${k.belumHadir>0?'700':'400'}">${k.belumHadir||k.totalSiswa-k.hadir}</td>
         <td>${k.hadir}</td>
         <td>${k.persentase}%
           <div class="persen-bar"><div class="persen-fill" style="width:${k.persentase}%"></div></div>
@@ -2169,6 +2170,7 @@ function bukаModalDetail(status) {
     siswaList = dataSiswa
       .filter(function(s){ return !sudahNisn.has(normNisn(s.nisn)); })
       .map(function(s){ return {nisn: s.nisn, nama: s.nama, kelas: s.kelas, info: 'Belum absen'}; });
+    siswaList.sort(function(a,b){ return a.kelas.localeCompare(b.kelas)||a.nama.localeCompare(b.nama); });
 
   } else if (status === 'belumPulang') {
     siswaList = dataDOM
@@ -2209,6 +2211,8 @@ function bukаModalDetail(status) {
   } else {
     var html4 = '<input type="text" placeholder="🔍 Cari nama..." autocomplete="off" oninput="filterMdList(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;margin-bottom:10px;box-sizing:border-box;outline:none;">';
     html4 += '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">'+siswaList.length+' siswa</p>';
+    // Urut per kelas lalu abjad
+    siswaList.sort(function(a,b){ return a.kelas.localeCompare(b.kelas)||a.nama.localeCompare(b.nama); });
     siswaList.forEach(function(s, i) {
       html4 += '<div class="modal-detail-item" id="mdrow'+i+'"><div class="modal-detail-no">'+(i+1)+'</div><div class="modal-detail-nama">'+s.nama+'</div><div class="modal-detail-kelas">'+s.kelas+'</div><div class="modal-detail-jam">'+s.info+'</div></div>';
     });
@@ -2483,6 +2487,64 @@ async function cetakRekapBulanan() {
   win.document.close();
   win.focus();
   setTimeout(function() { win.print(); }, 500);
+}
+
+
+function bukаModalKelas(kelas) {
+  var modal = document.getElementById('modalDetail');
+  var isi   = document.getElementById('modalDetailIsi');
+  var judul = document.getElementById('modalDetailJudul');
+  judul.textContent = '🏫 Kelas ' + kelas;
+  judul.style.color = 'var(--biru)';
+  modal.classList.add('open');
+
+  // Data dari tabel DOM
+  var tbody = document.getElementById('tabelAbsenHariIni');
+  var rows  = tbody ? Array.from(tbody.querySelectorAll('tr[data-nisn]')) : [];
+  var sudahHadir = rows
+    .filter(function(row) {
+      return row.querySelectorAll('td')[1]?.textContent.trim() === kelas;
+    })
+    .map(function(row) {
+      var cells = row.querySelectorAll('td');
+      return {
+        nama:   cells[0].textContent.trim(),
+        kelas:  cells[1].textContent.trim(),
+        status: cells[4].textContent.trim(),
+        jam:    cells[2].textContent.trim()
+      };
+    });
+
+  // Belum hadir dari dataSiswa
+  var sudahNisn = new Set(rows.map(function(r){ return r.dataset.nisn; }));
+  var belumHadir = dataSiswa
+    .filter(function(s){ return s.kelas === kelas && !sudahNisn.has(String(s.nisn||'')); })
+    .map(function(s){ return {nama: s.nama, kelas: s.kelas, status: 'Belum', jam: '-'}; });
+
+  // Gabung: hadir dulu, belum hadir di bawah - urut abjad
+  var semua = sudahHadir.concat(belumHadir);
+  semua.sort(function(a,b){ return a.nama.localeCompare(b.nama); });
+
+  if (!semua.length) {
+    isi.innerHTML = '<p style="text-align:center;padding:32px;color:#9aabb8;">Tidak ada data</p>';
+    return;
+  }
+
+  var html = '<input type="text" placeholder="🔍 Cari nama..." autocomplete="off" oninput="filterMdList(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;margin-bottom:10px;box-sizing:border-box;outline:none;">';
+  html += '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">';
+  html += sudahHadir.length + ' hadir, ' + belumHadir.length + ' belum hadir</p>';
+
+  semua.forEach(function(s, i) {
+    var warna = s.status === 'Belum' ? '#e65100' : (s.status === 'OnTime' ? 'var(--hijau)' : s.status === 'Terlambat' ? '#e65100' : '#1565c0');
+    var bg    = s.status === 'Belum' ? '#fff8f5' : '#fff';
+    html += '<div class="modal-detail-item" id="mdrow' + i + '" style="background:' + bg + ';">' +
+      '<div class="modal-detail-no">' + (i+1) + '</div>' +
+      '<div class="modal-detail-nama">' + s.nama + '</div>' +
+      '<div class="modal-detail-kelas">' + s.kelas + '</div>' +
+      '<div class="modal-detail-jam" style="color:' + warna + ';font-weight:600;">' + s.status + '</div>' +
+      '</div>';
+  });
+  isi.innerHTML = html;
 }
 
 function tutupModalDetail() {
