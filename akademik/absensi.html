@@ -438,7 +438,7 @@ tr:hover td{background:#f8fafc;}
   .modal-detail-head h3{font-size:16px;font-weight:700;}
   .modal-detail-body{overflow-y:auto;padding:16px 24px;flex:1;}
   .modal-detail-item{
-    display:flex;align-items:center;gap:12px;padding:10px 0;
+    display:flex;align-items:center;gap:8px;padding:5px 0;
     border-bottom:1px solid #f8fafc;
   }
   .modal-detail-item:last-child{border-bottom:none;}
@@ -1298,6 +1298,11 @@ window.addEventListener('load', async () => {
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   fokusNisn();
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
+  // Isi _sudahAbsenSet dari cache
+  window._sudahAbsenSet = new Set();
+  var normN2 = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
+  (ambilCacheAbsen()||[]).forEach(function(d){ if(d.nisn) window._sudahAbsenSet.add(normN2(d.nisn)); });
+  console.log('_sudahAbsenSet terisi:', window._sudahAbsenSet.size, 'dari cache');
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
   await loadToggleAlpa(); // load status toggle alpa
@@ -1591,14 +1596,25 @@ async function prosesAbsen() {
 
 async function prosesAbsenNisn(nisn) {
   if (!nisn) return;
+  var nisnKey = String(nisn).trim().replace(/\.0$/, '').replace(/^0+/, '');
+
+  // Cek set permanen sudah absen hari ini (paling kuat)
+  if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
+  if (window._sudahAbsenSet.has(nisnKey)) {
+    tampilNotif('⚠️', 'Sudah absen hari ini', '', true);
+    fokusNisn();
+    return;
+  }
+
   // Cegah scan ganda - flag per NISN
-  var nisnKey = String(nisn).trim().replace(/\.0$/, '');
   if (window._sedangDiproses && window._sedangDiproses[nisnKey]) {
     tampilNotif('⚠️', 'Sedang diproses...', 'Harap tunggu sebentar', true);
     return;
   }
   if (!window._sedangDiproses) window._sedangDiproses = {};
   window._sedangDiproses[nisnKey] = true;
+
+  // Cari dari dataSiswa lokal - instan
   const nisnBersih = String(nisn).trim().replace(/[.]0$/, '').replace(/^0+/, '');
   var siswa = dataSiswa.find(function(s) {
     var sn = String(s.nisn||'').replace(/[.]0$/, '').replace(/^0+/, '');
@@ -1608,11 +1624,13 @@ async function prosesAbsenNisn(nisn) {
     const r = await apiGet('cariSiswa', {nisn: nisn});
     if (!r.ok || !r.data) {
       tampilNotif('❌', 'Siswa tidak ditemukan', 'NISN: ' + nisn, true);
+      if (window._sedangDiproses) delete window._sedangDiproses[nisnKey];
       fokusNisn();
       return;
     }
     siswa = r.data;
   }
+
   siswaYangDipilih = siswa;
   document.getElementById('siswaNama').textContent  = siswa.nama;
   document.getElementById('siswaKelas').textContent = 'Kelas ' + siswa.kelas;
@@ -1625,10 +1643,13 @@ async function prosesAbsenNisn(nisn) {
   }
   document.getElementById('siswaPreview').classList.add('show');
   document.getElementById('btnAbsen').disabled = false;
+
   if (MODE_SCAN === 'quick') {
     await konfirmasiAbsen();
   }
-  // Reset flag setelah selesai
+
+  // Tambah ke set permanen setelah sukses
+  window._sudahAbsenSet.add(nisnKey);
   if (window._sedangDiproses) delete window._sedangDiproses[nisnKey];
 }
 
