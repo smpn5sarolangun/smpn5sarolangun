@@ -193,7 +193,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f4f8;color:var(--t
   text-align:center;flex-direction:column;align-items:center;gap:8px;
 }
 .notif-absen.show{display:flex;}
-.notif-absen.error{border-top-color:var(--merah);}
+.notif-absen.error{border-top-color:var(--merah);background:#fff5f5;}
 @keyframes slideInTop{from{transform:translateX(-50%) translateY(-20px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
 @keyframes slideIn{from{transform:translateX(120%);}to{transform:translateX(0);}}
 
@@ -1601,7 +1601,12 @@ async function prosesAbsenNisn(nisn) {
   // Cek set permanen sudah absen hari ini (paling kuat)
   if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
   if (window._sudahAbsenSet.has(nisnKey)) {
-    tampilNotif('⚠️', 'Sudah absen hari ini', '', true);
+    // Cari nama siswa untuk notif
+    var siswaSudah = dataSiswa.find(function(s){
+      return String(s.nisn||'').replace(/\.0$/,'').replace(/^0+/,'') === nisnKey;
+    });
+    var namaSudah = siswaSudah ? siswaSudah.nama : 'Siswa';
+    tampilNotif('⚠️', namaSudah + ' — Sudah Absen', 'Data sudah tercatat hari ini', true);
     fokusNisn();
     return;
   }
@@ -1972,6 +1977,9 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
     if (count > 0) elTotal.textContent = count;
   }
   updateBelumPulangDariDOM();
+  // Scroll tabel ke atas agar baris terbaru terlihat
+  var tabelWrap = document.querySelector('#tabelAbsenHariIni')?.closest('[style*="overflow-y"]');
+  if (tabelWrap) tabelWrap.scrollTop = 0;
 }
 
 function resetInputAbsen() {
