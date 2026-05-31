@@ -179,6 +179,13 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
   .id-sep{padding:0 6px !important;}
   .identitas-list{padding:8px 16px !important;}
 }
+
+  .link-disabled{
+    opacity:0.4 !important;
+    cursor:not-allowed !important;
+    pointer-events:none !important;
+    color:var(--teks-sub) !important;
+  }
 </style>
 </head>
 <body>
@@ -233,7 +240,15 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
         <a href="#" onclick="toggleDropdown(this);return false;" class="nav-link">Akademik <span class="dd-arrow">▾</span></a>
         <div class="dropdown-menu">
           <a href="akademik/login.html">Absensi Siswa</a>
-          <a href="https://rapor-smp5sarolangun.raportku.com" target="_blank">e-Raport</a>
+          <a href="https://rapor-smp5sarolangun.raportku.com" class="link-erapor link-disabled" target="_blank">e-Rapor</a>
+        </div>
+      </div>
+      <div class="nav-dropdown dd-right">
+        <a href="#" onclick="toggleDropdown(this);return false;" class="nav-link">CBT <span class="dd-arrow">▾</span></a>
+        <div class="dropdown-menu">
+          <a href="#" class="link-cbt-admin link-disabled" target="_blank">Admin</a>
+          <a href="#" class="link-cbt-guru link-disabled" target="_blank">Guru</a>
+          <a href="#" class="link-cbt-siswa link-disabled" target="_blank">Siswa</a>
         </div>
       </div>
       <a href="kontak.html" class="nav-link ">Kontak</a>
@@ -273,7 +288,13 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
     <div class="mob-parent-row"><a href="#" onclick="toggleMobSub(this.parentElement.querySelector('.mob-arrow'));return false;" class="mob-parent">Akademik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
 <div class="mob-sub">
     <a href="akademik/login.html" class="mob-child">— Absensi Siswa</a>
-    <a href="https://rapor-smp5sarolangun.raportku.com" target="_blank" class="mob-child">— e-Rapor</a>
+    <a href="https://rapor-smp5sarolangun.raportku.com" class="link-erapor mob-child link-disabled" target="_blank">— e-Rapor</a>
+</div>
+    <div class="mob-parent-row"><a href="#" onclick="toggleMobSub(this.parentElement.querySelector('.mob-arrow'));return false;" class="mob-parent">CBT</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+<div class="mob-sub">
+    <a href="#" class="link-cbt-admin mob-child link-disabled" target="_blank">— Admin</a>
+    <a href="#" class="link-cbt-guru mob-child link-disabled" target="_blank">— Guru</a>
+    <a href="#" class="link-cbt-siswa mob-child link-disabled" target="_blank">— Siswa</a>
 </div>
     <a href="kontak.html">Kontak</a>
   </div>
@@ -354,6 +375,23 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 </footer>
 
 <script>
+function updateLinkERapor(url) {
+  document.querySelectorAll('.link-erapor').forEach(function(el){
+    if(url){ el.href = url; el.classList.remove('link-disabled'); }
+    else { el.removeAttribute('href'); el.classList.add('link-disabled'); }
+  });
+}
+function updateLinkCBT(admin, guru, siswa) {
+  var links = {'.link-cbt-admin': admin, '.link-cbt-guru': guru, '.link-cbt-siswa': siswa};
+  Object.keys(links).forEach(function(sel){
+    var url = links[sel];
+    document.querySelectorAll(sel).forEach(function(el){
+      if(url){ el.href = url; el.classList.remove('link-disabled'); }
+      else { el.removeAttribute('href'); el.classList.add('link-disabled'); }
+    });
+  });
+}
+
 function toggleDropdown(el) {
   var menu = el.nextElementSibling;
   if(!menu) return;
