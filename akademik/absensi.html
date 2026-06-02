@@ -1952,7 +1952,13 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
 
   // Update counter statistik lokal
   const upd = (id, fn) => { const el=document.getElementById(id); if(el) el.textContent=fn(parseInt(el.textContent||0)); };
-  if (MODE_ABSEN === 'masuk') {
+  if (result.manual) {
+    // Input manual Izin / Sakit / Alpa dari halaman siswa
+    upd('stBelumMasuk', v => Math.max(0,v-1));
+    if (status==='Izin')  upd('stIzin',  v => v+1);
+    if (status==='Sakit') upd('stSakit', v => v+1);
+    if (status==='Alpa')  upd('stAlpa',  v => v+1);
+  } else if (MODE_ABSEN === 'masuk') {
     upd('stBelumMasuk', v => Math.max(0,v-1));
     if (status==='OnTime')    upd('stOnTime',    v => v+1);
     if (status==='Terlambat') upd('stTerlambat', v => v+1);
@@ -2333,6 +2339,14 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   var tglHariIni = getTglHariIni();
   cacheNow.push({tanggal:tglHariIni, nisn:nisnFinal, nama:nama, kelas:kelas, jamMasuk:'', jamPulang:'', status:st, ket:''});
   simpanCacheAbsen(cacheNow);
+
+  // Tambah ke tabel absensi hari ini agar langsung terlihat di dashboard
+  tambahKeTabeAbsenHariIni({nisn:nisnFinal, nama:nama, kelas:kelas}, {status:st, manual:true});
+
+  // Tandai NISN sebagai sudah absen agar cek duplikat langsung aktif
+  var nisnKey = String(nisnFinal||'').replace(/\.0$/,'').replace(/^0+/,'');
+  if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
+  if (nisnKey) window._sudahAbsenSet.add(nisnKey);
 
   // Kirim ke server di background
   apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni})
@@ -2741,7 +2755,31 @@ async function submitIzin() {
     kelas, status, keterangan: ket, tanggal: tgl
   });
 
-  tampilIzinMsg(r.ok ? r.pesan : (r.error||'Gagal'), !r.ok);
+  if (r.ok) {
+    playSukses();
+    const today = getTglHariIni();
+    // Update tabel & cache jika tanggal hari ini
+    if (tgl === today) {
+      const siswaPilih = {nisn: selOpt.dataset.nisn, nama: selOpt.dataset.nama, kelas};
+      tambahKeTabeAbsenHariIni(siswaPilih, {status, manual: true});
+    }
+    // Tandai NISN sebagai sudah absen agar cek duplikat langsung aktif
+    var nisnKey = String(selOpt.dataset.nisn||'').replace(/\.0$/,'').replace(/^0+/,'');
+    if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
+    if (nisnKey) window._sudahAbsenSet.add(nisnKey);
+    // Update counter statistik izin/sakit
+    var stId = status === 'Izin' ? 'stIzin' : status === 'Sakit' ? 'stSakit' : status === 'Alpa' ? 'stAlpa' : null;
+    if (stId && tgl === today) {
+      var elSt = document.getElementById(stId);
+      if (elSt) elSt.textContent = parseInt(elSt.textContent||0) + 1;
+      var elBM = document.getElementById('stBelumMasuk');
+      if (elBM) elBM.textContent = Math.max(0, parseInt(elBM.textContent||0) - 1);
+    }
+    // Reset form
+    selSiswa.selectedIndex = 0;
+    document.getElementById('izinKet').value = '';
+  }
+  tampilIzinMsg(r.ok ? (r.pesan || '✅ Berhasil dicatat') : (r.error||'Gagal'), !r.ok);
 }
 
 function tampilIzinMsg(msg, isError) {
