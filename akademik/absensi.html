@@ -1301,7 +1301,15 @@ window.addEventListener('load', async () => {
   // Isi _sudahAbsenSet dari cache
   window._sudahAbsenSet = new Set();
   var normN2 = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
-  (ambilCacheAbsen()||[]).forEach(function(d){ if(d.nisn) window._sudahAbsenSet.add(normN2(d.nisn)); });
+  // normKey: pakai NISN jika ada, fallback ke nama|kelas untuk siswa tanpa NISN (izin/sakit)
+  window._normKey = function(nisn, nama, kelas) {
+    var n = normN2(nisn);
+    return n ? n : (String(nama||'').trim() + '|' + String(kelas||'').trim()).toLowerCase();
+  };
+  (ambilCacheAbsen()||[]).forEach(function(d){
+    var k = window._normKey(d.nisn, d.nama, d.kelas);
+    if(k) window._sudahAbsenSet.add(k);
+  });
   console.log('_sudahAbsenSet terisi:', window._sudahAbsenSet.size, 'dari cache');
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
@@ -1870,33 +1878,32 @@ async function refreshDashboardDanTabel() {
 
 async function loadTabelAbsenHariIni() {
   const today = getTglHariIni();
-  // Tampilkan cache dulu agar tidak kosong
+  // Tampilkan cache dulu agar tidak kosong (flag dariCache=true agar tidak timpa cache)
   const cacheAda = ambilCacheAbsen() || [];
-  // Render dari cache dulu (meski kosong) agar tidak loading
   if (localStorage.getItem('absensi_hari_ini_v6')) {
-    renderTabelAbsenHariIni(cacheAda);
+    renderTabelAbsenHariIni(cacheAda, true);
   }
   // Fetch server di background
   try {
     const r = await apiGet('getAbsensiHari', {tanggal: today});
     if (!r.ok || !r.data) return;
-    // Merge cache dengan data server
+    // quickData: data lokal yang belum confirmed server, max 10 detik
+    const now = Date.now();
     const serverNisn = new Set(r.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
     const quickData = cacheAda.filter(function(x){
-      return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
+      const umur = now - (x._ts || 0);
+      return !serverNisn.has(String(x.nisn||'').replace(/^0+/,'')) && umur < 10000;
     });
     const merged = r.data.concat(quickData);
     simpanCacheAbsen(merged);
-    // Hanya render ulang kalau tabel masih kosong (belum ada scan berjalan)
-    var tbodyRows = document.getElementById('tabelAbsenHariIni')?.querySelectorAll('tr[data-nisn]') || [];
-    if (tbodyRows.length === 0) {
-      renderTabelAbsenHariIni(merged);
-    } else if (merged.length > tbodyRows.length) {
-      // Ada data baru dari server yang belum di tabel - render
+    // Render ulang hanya jika data server berbeda dengan yang sudah tampil
+    // Gunakan jumlah baris DOM keseluruhan (bukan hanya data-nisn) untuk deteksi scan aktif
+    var tbody = document.getElementById('tabelAbsenHariIni');
+    var rowsDOM = tbody ? tbody.querySelectorAll('tr').length : 0;
+    if (rowsDOM === 0 || merged.length !== rowsDOM) {
       renderTabelAbsenHariIni(merged);
     }
   } catch(e) {
-    // Fetch gagal - tabel sudah tampil dari cache, tidak apa-apa
     console.log('loadTabelAbsenHariIni error:', e);
   }
 }
@@ -1913,11 +1920,14 @@ async function refreshStatistikSaja() {
     // Update tabel dengan data lengkap dari server
     if (rAbsen.ok && rAbsen.data) {
       renderTabelAbsenHariIni(rAbsen.data);
-      // Merge cache - gabung data server dengan data quick yang belum confirmed
+      // Ganti cache penuh dengan data server — hapus data yang sudah dihapus di server
+      // quickData (scan belum confirmed) hanya di-merge jika dicatat dalam 10 detik terakhir
+      const now = Date.now();
       const cacheAda = ambilCacheAbsen() || [];
       const serverNisn = new Set(rAbsen.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
       const quickData = cacheAda.filter(function(x){
-        return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
+        const umur = now - (x._ts || 0);
+        return !serverNisn.has(String(x.nisn||'').replace(/^0+/,'')) && umur < 10000;
       });
       simpanCacheAbsen(rAbsen.data.concat(quickData));
     }
@@ -1942,6 +1952,7 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   // Tambah baris baru di atas
   const tr = document.createElement('tr');
   tr.style.animation = 'fadeIn 0.4s ease';
+  tr.setAttribute('data-nisn', nisn || '');
   tr.innerHTML = `
     <td style="font-weight:600">${nama}</td>
     <td>${kelas}</td>
@@ -1974,7 +1985,8 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
       nisn, nama, kelas,
       jamMasuk:  MODE_ABSEN==='masuk'  ? fmtJam(jam) : '',
       jamPulang: MODE_ABSEN==='pulang' ? fmtJam(jam) : '',
-      status, ket: ''
+      status, ket: '',
+      _ts: Date.now()   // timestamp untuk batas merge quick data
     });
     simpanCacheAbsen(existing);
   } catch(e) {}
@@ -2343,10 +2355,11 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   // Tambah ke tabel absensi hari ini agar langsung terlihat di dashboard
   tambahKeTabeAbsenHariIni({nisn:nisnFinal, nama:nama, kelas:kelas}, {status:st, manual:true});
 
-  // Tandai NISN sebagai sudah absen agar cek duplikat langsung aktif
-  var nisnKey = String(nisnFinal||'').replace(/\.0$/,'').replace(/^0+/,'');
+  // Tandai sebagai sudah absen — pakai NISN jika ada, fallback nama|kelas
   if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
-  if (nisnKey) window._sudahAbsenSet.add(nisnKey);
+  if (!window._normKey) window._normKey = function(n,nm,kl){ var x=String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); return x?x:(String(nm||'').trim()+'|'+String(kl||'').trim()).toLowerCase(); };
+  var absenKey = window._normKey(nisnFinal, nama, kelas);
+  if (absenKey) window._sudahAbsenSet.add(absenKey);
 
   // Kirim ke server di background
   apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni})
@@ -2763,10 +2776,11 @@ async function submitIzin() {
       const siswaPilih = {nisn: selOpt.dataset.nisn, nama: selOpt.dataset.nama, kelas};
       tambahKeTabeAbsenHariIni(siswaPilih, {status, manual: true});
     }
-    // Tandai NISN sebagai sudah absen agar cek duplikat langsung aktif
-    var nisnKey = String(selOpt.dataset.nisn||'').replace(/\.0$/,'').replace(/^0+/,'');
+    // Tandai sebagai sudah absen — pakai NISN jika ada, fallback nama|kelas
     if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
-    if (nisnKey) window._sudahAbsenSet.add(nisnKey);
+    if (!window._normKey) window._normKey = function(n,nm,kl){ var x=String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); return x?x:(String(nm||'').trim()+'|'+String(kl||'').trim()).toLowerCase(); };
+    var absenKey = window._normKey(selOpt.dataset.nisn, selOpt.dataset.nama, kelas);
+    if (absenKey) window._sudahAbsenSet.add(absenKey);
     // Update counter statistik izin/sakit
     var stId = status === 'Izin' ? 'stIzin' : status === 'Sakit' ? 'stSakit' : status === 'Alpa' ? 'stAlpa' : null;
     if (stId && tgl === today) {
