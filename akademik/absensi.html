@@ -1891,7 +1891,8 @@ async function loadTabelAbsenHariIni() {
     const now = Date.now();
     const serverNisn = new Set(r.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
     const quickData = cacheAda.filter(function(x){
-      const umur = now - (x._ts || 0);
+      if (!x._ts) return false; // tanpa timestamp = data lama, jangan merge
+      const umur = now - x._ts;
       return !serverNisn.has(String(x.nisn||'').replace(/^0+/,'')) && umur < 10000;
     });
     const merged = r.data.concat(quickData);
@@ -1926,7 +1927,8 @@ async function refreshStatistikSaja() {
       const cacheAda = ambilCacheAbsen() || [];
       const serverNisn = new Set(rAbsen.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
       const quickData = cacheAda.filter(function(x){
-        const umur = now - (x._ts || 0);
+        if (!x._ts) return false; // tanpa timestamp = data lama, jangan merge
+        const umur = now - x._ts;
         return !serverNisn.has(String(x.nisn||'').replace(/^0+/,'')) && umur < 10000;
       });
       simpanCacheAbsen(rAbsen.data.concat(quickData));
