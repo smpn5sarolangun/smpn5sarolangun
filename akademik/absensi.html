@@ -1295,14 +1295,16 @@ window.addEventListener('load', async () => {
     }
   } catch(e) {}
 
-  await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
-  fokusNisn();
-  initRekapBulananKelas(); // cache kelas saat dataSiswa siap
-  // Isi _sudahAbsenSet dari cache
+  // ★ Isi _sudahAbsenSet dari cache DULU — sebelum loadDashboard/loadSiswa
+  // sehingga siswa yang sudah scan sebelum reload langsung terblokir
   window._sudahAbsenSet = new Set();
   var normN2 = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
   (ambilCacheAbsen()||[]).forEach(function(d){ if(d.nisn) window._sudahAbsenSet.add(normN2(d.nisn)); });
-  console.log('_sudahAbsenSet terisi:', window._sudahAbsenSet.size, 'dari cache');
+  console.log('_sudahAbsenSet terisi:', window._sudahAbsenSet.size, 'dari cache lokal');
+
+  await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
+  fokusNisn();
+  initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
   await loadToggleAlpa(); // load status toggle alpa
@@ -1442,20 +1444,23 @@ function _updateDashboardUI(d) {
       </tr>`).join('');
   }
 
-  // Tabel absensi terbaru
+  // Tabel absensi terbaru — hanya render jika tabel masih kosong
   const tbody = document.getElementById('tabelAbsenHariIni');
   if (tbody) {
-    if (!d.terbaru || !d.terbaru.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
-    } else {
-      tbody.innerHTML = d.terbaru.map(r => `
-        <tr>
-          <td style="font-weight:600">${r.nama}</td>
-          <td>${r.kelas}</td>
-          <td>${r.jamMasuk||'—'}</td>
-          <td>${r.jamPulang||'—'}</td>
-          <td><span class="badge badge-${r.status.toLowerCase().replace(' ','')}">${r.status}</span></td>
-        </tr>`).join('');
+    const sudahAda = tbody.querySelectorAll('tr[data-nisn]').length > 0;
+    if (!sudahAda) {
+      if (!d.terbaru || !d.terbaru.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
+      } else {
+        tbody.innerHTML = d.terbaru.map(r => `
+          <tr data-nisn="${r.nisn||''}">
+            <td style="font-weight:600">${r.nama}</td>
+            <td>${r.kelas}</td>
+            <td>${r.jamMasuk||'—'}</td>
+            <td>${r.jamPulang||'—'}</td>
+            <td><span class="badge badge-${r.status.toLowerCase().replace(' ','')}">${r.status}</span></td>
+          </tr>`).join('');
+      }
     }
   }
 }
@@ -1470,19 +1475,23 @@ async function loadDashboard() {
     const d = r.data;
     _updateDashboardUI(d);
 
-    // Tabel absensi terbaru
+    // Tabel absensi terbaru — hanya render jika tabel masih kosong
+    // (menghindari overwrite baris scan yang baru masuk tapi belum tersimpan di server)
     const tbody = document.getElementById('tabelAbsenHariIni');
-    if (!d.terbaru || !d.terbaru.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
-    } else {
-      tbody.innerHTML = d.terbaru.map(row => `
-        <tr>
-          <td style="font-weight:600">${row.nama}</td>
-          <td>${row.kelas}</td>
-          <td>${fmtJam(row.jamMasuk)||'—'}</td>
-          <td>${fmtJam(row.jamPulang)||'—'}</td>
-          <td><span class="badge badge-${row.status.toLowerCase().replace(' ','')}">${row.status}</span></td>
-        </tr>`).join('');
+    const sudahAdaBaris = tbody && tbody.querySelectorAll('tr[data-nisn]').length > 0;
+    if (!sudahAdaBaris) {
+      if (!d.terbaru || !d.terbaru.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
+      } else {
+        tbody.innerHTML = d.terbaru.map(row => `
+          <tr data-nisn="${row.nisn||''}">
+            <td style="font-weight:600">${row.nama}</td>
+            <td>${row.kelas}</td>
+            <td>${fmtJam(row.jamMasuk)||'—'}</td>
+            <td>${fmtJam(row.jamPulang)||'—'}</td>
+            <td><span class="badge badge-${row.status.toLowerCase().replace(' ','')}">${row.status}</span></td>
+          </tr>`).join('');
+      }
     }
 
     // Tabel per kelas
@@ -1717,6 +1726,7 @@ async function konfirmasiAbsen() {
     const qAction = MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang';
     const qToken  = TOKEN;
     playSukses();
+    // ★ tambahKeTabeAbsenHariIni akan menambah NISN ke _sudahAbsenSet sebelum request dikirim
     tambahKeTabeAbsenHariIni(siswaYangDipilih, {status: qStatus, jam: qJam});
     resetInputAbsen(); // siswaYangDipilih jadi null setelah ini
     // Kirim ke server di background dengan data yang sudah disimpan
@@ -1735,10 +1745,7 @@ async function konfirmasiAbsen() {
   if (r.ok) {
     playSukses();
     tambahKeTabeAbsenHariIni(r.siswa || siswaYangDipilih, r);
-    // Tambah ke set setelah server konfirmasi
-    var _nisnN = String((r.siswa||siswaYangDipilih||{}).nisn||'').replace(/\.0$/,'').replace(/^0+/,'');
-    if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
-    if (_nisnN) window._sudahAbsenSet.add(_nisnN);
+    // _sudahAbsenSet sudah diupdate di dalam tambahKeTabeAbsenHariIni
     resetInputAbsen();
   } else {
     playGagal();
@@ -1812,38 +1819,59 @@ function ambilCacheDashboard() {
 }
 
 // ── Render tabel absensi hari ini dari data sheet ───────────────
+// ★ PATCH — tidak pernah replace/kosongkan tbody, hanya tambah baris yang belum ada
 function renderTabelAbsenHariIni(data, dariCache) {
   const tbody = document.getElementById('tabelAbsenHariIni');
   if (!tbody) return;
+
   if (!data || !data.length) {
-    if (!dariCache) {
+    // Hanya tampilkan placeholder kalau tabel benar-benar kosong
+    if (!tbody.querySelectorAll('tr[data-nisn]').length && !dariCache) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
-      // Jangan simpan kosong ke cache - biarkan cache lama tetap ada
     }
     return;
   }
-  // Simpan ke cache hanya jika data dari server (bukan dari cache)
+
   if (!dariCache) simpanCacheAbsen(data);
 
-  // Hitung duplikat NISN
+  // Kumpulkan NISN yang sudah ada di DOM — tidak akan ditimpa
+  var domNisn = {};
+  tbody.querySelectorAll('tr[data-nisn]').forEach(function(row) {
+    var n = String(row.dataset.nisn||'').replace(/\.0$/,'').replace(/^0+/,'');
+    if (n) domNisn[n] = true;
+  });
+
+  // Hapus baris placeholder "Belum ada" jika masih ada
+  Array.from(tbody.querySelectorAll('tr:not([data-nisn])')).forEach(function(r){ r.remove(); });
+
+  // Hitung duplikat untuk badge GANDA
   var nisnCount = {};
   data.forEach(function(r){ var n=String(r.nisn||r.nama); nisnCount[n]=(nisnCount[n]||0)+1; });
-  tbody.innerHTML = data.slice().reverse().map(r => {
-    var nisnKey = String(r.nisn||r.nama);
-    var isDuplikat = nisnCount[nisnKey] > 1;
-    var namaStyle = isDuplikat ? 'font-weight:700;color:#e53935;' : 'font-weight:600;';
-    var dupBadge = isDuplikat ? ' <span style="font-size:10px;color:#fff;background:#e53935;border-radius:4px;padding:1px 5px;">GANDA</span>' : '';
-    return '<tr data-nisn="' + (r.nisn||'') + '">' +
-      '<td style="' + namaStyle + '">' + r.nama + dupBadge + '</td>' +
-      '<td>' + r.kelas + '</td>' +
+
+  // Hanya insert baris yang belum ada di DOM
+  data.forEach(function(r) {
+    var nisnNorm = String(r.nisn||'').replace(/\.0$/,'').replace(/^0+/,'');
+    if (nisnNorm && domNisn[nisnNorm]) return; // sudah ada, jangan timpa
+
+    var isDuplikat = nisnCount[String(r.nisn||r.nama)] > 1;
+    var namaStyle  = isDuplikat ? 'font-weight:700;color:#e53935;' : 'font-weight:600;';
+    var dupBadge   = isDuplikat ? ' <span style="font-size:10px;color:#fff;background:#e53935;border-radius:4px;padding:1px 5px;">GANDA</span>' : '';
+    var tr = document.createElement('tr');
+    tr.dataset.nisn = r.nisn||'';
+    tr.innerHTML =
+      '<td style="' + namaStyle + '">' + (r.nama||'—') + dupBadge + '</td>' +
+      '<td>' + (r.kelas||'—') + '</td>' +
       '<td>' + fmtJam(r.jamMasuk) + '</td>' +
       '<td>' + fmtJam(r.jamPulang) + '</td>' +
-      '<td><span class="badge badge-' + (r.status||'').toLowerCase().replace(' ','') + '">' + r.status + '</span></td>' +
-      '</tr>';
-  }).join('');
-  // Update counter total absen
+      '<td><span class="badge badge-' + (r.status||'').toLowerCase().replace(' ','') + '">' + (r.status||'—') + '</span></td>';
+    tbody.appendChild(tr); // tambah di bawah (urutan kronologis dari server)
+  });
+
   var elTotal = document.getElementById('totalAbsenHariIni');
-  if (elTotal && data && data.length) elTotal.textContent = data.length;
+  if (elTotal) {
+    var count = tbody.querySelectorAll('tr[data-nisn]').length;
+    if (count > 0) elTotal.textContent = count;
+  }
   updateBelumPulangDariDOM();
 }
 
@@ -1887,14 +1915,12 @@ async function loadTabelAbsenHariIni() {
     });
     const merged = r.data.concat(quickData);
     simpanCacheAbsen(merged);
-    // Hanya render ulang kalau tabel masih kosong (belum ada scan berjalan)
-    var tbodyRows = document.getElementById('tabelAbsenHariIni')?.querySelectorAll('tr[data-nisn]') || [];
-    if (tbodyRows.length === 0) {
-      renderTabelAbsenHariIni(merged);
-    } else if (merged.length > tbodyRows.length) {
-      // Ada data baru dari server yang belum di tabel - render
-      renderTabelAbsenHariIni(merged);
-    }
+    // ★ Sinkronkan _sudahAbsenSet dengan data server (termasuk absen dari perangkat lain)
+    if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
+    var normNx = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
+    merged.forEach(function(d){ if(d.nisn) window._sudahAbsenSet.add(normNx(d.nisn)); });
+    // ★ Aman dipanggil kapanpun — render patch-based, tidak pernah hapus baris yang ada
+    renderTabelAbsenHariIni(merged);
   } catch(e) {
     // Fetch gagal - tabel sudah tampil dari cache, tidak apa-apa
     console.log('loadTabelAbsenHariIni error:', e);
@@ -1910,19 +1936,21 @@ async function refreshStatistikSaja() {
     ]);
     if (!rDash.ok) return;
     _updateDashboardUI(rDash.data);
-    // Update tabel dengan data lengkap dari server
+    // Update tabel hanya jika data dari server lebih lengkap dari DOM saat ini
     if (rAbsen.ok && rAbsen.data) {
-      renderTabelAbsenHariIni(rAbsen.data);
-      // Ganti cache penuh dengan data server — hapus data yang sudah dihapus di server
-      // quickData (scan belum confirmed) hanya di-merge jika dicatat dalam 10 detik terakhir
+      const serverData = rAbsen.data;
+      // Merge: data server + scan quick yang belum dikonfirmasi server (dalam 30 detik)
       const now = Date.now();
       const cacheAda = ambilCacheAbsen() || [];
-      const serverNisn = new Set(rAbsen.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
+      const serverNisnSet = new Set(serverData.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
       const quickData = cacheAda.filter(function(x){
         const umur = now - (x._ts || 0);
-        return !serverNisn.has(String(x.nisn||'').replace(/^0+/,'')) && umur < 10000;
+        return !serverNisnSet.has(String(x.nisn||'').replace(/^0+/,'')) && umur < 30000;
       });
-      simpanCacheAbsen(rAbsen.data.concat(quickData));
+      const merged = serverData.concat(quickData);
+      simpanCacheAbsen(merged);
+      // ★ Aman dipanggil kapanpun — render sekarang patch-based, tidak pernah hapus baris yang ada
+      renderTabelAbsenHariIni(merged);
     }
   } catch(e) {}
 }
@@ -1942,8 +1970,16 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   const jamMasuk  = result.manual ? '—' : (MODE_ABSEN === 'masuk'  ? jam : '—');
   const jamPulang = result.manual ? '—' : (MODE_ABSEN === 'pulang' ? jam : '—');
 
+  // ★ Selalu tandai NISN sudah absen di sini — semua jalur (quick/normal/manual) lewat fungsi ini
+  if (nisn) {
+    if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
+    var _nisnKey = String(nisn).replace(/\.0$/,'').replace(/^0+/,'');
+    if (_nisnKey) window._sudahAbsenSet.add(_nisnKey);
+  }
+
   // Tambah baris baru di atas
   const tr = document.createElement('tr');
+  tr.dataset.nisn = nisn; // penting: agar cek duplikat via DOM bekerja
   tr.style.animation = 'fadeIn 0.4s ease';
   tr.innerHTML = `
     <td style="font-weight:600">${nama}</td>
