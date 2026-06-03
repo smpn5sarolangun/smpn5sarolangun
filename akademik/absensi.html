@@ -1993,7 +1993,7 @@ async function refreshStatistikSaja() {
     if (!rDash.ok) return;
     _updateDashboardUI(rDash.data);
     // Update tabel hanya jika data dari server lebih lengkap dari DOM saat ini
-    if (rAbsen.ok && rAbsen.data) {
+    if (rAbsen.ok && rAbsen.data && rAbsen.data.length > 0) {
       const serverData = rAbsen.data;
       // Merge: data server + scan quick yang belum dikonfirmasi server (dalam 30 detik)
       const now = Date.now();
@@ -2005,9 +2005,12 @@ async function refreshStatistikSaja() {
       });
       const merged = serverData.concat(quickData);
       simpanCacheAbsen(merged);
-      // ★ Aman dipanggil kapanpun — render sekarang patch-based, tidak pernah hapus baris yang ada
+      // Render ulang penuh dari server agar data yang dihapus ikut hilang
+      const tbody = document.getElementById('tabelAbsenHariIni');
+      if (tbody) tbody.innerHTML = '';
       renderTabelAbsenHariIni(merged);
     }
+    // Jika server kirim kosong/error → skip, jangan hapus tampilan yang ada
   } catch(e) {}
 }
 
