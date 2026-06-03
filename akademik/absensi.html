@@ -2374,19 +2374,10 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   var elSt = document.getElementById(st==='Izin'?'stIzin':st==='Sakit'?'stSakit':'stAlpa');
   if (elSt) elSt.textContent = parseInt(elSt.textContent||0) + 1;
 
-  // Tambah ke cache lokal
-  var cacheNow = ambilCacheAbsen() || [];
   var tglHariIni = getTglHariIni();
-  cacheNow.push({tanggal:tglHariIni, nisn:nisnFinal, nama:nama, kelas:kelas, jamMasuk:'', jamPulang:'', status:st, ket:''});
-  simpanCacheAbsen(cacheNow);
 
-  // Tambah ke tabel absensi hari ini agar langsung terlihat di dashboard
+  // tambahKeTabeAbsenHariIni sudah mengurus: DOM, cache, _sudahAbsenSet — tidak perlu push manual
   tambahKeTabeAbsenHariIni({nisn:nisnFinal, nama:nama, kelas:kelas}, {status:st, manual:true});
-
-  // Tandai NISN sebagai sudah absen agar cek duplikat langsung aktif
-  var nisnKey = String(nisnFinal||'').replace(/\.0$/,'').replace(/^0+/,'');
-  if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
-  if (nisnKey) window._sudahAbsenSet.add(nisnKey);
 
   // Kirim ke server di background
   apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni})
