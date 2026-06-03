@@ -744,10 +744,19 @@ tr:hover td{background:#f8fafc;}
   <!-- Attendance Percentage per Kelas -->
   <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">📈 Persentase Kehadiran per Kelas</h3>
   <div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;">
-    <div style="overflow-x:auto;">
+    <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
       <table>
         <thead><tr>
-          <th>Kelas</th><th>Total</th><th style="color:#e65100;">Belum</th><th style="color:var(--hijau);">OnTime</th><th style="color:#e65100;">Terlambat</th><th style="color:#1565c0;">Izin</th><th style="color:#c62828;">Sakit</th><th style="color:var(--merah);">Alpa</th><th>Total Terdata</th><th>% Hadir</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;">Kelas</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;">Total</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;color:#e65100;">Belum</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;color:var(--hijau);">OnTime</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;color:#e65100;">Terlambat</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;color:#1565c0;">Izin</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;color:#c62828;">Sakit</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;color:var(--merah);">Alpa</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;">Total Terdata</th>
+          <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;">% Hadir</th>
         </tr></thead>
         <tbody id="tabelKelas">
           <tr><td colspan="10" class="loading">Memuat...</td></tr>
@@ -1438,7 +1447,7 @@ function _updateDashboardUI(d) {
   // Tabel per kelas
   const tbKelas = document.getElementById('tabelKelas');
   if (tbKelas && d.perKelas) {
-    tbKelas.innerHTML = d.perKelas.map(k => {
+    tbKelas.innerHTML = d.perKelas.map((k, idx) => {
       var kOT     = parseInt(k.onTime    || 0) || 0;
       var kTL     = parseInt(k.terlambat || 0) || 0;
       var kIzin   = parseInt(k.izin      || 0) || 0;
@@ -1448,17 +1457,18 @@ function _updateDashboardUI(d) {
       var kTerdata= k.terdata != null ? parseInt(k.terdata)||0 : kHadir + kIzin + kSakit + kAlpa;
       var kBelum  = k.belumHadir != null ? parseInt(k.belumHadir)||0 : Math.max(0, k.totalSiswa - kTerdata);
       var kPct    = k.persentase != null ? k.persentase : (k.totalSiswa ? Math.round(kHadir/k.totalSiswa*100) : 0);
-      return `<tr>
-        <td style="font-weight:700">${k.kelas}</td>
-        <td>${k.totalSiswa}</td>
-        <td style="color:${kBelum>0?'#e65100':'#9aabb8'};font-weight:${kBelum>0?700:400}">${kBelum}</td>
-        <td style="color:${kOT>0?'var(--hijau)':'#9aabb8'};font-weight:${kOT>0?700:400}">${kOT}</td>
-        <td style="color:${kTL>0?'#e65100':'#9aabb8'};font-weight:${kTL>0?700:400}">${kTL}</td>
-        <td style="color:${kIzin>0?'#1565c0':'#9aabb8'};font-weight:${kIzin>0?700:400}">${kIzin}</td>
-        <td style="color:${kSakit>0?'#c62828':'#9aabb8'};font-weight:${kSakit>0?700:400}">${kSakit}</td>
-        <td style="color:${kAlpa>0?'var(--merah)':'#9aabb8'};font-weight:${kAlpa>0?700:400}">${kAlpa}</td>
-        <td style="font-weight:${kTerdata>0?700:400}">${kTerdata}</td>
-        <td>${kPct}%
+      var zebra = (idx%2===0) ? 'background:#fff;' : 'background:#f8fafc;';
+      return `<tr style="${zebra}">
+        <td style="text-align:center;font-weight:700">${k.kelas}</td>
+        <td style="text-align:center">${k.totalSiswa}</td>
+        <td style="text-align:center;color:${kBelum>0?'#e65100':'#9aabb8'};font-weight:${kBelum>0?700:400}">${kBelum}</td>
+        <td style="text-align:center;color:${kOT>0?'var(--hijau)':'#9aabb8'};font-weight:${kOT>0?700:400}">${kOT}</td>
+        <td style="text-align:center;color:${kTL>0?'#e65100':'#9aabb8'};font-weight:${kTL>0?700:400}">${kTL}</td>
+        <td style="text-align:center;color:${kIzin>0?'#1565c0':'#9aabb8'};font-weight:${kIzin>0?700:400}">${kIzin}</td>
+        <td style="text-align:center;color:${kSakit>0?'#c62828':'#9aabb8'};font-weight:${kSakit>0?700:400}">${kSakit}</td>
+        <td style="text-align:center;color:${kAlpa>0?'var(--merah)':'#9aabb8'};font-weight:${kAlpa>0?700:400}">${kAlpa}</td>
+        <td style="text-align:center;font-weight:${kTerdata>0?700:400}">${kTerdata}</td>
+        <td style="text-align:center">${kPct}%
           <div class="persen-bar"><div class="persen-fill" style="width:${kPct}%"></div></div>
         </td>
       </tr>`;
@@ -1517,7 +1527,7 @@ async function loadDashboard() {
 
     // Tabel per kelas
     const tbKelas = document.getElementById('tabelKelas');
-    tbKelas.innerHTML = d.perKelas.map(k => {
+    tbKelas.innerHTML = d.perKelas.map((k, idx) => {
       var kOT     = parseInt(k.onTime    || 0) || 0;
       var kTL     = parseInt(k.terlambat || 0) || 0;
       var kIzin   = parseInt(k.izin      || 0) || 0;
@@ -1527,17 +1537,18 @@ async function loadDashboard() {
       var kTerdata= k.terdata != null ? parseInt(k.terdata)||0 : kHadir + kIzin + kSakit + kAlpa;
       var kBelum  = k.belumHadir != null ? parseInt(k.belumHadir)||0 : Math.max(0, k.totalSiswa - kTerdata);
       var kPct    = k.persentase != null ? k.persentase : (k.totalSiswa ? Math.round(kHadir/k.totalSiswa*100) : 0);
-      return `<tr>
-        <td style="font-weight:700">${k.kelas}</td>
-        <td>${k.totalSiswa}</td>
-        <td style="color:${kBelum>0?'#e65100':'#9aabb8'};font-weight:${kBelum>0?700:400}">${kBelum}</td>
-        <td style="color:${kOT>0?'var(--hijau)':'#9aabb8'};font-weight:${kOT>0?700:400}">${kOT}</td>
-        <td style="color:${kTL>0?'#e65100':'#9aabb8'};font-weight:${kTL>0?700:400}">${kTL}</td>
-        <td style="color:${kIzin>0?'#1565c0':'#9aabb8'};font-weight:${kIzin>0?700:400}">${kIzin}</td>
-        <td style="color:${kSakit>0?'#c62828':'#9aabb8'};font-weight:${kSakit>0?700:400}">${kSakit}</td>
-        <td style="color:${kAlpa>0?'var(--merah)':'#9aabb8'};font-weight:${kAlpa>0?700:400}">${kAlpa}</td>
-        <td style="font-weight:${kTerdata>0?700:400}">${kTerdata}</td>
-        <td>${kPct}%
+      var zebra = (idx%2===0) ? 'background:#fff;' : 'background:#f8fafc;';
+      return `<tr style="${zebra}">
+        <td style="text-align:center;font-weight:700">${k.kelas}</td>
+        <td style="text-align:center">${k.totalSiswa}</td>
+        <td style="text-align:center;color:${kBelum>0?'#e65100':'#9aabb8'};font-weight:${kBelum>0?700:400}">${kBelum}</td>
+        <td style="text-align:center;color:${kOT>0?'var(--hijau)':'#9aabb8'};font-weight:${kOT>0?700:400}">${kOT}</td>
+        <td style="text-align:center;color:${kTL>0?'#e65100':'#9aabb8'};font-weight:${kTL>0?700:400}">${kTL}</td>
+        <td style="text-align:center;color:${kIzin>0?'#1565c0':'#9aabb8'};font-weight:${kIzin>0?700:400}">${kIzin}</td>
+        <td style="text-align:center;color:${kSakit>0?'#c62828':'#9aabb8'};font-weight:${kSakit>0?700:400}">${kSakit}</td>
+        <td style="text-align:center;color:${kAlpa>0?'var(--merah)':'#9aabb8'};font-weight:${kAlpa>0?700:400}">${kAlpa}</td>
+        <td style="text-align:center;font-weight:${kTerdata>0?700:400}">${kTerdata}</td>
+        <td style="text-align:center">${kPct}%
           <div class="persen-bar"><div class="persen-fill" style="width:${kPct}%"></div></div>
         </td>
       </tr>`;
@@ -2334,9 +2345,11 @@ function bukаModalDetail(status) {
       row += '<div class="modal-detail-nama" style="flex:1;">'+s.nama+'</div>';
       row += '<div class="modal-detail-kelas">'+s.kelas+'</div></div>';
       row += '<div id="mdform'+i+'" style="display:none;padding:8px 0 4px 36px;gap:8px;flex-wrap:wrap;">';
+      row += '<button onclick="pilihMdStatus('+i+',\'Hadir\')" id="mdbtn'+i+'Hadir" style="padding:5px 12px;border:2px solid var(--hijau);border-radius:8px;color:var(--hijau);background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Hadir</button>';
       row += '<button onclick="pilihMdStatus('+i+',\'Izin\')" id="mdbtn'+i+'Izin" style="padding:5px 12px;border:2px solid #1565c0;border-radius:8px;color:#1565c0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Izin</button>';
       row += '<button onclick="pilihMdStatus('+i+',\'Sakit\')" id="mdbtn'+i+'Sakit" style="padding:5px 12px;border:2px solid #c62828;border-radius:8px;color:#c62828;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Sakit</button>';
       row += '<button onclick="pilihMdStatus('+i+',\'Alpa\')" id="mdbtn'+i+'Alpa" style="padding:5px 12px;border:2px solid #e53935;border-radius:8px;color:#e53935;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Alpa</button>';
+      row += '<span id="mdjam'+i+'" style="display:none;font-size:12px;font-weight:700;color:var(--hijau);align-self:center;"></span>';
       row += '<button onclick="simpanMdStatus('+i+',\''+nisnVal+'\',\''+nn+'\',\''+s.kelas+'\')" id="mdsave'+i+'" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Simpan</button>';
       row += '</div></div>';
       html3 += row;
@@ -2406,12 +2419,29 @@ function toggleMdForm(i) {
 }
 function pilihMdStatus(i, st) {
   _mdStatus[i] = st;
-  ['Izin','Sakit','Alpa'].forEach(function(s) {
+  var colMap = {Hadir:'var(--hijau)', Izin:'#1565c0', Sakit:'#c62828', Alpa:'#e53935'};
+  ['Hadir','Izin','Sakit','Alpa'].forEach(function(s) {
     var b = document.getElementById('mdbtn' + i + s); if (!b) return;
-    var col = s==='Izin'?'#1565c0':s==='Sakit'?'#c62828':'#e53935';
+    var col = colMap[s];
     b.style.background = s===st ? col : '#fff';
     b.style.color = s===st ? '#fff' : col;
   });
+  // Tampilkan jam jika Hadir
+  var jamEl = document.getElementById('mdjam' + i);
+  if (jamEl) {
+    if (st === 'Hadir') {
+      var now = new Date();
+      var hh = String(now.getHours()).padStart(2,'0');
+      var mm = String(now.getMinutes()).padStart(2,'0');
+      var jamStr = hh + ':' + mm;
+      jamEl.textContent = '🕐 ' + jamStr;
+      jamEl.style.display = 'inline-block';
+      _mdStatus['jam' + i] = jamStr;
+    } else {
+      jamEl.style.display = 'none';
+      delete _mdStatus['jam' + i];
+    }
+  }
   var sv = document.getElementById('mdsave' + i);
   if (sv) sv.style.display = 'inline-block';
 }
@@ -2426,6 +2456,17 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   if (!nisnFinal && nama) {
     var found = dataSiswa.find(function(s) { return s.nama === nama; });
     if (found) nisnFinal = found.nisn || '';
+  }
+
+  // Handle Hadir → tentukan OnTime atau Terlambat berdasarkan jam
+  var jamMasuk = '';
+  if (st === 'Hadir') {
+    jamMasuk = _mdStatus['jam' + i] || (function(){
+      var now = new Date();
+      return String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    })();
+    var batas = (window._jadwalData && window._jadwalData.jamMasukBatas) ? window._jadwalData.jamMasukBatas : '07:30';
+    st = jamMasuk <= batas ? 'OnTime' : 'Terlambat';
   }
 
   // Update UI langsung tanpa tunggu server
@@ -2458,7 +2499,7 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   // FIX: Update counter statistik Izin/Sakit/Alpa dan kurangi Belum Masuk
   var tglHariIni = getTglHariIni();
   tambahKeTabeAbsenHariIni({nisn:nisnFinal, nama:nama, kelas:kelas}, {status:st, manual:true});
-  var stIdMap = {Izin:'stIzin', Sakit:'stSakit', Alpa:'stAlpa'};
+  var stIdMap = {OnTime:'stOnTime', Terlambat:'stTerlambat', Izin:'stIzin', Sakit:'stSakit', Alpa:'stAlpa'};
   if (stIdMap[st]) {
     var elSt = document.getElementById(stIdMap[st]);
     if (elSt) elSt.textContent = parseInt(elSt.textContent||0) + 1;
@@ -2467,7 +2508,7 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   if (elBM) elBM.textContent = Math.max(0, parseInt(elBM.textContent||0) - 1);
 
   // Kirim ke server di background
-  apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni})
+  apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni, jamMasuk:jamMasuk||''})
     .catch(function() {});
 }
 
