@@ -2498,12 +2498,14 @@ async function simpanMdStatus(i) {
   var elBM = document.getElementById('stBelumMasuk');
   if (elBM) elBM.textContent = Math.max(0, parseInt(elBM.textContent || 0) - 1);
 
-  // 3. Update label count modal
-  var countEl = document.getElementById('mdCountBM');
-  if (countEl) {
-    var cur = parseInt(countEl.textContent) || 0;
-    countEl.textContent = Math.max(0, cur - 1) + ' siswa belum masuk — klik nama untuk input';
-  }
+  // 3. Update label count modal — hitung dari DOM langsung biar akurat
+  setTimeout(function() {
+    var countEl = document.getElementById('mdCountBM');
+    if (countEl) {
+      var vis = document.querySelectorAll('[id^="mdrow"]').length;
+      countEl.textContent = vis + ' siswa belum masuk — klik nama untuk input';
+    }
+  }, 320); // setelah row.remove() selesai (300ms)
 
   // 4. Update counter status (SATU TEMPAT SAJA — tidak lewat tambahKeTabeAbsenHariIni)
   var stIdMap = {OnTime:'stOnTime', Terlambat:'stTerlambat', Izin:'stIzin', Sakit:'stSakit', Alpa:'stAlpa'};
