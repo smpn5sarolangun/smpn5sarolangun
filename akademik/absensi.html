@@ -1855,8 +1855,18 @@ function renderTabelAbsenHariIni(data, dariCache) {
   var nisnCount = {};
   data.forEach(function(r){ var n=String(r.nisn||r.nama); nisnCount[n]=(nisnCount[n]||0)+1; });
 
+  // Sort berdasarkan timestamp (_ts) jika ada, fallback ke jamMasuk
+  var sorted = data.slice().sort(function(a, b) {
+    var ta = a._ts || 0;
+    var tb = b._ts || 0;
+    if (ta && tb) return tb - ta;
+    var ja = String(a.jamMasuk||'').replace(':','') || '0000';
+    var jb = String(b.jamMasuk||'').replace(':','') || '0000';
+    return jb.localeCompare(ja);
+  });
+
   // Hanya insert baris yang belum ada di DOM
-  data.forEach(function(r) {
+  sorted.forEach(function(r) {
     var nisnNorm = String(r.nisn||'').replace(/\.0$/,'').replace(/^0+/,'');
     if (nisnNorm && domNisn[nisnNorm]) return; // sudah ada, jangan timpa
 
@@ -1994,7 +2004,7 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
     <td>${fmtJam(jamMasuk)}</td>
     <td>${fmtJam(jamPulang)}</td>
     <td><span class="badge badge-${status.toLowerCase().replace(' ','')}">${status}</span></td>`;
-  tbody.insertBefore(tr, tbody.firstChild);
+  tbody.insertBefore(tr, tbody.firstChild); // terbaru di atas
 
   // Update counter statistik lokal
   const upd = (id, fn) => { const el=document.getElementById(id); if(el) el.textContent=fn(parseInt(el.textContent||0)); };
