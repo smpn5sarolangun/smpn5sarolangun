@@ -2282,7 +2282,7 @@ function bukаModalDetail(status) {
       mdSticky.style.cssText = 'padding:0 24px 10px;border-bottom:1px solid #f0f4f8;background:#fff;flex-shrink:0;';
       isi.parentNode.insertBefore(mdSticky, isi);
     }
-    mdSticky.innerHTML = '<div class="search-wrap" style="margin-bottom:8px;"><input type="text" id="mdSearch" placeholder="🔍 Cari nama..." autocomplete="off" oninput="onSearchInput(this,filterMdList)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;box-sizing:border-box;outline:none;"><button class="search-clear" onclick="clearSearch('mdSearch',filterMdList)">✕</button></div>'
+    mdSticky.innerHTML = '<div class="search-wrap" style="margin-bottom:8px;"><input type="text" id="mdSearch" placeholder="🔍 Cari nama..." autocomplete="off" oninput="onSearchInput(this,filterMdList)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;box-sizing:border-box;outline:none;"><button class="search-clear" onclick="clearSearch(&apos;mdSearch&apos;,filterMdList)">✕</button></div>'
       + '<p style="font-size:12px;color:var(--teks-sub);margin:0;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk — klik nama untuk input</p>';
     var html3 = '';
     siswaList.forEach(function(s, i) {
@@ -2303,7 +2303,7 @@ function bukаModalDetail(status) {
     });
     isi.innerHTML = html3;
   } else {
-    var html4 = '<div class="search-wrap" style="margin-bottom:10px;"><input type="text" id="mdSearchOther" placeholder="🔍 Cari nama..." autocomplete="off" oninput="onSearchInput(this,filterMdList)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;box-sizing:border-box;outline:none;"><button class="search-clear" onclick="clearSearch('mdSearchOther',filterMdList)">✕</button></div>';
+    var html4 = '<div class="search-wrap" style="margin-bottom:10px;"><input type="text" id="mdSearchOther" placeholder="🔍 Cari nama..." autocomplete="off" oninput="onSearchInput(this,filterMdList)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;box-sizing:border-box;outline:none;"><button class="search-clear" onclick="clearSearch(&apos;mdSearchOther&apos;,filterMdList)">✕</button></div>';
     html4 += '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">'+siswaList.length+' siswa</p>';
     // Urut per kelas lalu abjad
     siswaList.sort(function(a,b){ return a.kelas.localeCompare(b.kelas)||a.nama.localeCompare(b.nama); });
@@ -2629,7 +2629,7 @@ function bukаModalKelas(kelas) {
     return;
   }
 
-  var html = '<div class="search-wrap" style="margin-bottom:10px;"><input type="text" id="mdSearchRekap" placeholder="🔍 Cari nama..." autocomplete="off" oninput="onSearchInput(this,filterMdList)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;box-sizing:border-box;outline:none;"><button class="search-clear" onclick="clearSearch('mdSearchRekap',filterMdList)">✕</button></div>';
+  var html = '<div class="search-wrap" style="margin-bottom:10px;"><input type="text" id="mdSearchRekap" placeholder="🔍 Cari nama..." autocomplete="off" oninput="onSearchInput(this,filterMdList)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;box-sizing:border-box;outline:none;"><button class="search-clear" onclick="clearSearch(&apos;mdSearchRekap&apos;,filterMdList)">✕</button></div>';
   html += '<p style="font-size:12px;color:var(--teks-sub);margin-bottom:12px;" id="mdCountBM">';
   html += sudahHadir.length + ' hadir, ' + belumHadir.length + ' belum hadir</p>';
 
