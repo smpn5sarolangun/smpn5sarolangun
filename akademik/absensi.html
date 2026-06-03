@@ -747,10 +747,10 @@ tr:hover td{background:#f8fafc;}
     <div style="overflow-x:auto;">
       <table>
         <thead><tr>
-          <th>Kelas</th><th>Total</th><th>Belum</th><th>Hadir</th><th>%</th>
+          <th>Kelas</th><th>Total</th><th style="color:#e65100;">Belum</th><th style="color:var(--hijau);">OnTime</th><th style="color:#e65100;">Terlambat</th><th style="color:#1565c0;">Izin</th><th style="color:#c62828;">Sakit</th><th style="color:var(--merah);">Alpa</th><th>Total Terdata</th><th>% Hadir</th>
         </tr></thead>
         <tbody id="tabelKelas">
-          <tr><td colspan="5" class="loading">Memuat...</td></tr>
+          <tr><td colspan="10" class="loading">Memuat...</td></tr>
         </tbody>
       </table>
     </div>
@@ -1438,17 +1438,31 @@ function _updateDashboardUI(d) {
   // Tabel per kelas
   const tbKelas = document.getElementById('tabelKelas');
   if (tbKelas && d.perKelas) {
-    tbKelas.innerHTML = d.perKelas.map(k => `
-      <tr>
+    tbKelas.innerHTML = d.perKelas.map(k => {
+      var kOT     = parseInt(k.onTime    || 0) || 0;
+      var kTL     = parseInt(k.terlambat || 0) || 0;
+      var kIzin   = parseInt(k.izin      || 0) || 0;
+      var kSakit  = parseInt(k.sakit     || 0) || 0;
+      var kAlpa   = parseInt(k.alpa      || 0) || 0;
+      var kHadir  = kOT + kTL;
+      var kTerdata= k.terdata != null ? parseInt(k.terdata)||0 : kHadir + kIzin + kSakit + kAlpa;
+      var kBelum  = k.belumHadir != null ? parseInt(k.belumHadir)||0 : Math.max(0, k.totalSiswa - kTerdata);
+      var kPct    = k.persentase != null ? k.persentase : (k.totalSiswa ? Math.round(kHadir/k.totalSiswa*100) : 0);
+      return `<tr>
         <td style="font-weight:700">${k.kelas}</td>
         <td>${k.totalSiswa}</td>
-        <td style="color:${k.belumHadir>0?'#e65100':'#9aabb8'};font-weight:${k.belumHadir>0?'700':'400'}">${k.belumHadir||k.totalSiswa-k.hadir}</td>
-        <td>${k.hadir}</td>
-        <td>${k.persentase}%
-          <div class="persen-bar"><div class="persen-fill" style="width:${k.persentase}%"></div></div>
+        <td style="color:${kBelum>0?'#e65100':'#9aabb8'};font-weight:${kBelum>0?700:400}">${kBelum}</td>
+        <td style="color:${kOT>0?'var(--hijau)':'#9aabb8'};font-weight:${kOT>0?700:400}">${kOT}</td>
+        <td style="color:${kTL>0?'#e65100':'#9aabb8'};font-weight:${kTL>0?700:400}">${kTL}</td>
+        <td style="color:${kIzin>0?'#1565c0':'#9aabb8'};font-weight:${kIzin>0?700:400}">${kIzin}</td>
+        <td style="color:${kSakit>0?'#c62828':'#9aabb8'};font-weight:${kSakit>0?700:400}">${kSakit}</td>
+        <td style="color:${kAlpa>0?'var(--merah)':'#9aabb8'};font-weight:${kAlpa>0?700:400}">${kAlpa}</td>
+        <td style="font-weight:${kTerdata>0?700:400}">${kTerdata}</td>
+        <td>${kPct}%
+          <div class="persen-bar"><div class="persen-fill" style="width:${kPct}%"></div></div>
         </td>
-        <td><span class="badge ${k.empty?'badge-alpa':'badge-ontime'}">${k.empty?'Empty':'Aktif'}</span></td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
   }
 
   // Tabel absensi terbaru — hanya render jika tabel masih kosong
@@ -1503,17 +1517,31 @@ async function loadDashboard() {
 
     // Tabel per kelas
     const tbKelas = document.getElementById('tabelKelas');
-    tbKelas.innerHTML = d.perKelas.map(k => `
-      <tr>
+    tbKelas.innerHTML = d.perKelas.map(k => {
+      var kOT     = parseInt(k.onTime    || 0) || 0;
+      var kTL     = parseInt(k.terlambat || 0) || 0;
+      var kIzin   = parseInt(k.izin      || 0) || 0;
+      var kSakit  = parseInt(k.sakit     || 0) || 0;
+      var kAlpa   = parseInt(k.alpa      || 0) || 0;
+      var kHadir  = kOT + kTL;
+      var kTerdata= k.terdata != null ? parseInt(k.terdata)||0 : kHadir + kIzin + kSakit + kAlpa;
+      var kBelum  = k.belumHadir != null ? parseInt(k.belumHadir)||0 : Math.max(0, k.totalSiswa - kTerdata);
+      var kPct    = k.persentase != null ? k.persentase : (k.totalSiswa ? Math.round(kHadir/k.totalSiswa*100) : 0);
+      return `<tr>
         <td style="font-weight:700">${k.kelas}</td>
         <td>${k.totalSiswa}</td>
-        <td>${k.hadir}</td>
-        <td>
-          ${k.persentase}%
-          <div class="persen-bar"><div class="persen-fill" style="width:${k.persentase}%"></div></div>
+        <td style="color:${kBelum>0?'#e65100':'#9aabb8'};font-weight:${kBelum>0?700:400}">${kBelum}</td>
+        <td style="color:${kOT>0?'var(--hijau)':'#9aabb8'};font-weight:${kOT>0?700:400}">${kOT}</td>
+        <td style="color:${kTL>0?'#e65100':'#9aabb8'};font-weight:${kTL>0?700:400}">${kTL}</td>
+        <td style="color:${kIzin>0?'#1565c0':'#9aabb8'};font-weight:${kIzin>0?700:400}">${kIzin}</td>
+        <td style="color:${kSakit>0?'#c62828':'#9aabb8'};font-weight:${kSakit>0?700:400}">${kSakit}</td>
+        <td style="color:${kAlpa>0?'var(--merah)':'#9aabb8'};font-weight:${kAlpa>0?700:400}">${kAlpa}</td>
+        <td style="font-weight:${kTerdata>0?700:400}">${kTerdata}</td>
+        <td>${kPct}%
+          <div class="persen-bar"><div class="persen-fill" style="width:${kPct}%"></div></div>
         </td>
-        <td><span class="badge ${k.empty ? 'badge-alpa' : 'badge-ontime'}">${k.empty ? 'Empty' : 'Aktif'}</span></td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
   } catch(e) {
     console.error('Dashboard error:', e);
   }
@@ -2256,11 +2284,13 @@ function bukаModalDetail(status) {
 
   if (status === 'belumMasuk') {
     // Pakai NISN dari cache - normalisasi strip leading zero
+    // FIX: Siswa yang sudah Izin/Sakit/Alpa TIDAK masuk daftar Belum Masuk
     var cacheAbsen = ambilCacheAbsen() || [];
     var normNisn = function(n) { return String(n||'').trim().replace(/\.0$/, '').replace(/^0+/, ''); };
     var sudahNisn = new Set();
+    var statusSudahAbsen = new Set(['OnTime','Terlambat','Izin','Sakit','Alpa','Pulang']);
     cacheAbsen.forEach(function(d) { 
-      if (d.nisn) sudahNisn.add(normNisn(d.nisn));
+      if (d.nisn && statusSudahAbsen.has(d.status)) sudahNisn.add(normNisn(d.nisn));
     });
     siswaList = dataSiswa
       .filter(function(s){ return !sudahNisn.has(normNisn(s.nisn)); })
@@ -2401,15 +2431,40 @@ async function simpanMdStatus(i, nisn, nama, kelas) {
   // Update UI langsung tanpa tunggu server
   playSukses();
   var row = document.getElementById('mdrow' + i);
-  if (row) { row.style.opacity='0'; row.style.transition='all 0.3s'; setTimeout(function(){row.remove();}, 300); }
+  if (row) {
+    row.style.opacity='0';
+    row.style.transition='all 0.3s';
+    setTimeout(function(){
+      row.remove();
+      // Reindex nomor urut otomatis setelah baris dihapus
+      var allRows = document.querySelectorAll('[id^="mdrow"]');
+      allRows.forEach(function(r, idx) {
+        var noEl = r.querySelector('.modal-detail-no');
+        if (noEl) noEl.textContent = idx + 1;
+      });
+      // Update count label
+      var countEl = document.getElementById('mdCountBM');
+      if (countEl) {
+        var vis = document.querySelectorAll('[id^="mdrow"]').length;
+        countEl.textContent = vis + ' siswa belum masuk — klik nama untuk input';
+      }
+    }, 300);
+  }
   // Clear search box setelah simpan
   var srch = document.getElementById('mdSearch');
   if (srch) { srch.value = ''; filterMdList(''); }
   var el = document.getElementById('mdCountBM');
   if (el) { var n = parseInt(el.textContent) - 1; el.textContent = n + ' siswa belum masuk — klik nama untuk input'; }
-  // Counter diurus oleh tambahKeTabeAbsenHariIni — tidak perlu update di sini
+  // FIX: Update counter statistik Izin/Sakit/Alpa dan kurangi Belum Masuk
   var tglHariIni = getTglHariIni();
   tambahKeTabeAbsenHariIni({nisn:nisnFinal, nama:nama, kelas:kelas}, {status:st, manual:true});
+  var stIdMap = {Izin:'stIzin', Sakit:'stSakit', Alpa:'stAlpa'};
+  if (stIdMap[st]) {
+    var elSt = document.getElementById(stIdMap[st]);
+    if (elSt) elSt.textContent = parseInt(elSt.textContent||0) + 1;
+  }
+  var elBM = document.getElementById('stBelumMasuk');
+  if (elBM) elBM.textContent = Math.max(0, parseInt(elBM.textContent||0) - 1);
 
   // Kirim ke server di background
   apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni})
