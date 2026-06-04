@@ -1926,7 +1926,9 @@ function renderTabelAbsenHariIni(data, dariCache) {
   var elTotal = document.getElementById('totalAbsenHariIni');
   if (elTotal) {
     var count = tbody.querySelectorAll('tr[data-nisn]').length;
-    if (count > 0) elTotal.textContent = count;
+    var prevCount = parseInt(elTotal.textContent||'0') || 0;
+    // Counter tidak pernah turun — hanya naik atau tetap
+    if (count > prevCount) elTotal.textContent = count;
   }
   updateBelumPulangDariDOM();
 }
@@ -1992,22 +1994,28 @@ async function refreshStatistikSaja() {
     ]);
     if (!rDash.ok) return;
     _updateDashboardUI(rDash.data);
-    // Update tabel hanya jika data dari server lebih lengkap dari DOM saat ini
+    // Server hanya menambah data ke cache/tabel — tidak pernah mengurangi
     if (rAbsen.ok && rAbsen.data && rAbsen.data.length > 0) {
       const serverData = rAbsen.data;
-      // Merge: data server + scan quick yang belum dikonfirmasi server (dalam 30 detik)
-      const now = Date.now();
+      // Merge: ambil cache lokal, tambahkan data server yang belum ada
       const cacheAda = ambilCacheAbsen() || [];
       const serverNisnSet = new Set(serverData.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
+      // quickData = data lokal yang belum ada di server (scan quick belum dikonfirmasi)
+      // Tidak ada batas waktu — simpan sampai server konfirmasi
       const quickData = cacheAda.filter(function(x){
-        const umur = now - (x._ts || 0);
-        return !serverNisnSet.has(String(x.nisn||'').replace(/^0+/,'')) && umur < 30000;
+        return !serverNisnSet.has(String(x.nisn||'').replace(/^0+/,''));
       });
-      const merged = serverData.concat(quickData);
+      // Update field jamPulang/status dari server jika ada (misal absen pulang dari device lain)
+      const serverByNisn = {};
+      serverData.forEach(function(d){ serverByNisn[String(d.nisn||'').replace(/^0+/,'')] = d; });
+      const quickUpdated = quickData.map(function(x){
+        var key = String(x.nisn||'').replace(/^0+/,'');
+        return serverByNisn[key] ? Object.assign({}, x, serverByNisn[key]) : x;
+      });
+      const merged = serverData.concat(quickUpdated);
       simpanCacheAbsen(merged);
-      // Render ulang penuh dari server agar data yang dihapus ikut hilang
-      const tbody = document.getElementById('tabelAbsenHariIni');
-      if (tbody) tbody.innerHTML = '';
+      // renderTabelAbsenHariIni sudah patch-based: hanya menambah baris baru, tidak hapus yang ada
+      // JANGAN clear tbody di sini — data lokal yang belum dikonfirmasi server harus tetap tampil
       renderTabelAbsenHariIni(merged);
     }
     // Jika server kirim kosong/error → skip, jangan hapus tampilan yang ada
