@@ -1249,22 +1249,19 @@ function fokusNisn() {
 // ── HITUNG BELUM MASUK DARI LOKAL ──────────────────────────────────
 // Selalu sinkron dengan modal — tidak bergantung angka dari server
 function hitungBelumMasuk() {
-  var tbody = document.getElementById('tabelAbsenHariIni');
-  var sudahAbsen = tbody ? tbody.querySelectorAll('tr[data-nisn]').length : 0;
+  // Rumus: Total Siswa - sudah absen hari ini (counter badge yg selalu update)
+  var elTotalSiswa = document.getElementById('stTotalSiswa');
+  var elSudahAbsen = document.getElementById('totalAbsenHariIni');
 
-  // Prioritas 1: pakai dataSiswa jika sudah tersedia (paling akurat)
-  var totalSiswa = dataSiswa && dataSiswa.length ? dataSiswa.length : 0;
+  var totalSiswa  = elTotalSiswa ? parseInt(elTotalSiswa.textContent)  || 0 : 0;
+  var sudahAbsen  = elSudahAbsen ? parseInt(elSudahAbsen.textContent)  || 0 : 0;
 
-  // Prioritas 2: fallback ke angka Total Siswa di DOM (sudah ada sejak dashboard load)
-  if (!totalSiswa) {
-    var elTotal = document.getElementById('stTotalSiswa');
-    totalSiswa = elTotal ? parseInt(elTotal.textContent) || 0 : 0;
-  }
+  // Fallback: dataSiswa jika stTotalSiswa belum terisi
+  if (!totalSiswa && dataSiswa && dataSiswa.length) totalSiswa = dataSiswa.length;
 
-  if (!totalSiswa) return; // belum ada data sama sekali
-  var belum = Math.max(0, totalSiswa - sudahAbsen);
+  if (!totalSiswa) return;
   var el = document.getElementById('stBelumMasuk');
-  if (el) el.textContent = belum;
+  if (el) el.textContent = Math.max(0, totalSiswa - sudahAbsen);
 }
 
 // Auto fokus ke field NISN saat klik di mana saja
