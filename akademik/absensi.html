@@ -1514,7 +1514,10 @@ function _updateDashboardUI(d) {
   simpanCacheDashboard(d);
 
   const upd = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-  upd('stTotalSiswa', d.totalSiswa);
+  // Gunakan dataSiswa.length jika sudah tersedia (lebih akurat dari getDashboard)
+  // getDashboard bisa return totalSiswa yg stale kalau GAS cache-nya belum refresh
+  var totalSiswaAkurat = (dataSiswa && dataSiswa.length) ? dataSiswa.length : d.totalSiswa;
+  upd('stTotalSiswa', totalSiswaAkurat);
   upd('stTotalKelas', d.totalKelas);
   upd('stTglDash',    d.tanggal);
   if (d.jadwal) {
