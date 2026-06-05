@@ -1249,10 +1249,20 @@ function fokusNisn() {
 // ── HITUNG BELUM MASUK DARI LOKAL ──────────────────────────────────
 // Selalu sinkron dengan modal — tidak bergantung angka dari server
 function hitungBelumMasuk() {
-  if (!dataSiswa || !dataSiswa.length) return;
   var tbody = document.getElementById('tabelAbsenHariIni');
   var sudahAbsen = tbody ? tbody.querySelectorAll('tr[data-nisn]').length : 0;
-  var belum = Math.max(0, dataSiswa.length - sudahAbsen);
+
+  // Prioritas 1: pakai dataSiswa jika sudah tersedia (paling akurat)
+  var totalSiswa = dataSiswa && dataSiswa.length ? dataSiswa.length : 0;
+
+  // Prioritas 2: fallback ke angka Total Siswa di DOM (sudah ada sejak dashboard load)
+  if (!totalSiswa) {
+    var elTotal = document.getElementById('stTotalSiswa');
+    totalSiswa = elTotal ? parseInt(elTotal.textContent) || 0 : 0;
+  }
+
+  if (!totalSiswa) return; // belum ada data sama sekali
+  var belum = Math.max(0, totalSiswa - sudahAbsen);
   var el = document.getElementById('stBelumMasuk');
   if (el) el.textContent = belum;
 }
@@ -1518,7 +1528,8 @@ function _updateDashboardUI(d) {
   const s = d.statistik;
   upd('stOnTime',      s.onTime);
   upd('stTerlambat',   s.terlambat);
-  // stBelumMasuk dihitung dari lokal via hitungBelumMasuk(), tidak dari server
+  // stBelumMasuk dihitung dari lokal — hitung ulang karena stTotalSiswa baru saja diisi
+  hitungBelumMasuk();
   upd('stBelumPulang', s.belumPulang);
   upd('stIzin',        s.izin);
   upd('stSakit',       s.sakit);
