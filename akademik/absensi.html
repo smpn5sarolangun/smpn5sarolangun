@@ -1563,13 +1563,14 @@ function _updateDashboardUI(d) {
       if (!d.terbaru || !d.terbaru.length) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
       } else {
-        tbody.innerHTML = d.terbaru.map(r => `
+        tbody.innerHTML = d.terbaru.map((r, idx) => `
           <tr data-nisn="${r.nisn||''}">
+            <td style="text-align:center;font-size:11px;color:var(--teks-sub);font-weight:600;">${idx+1}</td>
             <td style="font-weight:600">${r.nama}</td>
             <td>${r.kelas}</td>
-            <td>${r.jamMasuk||'—'}</td>
-            <td>${r.jamPulang||'—'}</td>
-            <td><span class="badge badge-${r.status.toLowerCase().replace(' ','')}">${r.status}</span></td>
+            <td>${fmtJam(r.jamMasuk)||'—'}</td>
+            <td>${fmtJam(r.jamPulang)||'—'}</td>
+            <td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','')}">${r.status}</span></td>
           </tr>`).join('');
       }
     }
@@ -2011,7 +2012,7 @@ function renderTabelAbsenHariIni(data, dariCache) {
   if (!data || !data.length) {
     // Hanya tampilkan placeholder kalau tabel benar-benar kosong
     if (!tbody.querySelectorAll('tr[data-nisn]').length && !dariCache) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
     }
     return;
   }
@@ -2127,12 +2128,13 @@ async function loadTabelAbsenHariIni() {
     merged.forEach(function(d){ if(d.nisn) window._sudahAbsenSet.add(normNx(d.nisn)); });
     // ★ Aman dipanggil kapanpun — render patch-based, tidak pernah hapus baris yang ada
     renderTabelAbsenHariIni(merged);
+    // Hitung setelah render server selesai (data paling lengkap)
+    hitungBelumMasuk();
   } catch(e) {
-    // Fetch gagal - tabel sudah tampil dari cache, tidak apa-apa
+    // Fetch gagal - tabel sudah tampil dari cache, hitung dari DOM yang ada
     console.log('loadTabelAbsenHariIni error:', e);
+    hitungBelumMasuk();
   }
-  // Hitung belum masuk setelah tabel terisi
-  hitungBelumMasuk();
 }
 
 async function refreshStatistikSaja() {
@@ -2249,8 +2251,7 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   // Update counter total absen
   var elTotal = document.getElementById('totalAbsenHariIni');
   if (elTotal) {
-    var rows = document.getElementById('tabelAbsenHariIni')?.querySelectorAll('tr') || [];
-    var count = Array.from(rows).filter(function(r){ return r.querySelectorAll('td').length >= 3; }).length;
+    var count = document.getElementById('tabelAbsenHariIni')?.querySelectorAll('tr[data-nisn]').length || 0;
     if (count > 0) elTotal.textContent = count;
   }
   updateBelumPulangDariDOM();
@@ -2560,7 +2561,8 @@ function filterTabelAbsen(q) {
   rows.forEach(function(row) {
     var cells = row.querySelectorAll('td');
     if (cells.length < 2) return;
-    var nama = cells[0].textContent.toLowerCase();
+    // cells[0] = No, cells[1] = Nama Siswa
+    var nama = cells[1].textContent.toLowerCase();
     row.style.display = (!query || nama.includes(query)) ? '' : 'none';
   });
 }
@@ -2908,15 +2910,15 @@ function bukаModalKelas(kelas) {
   var rows  = tbody ? Array.from(tbody.querySelectorAll('tr[data-nisn]')) : [];
   var sudahHadir = rows
     .filter(function(row) {
-      return row.querySelectorAll('td')[1]?.textContent.trim() === kelas;
+      return row.querySelectorAll('td')[2]?.textContent.trim() === kelas;
     })
     .map(function(row) {
       var cells = row.querySelectorAll('td');
       return {
-        nama:   cells[0].textContent.trim(),
-        kelas:  cells[1].textContent.trim(),
-        status: cells[4].textContent.trim(),
-        jam:    cells[2].textContent.trim()
+        nama:   cells[1].textContent.trim(),
+        kelas:  cells[2].textContent.trim(),
+        status: cells[5].textContent.trim(),
+        jam:    cells[3].textContent.trim()
       };
     });
 
