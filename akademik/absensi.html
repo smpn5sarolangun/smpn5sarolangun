@@ -1514,10 +1514,13 @@ function _updateDashboardUI(d) {
   simpanCacheDashboard(d);
 
   const upd = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-  // Gunakan dataSiswa.length jika sudah tersedia (lebih akurat dari getDashboard)
-  // getDashboard bisa return totalSiswa yg stale kalau GAS cache-nya belum refresh
-  var totalSiswaAkurat = (dataSiswa && dataSiswa.length) ? dataSiswa.length : d.totalSiswa;
-  upd('stTotalSiswa', totalSiswaAkurat);
+  // totalSiswa TIDAK disimpan di cache dashboard (selalu stale)
+  // Hanya update dari: (1) dataSiswa.length setelah getSiswa, (2) d.totalSiswa dari server live
+  // Jangan update dari cache (d.totalSiswa undefined saat dari cache)
+  if (d.totalSiswa) {
+    var totalSiswaAkurat = (dataSiswa && dataSiswa.length) ? dataSiswa.length : d.totalSiswa;
+    upd('stTotalSiswa', totalSiswaAkurat);
+  }
   upd('stTotalKelas', d.totalKelas);
   upd('stTglDash',    d.tanggal);
   if (d.jadwal) {
@@ -1998,9 +2001,14 @@ function ambilCacheAbsen() {
 
 // Cache dashboard stats
 function simpanCacheDashboard(data) {
-  try { localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
-    tgl: getTglHariIni(), ts: Date.now(), data
-  })); } catch(e){}
+  try {
+    // Jangan cache totalSiswa — selalu ambil live dari getSiswa agar tidak stale saat reload
+    var toSave = Object.assign({}, data);
+    delete toSave.totalSiswa;
+    localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+      tgl: getTglHariIni(), ts: Date.now(), data: toSave
+    }));
+  } catch(e){}
 }
 function ambilCacheDashboard() {
   try {
