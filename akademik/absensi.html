@@ -2995,6 +2995,12 @@ async function loadSiswa() {
   if (!r.ok) return;
   dataSiswa = r.data;
   renderTabelSiswa(dataSiswa);
+  // Update stTotalSiswa dari getSiswa — lebih akurat dan real-time vs getDashboard
+  var elTS = document.getElementById('stTotalSiswa');
+  if (elTS && dataSiswa.length) {
+    elTS.textContent = dataSiswa.length;
+    hitungBelumMasuk(); // recalc dengan totalSiswa terbaru
+  }
 }
 
 function renderTabelSiswa(data) {
