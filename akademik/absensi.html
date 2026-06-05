@@ -2379,15 +2379,25 @@ function bukаModalDetail(status) {
   var siswaList = [];
 
   if (status === 'belumMasuk') {
-    // Pakai NISN dari cache - normalisasi strip leading zero
-    // FIX: Siswa yang sudah Izin/Sakit/Alpa TIDAK masuk daftar Belum Masuk
-    var cacheAbsen = ambilCacheAbsen() || [];
     var normNisn = function(n) { return String(n||'').trim().replace(/\.0$/, '').replace(/^0+/, ''); };
     var sudahNisn = new Set();
+
+    // Sumber 1: cache lokal (hasil scan sesi ini)
+    var cacheAbsen = ambilCacheAbsen() || [];
     var statusSudahAbsen = new Set(['OnTime','Terlambat','Izin','Sakit','Alpa','Pulang']);
-    cacheAbsen.forEach(function(d) { 
+    cacheAbsen.forEach(function(d) {
       if (d.nisn && statusSudahAbsen.has(d.status)) sudahNisn.add(normNisn(d.nisn));
     });
+
+    // Sumber 2: tabel DOM (baris yang sudah tampil di tabel absen hari ini)
+    var tbody2 = document.getElementById('tabelAbsenHariIni');
+    if (tbody2) {
+      tbody2.querySelectorAll('tr[data-nisn]').forEach(function(row) {
+        var n = normNisn(row.dataset.nisn || '');
+        if (n) sudahNisn.add(n);
+      });
+    }
+
     siswaList = dataSiswa
       .filter(function(s){ return !sudahNisn.has(normNisn(s.nisn)); })
       .map(function(s){ return {nisn: s.nisn, nama: s.nama, kelas: s.kelas, info: 'Belum absen'}; });
@@ -2470,7 +2480,15 @@ function filterTabelAbsen(q) {
 
 function clearSearch(inputId, filterFn) {
   var el = document.getElementById(inputId);
-  if (el) { el.value = ''; filterFn(''); el.focus(); }
+  if (el) {
+    el.value = ''; filterFn('');
+    var dashPage = document.getElementById('page-dashboard');
+    if (inputId === 'cariNama' && dashPage && dashPage.classList.contains('active')) {
+      fokusNisn();
+    } else {
+      el.focus();
+    }
+  }
   var btn = el ? el.parentNode.querySelector('.search-clear') : null;
   if (btn) btn.classList.remove('visible');
 }
@@ -2852,6 +2870,8 @@ function tutupModalDetail() {
   var mdSticky = document.getElementById('mdStickyArea');
   if (mdSticky) mdSticky.remove();
   document.getElementById('modalDetail').classList.remove('open');
+  var dashPage = document.getElementById('page-dashboard');
+  if (dashPage && dashPage.classList.contains('active')) fokusNisn();
 }
 
 // ── LOAD ABSENSI HARI ───────────────────────────────────
@@ -2975,7 +2995,11 @@ function tampilModalMsg(msg, isError) {
   el.style.color = isError ? '#c0392b' : '#1a7a4a';
 }
 
-function tutupModal(id) { document.getElementById(id).classList.remove('open'); }
+function tutupModal(id) {
+  document.getElementById(id).classList.remove('open');
+  var dashPage = document.getElementById('page-dashboard');
+  if (dashPage && dashPage.classList.contains('active')) fokusNisn();
+}
 
 // ── IZIN/SAKIT ──────────────────────────────────────────
 async function loadSiswaKelas() {
