@@ -1250,20 +1250,9 @@ function fokusNisn() {
 // Selalu sinkron dengan modal — tidak bergantung angka dari server
 function hitungBelumMasuk() {
   if (!dataSiswa || !dataSiswa.length) return;
-  var normN = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
-  var sudah = new Set();
-  var statusSudah = new Set(['OnTime','Terlambat','Izin','Sakit','Alpa','Pulang']);
-  (ambilCacheAbsen()||[]).forEach(function(d){
-    if (d.nisn && statusSudah.has(d.status)) sudah.add(normN(d.nisn));
-  });
   var tbody = document.getElementById('tabelAbsenHariIni');
-  if (tbody) {
-    tbody.querySelectorAll('tr[data-nisn]').forEach(function(row){
-      var n = normN(row.dataset.nisn||'');
-      if (n) sudah.add(n);
-    });
-  }
-  var belum = dataSiswa.filter(function(s){ return !sudah.has(normN(s.nisn)); }).length;
+  var sudahAbsen = tbody ? tbody.querySelectorAll('tr[data-nisn]').length : 0;
+  var belum = Math.max(0, dataSiswa.length - sudahAbsen);
   var el = document.getElementById('stBelumMasuk');
   if (el) el.textContent = belum;
 }
@@ -1413,6 +1402,8 @@ window.addEventListener('load', async () => {
   loadTabelAbsenHariIni();
   await loadToggleAlpa(); // load status toggle alpa
   setInterval(refreshStatistikSaja, 30 * 1000);
+  // Kirim ulang scan yang mungkin gagal di sesi sebelumnya
+  setTimeout(prosesRetryQueue, 5000);
   // Restore mode scan dari localStorage
   var savedMode = localStorage.getItem('mode_scan') || 'quick';
   setMode(savedMode);
@@ -1868,7 +1859,15 @@ async function konfirmasiAbsen() {
     resetInputAbsen(); // siswaYangDipilih jadi null setelah ini
     // Kirim ke server di background dengan data yang sudah disimpan
     setTimeout(async function() {
-      try { await apiPost({action: qAction, nisn: qNisn, token: qToken}); } catch(e) {}
+      try {
+        var r = await apiPost({action: qAction, nisn: qNisn, token: qToken});
+        if (!r.ok && !(r.error && r.error.toLowerCase().includes('sudah'))) {
+          tambahRetryQueue(qAction, qNisn, qToken);
+        }
+      } catch(e) {
+        // Gagal kirim — masuk retry queue, akan dicoba ulang otomatis
+        tambahRetryQueue(qAction, qNisn, qToken);
+      }
     }, 0);
     return;
   }
@@ -1909,6 +1908,53 @@ function playGagal()  { try { AUDIO_GAGAL.currentTime=0;  AUDIO_GAGAL.play();  }
 // ── CACHE LOKAL (instan saat buka halaman) ──────────────────────
 const ABSEN_CACHE_KEY   = 'absensi_hari_ini_v6';
 const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini_v6';
+// ── RETRY QUEUE — kirim ulang scan yang gagal ke server ────────────
+const RETRY_QUEUE_KEY = 'absensi_retry_queue_v6';
+
+function simpanRetryQueue(queue) {
+  try { localStorage.setItem(RETRY_QUEUE_KEY, JSON.stringify(queue)); } catch(e) {}
+}
+function ambilRetryQueue() {
+  try { return JSON.parse(localStorage.getItem(RETRY_QUEUE_KEY)||'[]'); } catch(e) { return []; }
+}
+function tambahRetryQueue(action, nisn, token) {
+  var queue = ambilRetryQueue();
+  // Hindari duplikat action+nisn di queue
+  var exists = queue.find(function(q){ return q.nisn === nisn && q.action === action; });
+  if (!exists) {
+    queue.push({action: action, nisn: nisn, token: token, tgl: getTglHariIni(), ts: Date.now()});
+    simpanRetryQueue(queue);
+  }
+}
+async function prosesRetryQueue() {
+  var queue = ambilRetryQueue();
+  // Hapus item yang beda hari (sudah kadaluarsa)
+  var today = getTglHariIni();
+  queue = queue.filter(function(q){ return q.tgl === today; });
+  if (!queue.length) { simpanRetryQueue([]); return; }
+
+  var berhasil = [];
+  for (var i = 0; i < queue.length; i++) {
+    var item = queue[i];
+    try {
+      var r = await apiPost({action: item.action, nisn: item.nisn, token: item.token || TOKEN});
+      if (r.ok || (r.error && r.error.toLowerCase().includes('sudah'))) {
+        // Berhasil atau memang sudah tercatat — hapus dari queue
+        berhasil.push(i);
+      }
+    } catch(e) {
+      // Masih gagal, biarkan di queue untuk retry berikutnya
+    }
+  }
+  if (berhasil.length) {
+    queue = queue.filter(function(_, idx){ return berhasil.indexOf(idx) === -1; });
+    simpanRetryQueue(queue);
+    console.log('[Retry] Berhasil kirim ' + berhasil.length + ' item, sisa: ' + queue.length);
+  }
+}
+// Jalankan retry tiap 15 detik, belakang layar
+setInterval(prosesRetryQueue, 15000);
+
 
 function getTglHariIni() {
   var d = new Date();
