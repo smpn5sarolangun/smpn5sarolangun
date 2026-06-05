@@ -1396,7 +1396,6 @@ window.addEventListener('load', async () => {
   console.log('_sudahAbsenSet terisi:', window._sudahAbsenSet.size, 'dari cache lokal');
 
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
-  hitungBelumMasuk(); // hitung dari DOM setelah dataSiswa tersedia
   fokusNisn();
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
@@ -2124,6 +2123,8 @@ async function loadTabelAbsenHariIni() {
     // Fetch gagal - tabel sudah tampil dari cache, tidak apa-apa
     console.log('loadTabelAbsenHariIni error:', e);
   }
+  // Hitung belum masuk setelah tabel terisi (cache atau server)
+  hitungBelumMasuk();
 }
 
 async function refreshStatistikSaja() {
@@ -2190,13 +2191,20 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   tr.dataset.nisn = nisn; // penting: agar cek duplikat via DOM bekerja
   tr.style.animation = 'fadeIn 0.4s ease';
   var jamTampil = result.jamMasuk || jamMasuk;
+  var noScan = tbody.querySelectorAll('tr[data-nisn]').length + 1;
   tr.innerHTML = `
+    <td style="text-align:center;font-size:11px;color:var(--teks-sub);font-weight:600;">${noScan}</td>
     <td style="font-weight:600">${nama}</td>
     <td>${kelas}</td>
     <td>${fmtJam(jamTampil)}</td>
     <td>${fmtJam(jamPulang)}</td>
     <td><span class="badge badge-${status.toLowerCase().replace(' ','')}">${status}</span></td>`;
   tbody.insertBefore(tr, tbody.firstChild); // terbaru di atas
+  // Renomor semua baris setelah insert di atas
+  tbody.querySelectorAll('tr[data-nisn]').forEach(function(row, idx) {
+    var noEl = row.querySelector('td:first-child');
+    if (noEl) noEl.textContent = idx + 1;
+  });
 
   // Update counter statistik lokal
   // fromModal = sudah diupdate di simpanMdStatus, skip di sini
@@ -2437,13 +2445,13 @@ function bukаModalDetail(status) {
 
   const dataDOM = rows.map(function(row) {
     const cells = row.querySelectorAll('td');
-    if (cells.length < 5) return null;
+    if (cells.length < 6) return null; // sekarang ada kolom No (6 kolom)
     return {
-      nama:      cells[0].textContent.trim(),
-      kelas:     cells[1].textContent.trim(),
-      jamMasuk:  cells[2].textContent.trim(),
-      jamPulang: cells[3].textContent.trim(),
-      status:    cells[4].textContent.trim()
+      nama:      cells[1].textContent.trim(),
+      kelas:     cells[2].textContent.trim(),
+      jamMasuk:  cells[3].textContent.trim(),
+      jamPulang: cells[4].textContent.trim(),
+      status:    cells[5].textContent.trim()
     };
   }).filter(Boolean);
 
@@ -3549,9 +3557,9 @@ function updateBelumPulangDariDOM() {
   rows.forEach(function(row) {
     var cells = row.querySelectorAll('td');
     if (cells.length < 5) return;
-    var jamMasuk  = cells[2].textContent.trim();
-    var jamPulang = cells[3].textContent.trim();
-    var status    = cells[4].textContent.trim();
+    var jamMasuk  = cells[3].textContent.trim();
+    var jamPulang = cells[4].textContent.trim();
+    var status    = cells[5].textContent.trim();
     // Belum pulang = sudah masuk (ada jam masuk) tapi jam pulang kosong
     if (jamMasuk && jamMasuk !== '—' && (!jamPulang || jamPulang === '—') &&
         (status === 'OnTime' || status === 'Terlambat')) {
