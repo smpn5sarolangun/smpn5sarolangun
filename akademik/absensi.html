@@ -1254,6 +1254,73 @@ document.addEventListener('click', function(e) {
   if (!skip) fokusNisn();
 });
 
+// ── DETEKSI SCAN BARCODE DI POSISI SALAH ───────────────────────────
+// Scanner barcode fisik (USB/Bluetooth) mengirim karakter sangat cepat + Enter
+// Jika kursor tidak di field nisnInput saat scan, play gagal & tampilkan peringatan
+(function() {
+  var _buf = '';
+  var _bufTimer = null;
+  var _lastKeyTime = 0;
+  var SCAN_SPEED_MS = 50;   // karakter scanner datang < 50ms antar ketukan
+  var MIN_NISN_LEN  = 5;    // minimal panjang barcode dianggap scan
+
+  document.addEventListener('keydown', function(e) {
+    var nisnField = document.getElementById('nisnInput');
+    if (!nisnField) return;
+
+    var focused = document.activeElement;
+    var isInNisn = (focused === nisnField);
+
+    // Hanya proses jika aktif di halaman dashboard (page-dashboard aktif)
+    var dashPage = document.getElementById('page-dashboard');
+    if (!dashPage || !dashPage.classList.contains('active')) return;
+
+    // Jika fokus sudah di nisnInput, biarkan handler normal bekerja
+    if (isInNisn) {
+      _buf = '';
+      if (_bufTimer) { clearTimeout(_bufTimer); _bufTimer = null; }
+      return;
+    }
+
+    var now = Date.now();
+    var delta = now - _lastKeyTime;
+    _lastKeyTime = now;
+
+    // Jika karakter masuk sangat cepat (tipikal scanner), kumpulkan buffer
+    if (delta < SCAN_SPEED_MS || _buf.length > 0) {
+      if (e.key === 'Enter') {
+        // Scanner selesai kirim data
+        if (_bufTimer) { clearTimeout(_bufTimer); _bufTimer = null; }
+        var scanned = _buf;
+        _buf = '';
+        if (scanned.length >= MIN_NISN_LEN) {
+          // Scan terdeteksi tapi kursor BUKAN di field NISN!
+          e.preventDefault();
+          playGagal();
+          tampilNotif('⚠️', 'Posisi scan salah!',
+            'Klik area absensi dulu sebelum scan kartu', true);
+          // Otomatis fokus ke nisnInput untuk scan berikutnya
+          setTimeout(function() { fokusNisn(); }, 500);
+        }
+        return;
+      }
+
+      // Kumpulkan karakter (abaikan Shift, Ctrl, dll)
+      if (e.key.length === 1) {
+        _buf += e.key;
+        e.preventDefault(); // cegah karakter masuk ke field lain (misal cariNama)
+      }
+
+      // Reset buffer jika terlalu lama tidak ada input baru
+      if (_bufTimer) clearTimeout(_bufTimer);
+      _bufTimer = setTimeout(function() {
+        _buf = '';
+        _bufTimer = null;
+      }, 300);
+    }
+  }, true); // useCapture agar tertangkap sebelum handler lain
+})();
+
 window.addEventListener('load', async () => {
   // Render tabel jadwal dulu dengan default
   renderTabelJadwal();
