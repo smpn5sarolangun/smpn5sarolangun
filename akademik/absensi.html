@@ -1249,19 +1249,20 @@ function fokusNisn() {
 // ── HITUNG BELUM MASUK DARI LOKAL ──────────────────────────────────
 // Selalu sinkron dengan modal — tidak bergantung angka dari server
 function hitungBelumMasuk() {
-  // Rumus: Total Siswa - sudah absen hari ini (counter badge yg selalu update)
+  // Rumus pasti: Total Siswa - totalAbsenHariIni (badge counter, selalu akurat)
   var elTotalSiswa = document.getElementById('stTotalSiswa');
   var elSudahAbsen = document.getElementById('totalAbsenHariIni');
+  var elBelum      = document.getElementById('stBelumMasuk');
+  if (!elBelum) return;
 
-  var totalSiswa  = elTotalSiswa ? parseInt(elTotalSiswa.textContent)  || 0 : 0;
-  var sudahAbsen  = elSudahAbsen ? parseInt(elSudahAbsen.textContent)  || 0 : 0;
+  var totalSiswa = parseInt((elTotalSiswa||{}).textContent) || 0;
+  var sudahAbsen = parseInt((elSudahAbsen||{}).textContent) || 0;
 
-  // Fallback: dataSiswa jika stTotalSiswa belum terisi
+  // Fallback jika stTotalSiswa belum terisi dari server
   if (!totalSiswa && dataSiswa && dataSiswa.length) totalSiswa = dataSiswa.length;
-
   if (!totalSiswa) return;
-  var el = document.getElementById('stBelumMasuk');
-  if (el) el.textContent = Math.max(0, totalSiswa - sudahAbsen);
+
+  elBelum.textContent = Math.max(0, totalSiswa - sudahAbsen);
 }
 
 // Auto fokus ke field NISN saat klik di mana saja
@@ -1525,8 +1526,7 @@ function _updateDashboardUI(d) {
   const s = d.statistik;
   upd('stOnTime',      s.onTime);
   upd('stTerlambat',   s.terlambat);
-  // stBelumMasuk dihitung dari lokal — hitung ulang karena stTotalSiswa baru saja diisi
-  hitungBelumMasuk();
+  // stBelumMasuk dihitung dari hitungBelumMasuk() setelah tabel render selesai
   upd('stBelumPulang', s.belumPulang);
   upd('stIzin',        s.izin);
   upd('stSakit',       s.sakit);
@@ -2082,12 +2082,10 @@ function renderTabelAbsenHariIni(data, dariCache) {
   if (elTotal) {
     var count = tbody.querySelectorAll('tr[data-nisn]').length;
     var prevCount = parseInt(elTotal.textContent||'0') || 0;
-    // Counter tidak pernah turun — hanya naik atau tetap
     if (count > prevCount) elTotal.textContent = count;
   }
   updateBelumPulangDariDOM();
-  // hitungBelumMasuk dipanggil dari luar setelah dataSiswa tersedia
-  if (dataSiswa && dataSiswa.length) hitungBelumMasuk();
+  hitungBelumMasuk(); // totalAbsenHariIni sudah diset di atas — rumus pasti benar
 }
 
 // ── Update tabel absensi langsung setelah scan ──────────────────
