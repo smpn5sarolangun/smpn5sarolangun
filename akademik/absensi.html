@@ -1661,6 +1661,7 @@ async function prosesAbsenNisn(nisn) {
       return String(s.nisn||'').replace(/\.0$/,'').replace(/^0+/,'') === nisnKey;
     });
     var namaSudah = siswaSudah ? siswaSudah.nama : 'Siswa';
+    playGagal();
     tampilNotif('⚠️', namaSudah + ' — Sudah Absen', 'Data sudah tercatat hari ini', true);
     fokusNisn();
     return;
@@ -1668,6 +1669,7 @@ async function prosesAbsenNisn(nisn) {
 
   // Cegah scan ganda - flag per NISN
   if (window._sedangDiproses && window._sedangDiproses[nisnKey]) {
+    playGagal();
     tampilNotif('⚠️', 'Sedang diproses...', 'Harap tunggu sebentar', true);
     return;
   }
@@ -1683,6 +1685,7 @@ async function prosesAbsenNisn(nisn) {
   if (!siswa) {
     const r = await apiGet('cariSiswa', {nisn: nisn});
     if (!r.ok || !r.data) {
+      playGagal();
       tampilNotif('❌', 'Siswa tidak ditemukan', 'NISN: ' + nisn, true);
       if (window._sedangDiproses) delete window._sedangDiproses[nisnKey];
       fokusNisn();
