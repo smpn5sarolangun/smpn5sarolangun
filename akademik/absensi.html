@@ -1246,6 +1246,27 @@ function fokusNisn() {
     if (el) el.focus();
   }, 50);
 }
+// ── HITUNG BELUM MASUK DARI LOKAL ──────────────────────────────────
+// Selalu sinkron dengan modal — tidak bergantung angka dari server
+function hitungBelumMasuk() {
+  if (!dataSiswa || !dataSiswa.length) return;
+  var normN = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
+  var sudah = new Set();
+  var statusSudah = new Set(['OnTime','Terlambat','Izin','Sakit','Alpa','Pulang']);
+  (ambilCacheAbsen()||[]).forEach(function(d){
+    if (d.nisn && statusSudah.has(d.status)) sudah.add(normN(d.nisn));
+  });
+  var tbody = document.getElementById('tabelAbsenHariIni');
+  if (tbody) {
+    tbody.querySelectorAll('tr[data-nisn]').forEach(function(row){
+      var n = normN(row.dataset.nisn||'');
+      if (n) sudah.add(n);
+    });
+  }
+  var belum = dataSiswa.filter(function(s){ return !sudah.has(normN(s.nisn)); }).length;
+  var el = document.getElementById('stBelumMasuk');
+  if (el) el.textContent = belum;
+}
 
 // Auto fokus ke field NISN saat klik di mana saja
 // kecuali modal, dropdown, button, input lain
@@ -1505,7 +1526,7 @@ function _updateDashboardUI(d) {
   const s = d.statistik;
   upd('stOnTime',      s.onTime);
   upd('stTerlambat',   s.terlambat);
-  upd('stBelumMasuk',  s.belumMasuk);
+  // stBelumMasuk dihitung dari lokal via hitungBelumMasuk(), tidak dari server
   upd('stBelumPulang', s.belumPulang);
   upd('stIzin',        s.izin);
   upd('stSakit',       s.sakit);
@@ -2001,6 +2022,7 @@ function renderTabelAbsenHariIni(data, dariCache) {
     if (count > prevCount) elTotal.textContent = count;
   }
   updateBelumPulangDariDOM();
+  hitungBelumMasuk();
 }
 
 // ── Update tabel absensi langsung setelah scan ──────────────────
@@ -2134,12 +2156,12 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
     // Counter sudah diupdate di simpanMdStatus — skip semua
   } else if (result.manual) {
     // Input manual Izin / Sakit / Alpa dari halaman siswa
-    upd('stBelumMasuk', v => Math.max(0,v-1));
+    setTimeout(hitungBelumMasuk, 50);
     if (status==='Izin')  upd('stIzin',  v => v+1);
     if (status==='Sakit') upd('stSakit', v => v+1);
     if (status==='Alpa')  upd('stAlpa',  v => v+1);
   } else if (MODE_ABSEN === 'masuk') {
-    upd('stBelumMasuk', v => Math.max(0,v-1));
+    setTimeout(hitungBelumMasuk, 50);
     if (status==='OnTime')    upd('stOnTime',    v => v+1);
     if (status==='Terlambat') upd('stTerlambat', v => v+1);
   } else {
@@ -2593,9 +2615,8 @@ async function simpanMdStatus(i) {
     }, 300);
   }
 
-  // 2. Update counter Belum Masuk langsung (tanpa setTimeout)
-  var elBM = document.getElementById('stBelumMasuk');
-  if (elBM) elBM.textContent = Math.max(0, parseInt(elBM.textContent || 0) - 1);
+  // 2. Update counter Belum Masuk dari lokal (selalu sinkron dengan modal)
+  setTimeout(hitungBelumMasuk, 350); // setelah row.remove() selesai (300ms)
 
   // 3. Update label count modal — hitung dari DOM langsung biar akurat
   setTimeout(function() {
@@ -3053,8 +3074,7 @@ async function submitIzin() {
     if (stId && tgl === today) {
       var elSt = document.getElementById(stId);
       if (elSt) elSt.textContent = parseInt(elSt.textContent||0) + 1;
-      var elBM = document.getElementById('stBelumMasuk');
-      if (elBM) elBM.textContent = Math.max(0, parseInt(elBM.textContent||0) - 1);
+      setTimeout(hitungBelumMasuk, 50);
     }
     // Reset form
     selSiswa.selectedIndex = 0;
