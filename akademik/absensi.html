@@ -1378,6 +1378,14 @@ window.addEventListener('load', async () => {
   const cacheAbsen = ambilCacheAbsen();
   if (cacheDash)  _updateDashboardUI(cacheDash);
   if (cacheAbsen) renderTabelAbsenHariIni(cacheAbsen, true);
+  // Isi stTotalSiswa dari cache khusus getSiswa — selalu akurat, tidak pernah stale
+  try {
+    var cachedTotal = parseInt(localStorage.getItem(TOTAL_SISWA_KEY)) || 0;
+    if (cachedTotal) {
+      var elTS = document.getElementById('stTotalSiswa');
+      if (elTS) elTS.textContent = cachedTotal;
+    }
+  } catch(e) {}
 
   // Fetch server di background (update data terbaru)
   // Ping server untuk warm up (cegah cold start delay)
@@ -1926,6 +1934,7 @@ const ABSEN_CACHE_KEY   = 'absensi_hari_ini_v6';
 const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini_v6';
 // ── RETRY QUEUE — kirim ulang scan yang gagal ke server ────────────
 const RETRY_QUEUE_KEY = 'absensi_retry_queue_v6';
+const TOTAL_SISWA_KEY = 'total_siswa_v6'; // cache khusus totalSiswa dari getSiswa
 
 function simpanRetryQueue(queue) {
   try { localStorage.setItem(RETRY_QUEUE_KEY, JSON.stringify(queue)); } catch(e) {}
@@ -3006,11 +3015,11 @@ async function loadSiswa() {
   if (!r.ok) return;
   dataSiswa = r.data;
   renderTabelSiswa(dataSiswa);
-  // Update stTotalSiswa dari getSiswa — lebih akurat dan real-time vs getDashboard
-  var elTS = document.getElementById('stTotalSiswa');
-  if (elTS && dataSiswa.length) {
-    elTS.textContent = dataSiswa.length;
-    hitungBelumMasuk(); // recalc dengan totalSiswa terbaru
+  // Simpan totalSiswa di cache khusus — sumber kebenaran untuk stTotalSiswa
+  if (dataSiswa.length) {
+    try { localStorage.setItem(TOTAL_SISWA_KEY, dataSiswa.length); } catch(e) {}
+    var elTS = document.getElementById('stTotalSiswa');
+    if (elTS) { elTS.textContent = dataSiswa.length; hitungBelumMasuk(); }
   }
 }
 
