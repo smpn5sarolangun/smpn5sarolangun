@@ -1396,6 +1396,7 @@ window.addEventListener('load', async () => {
   console.log('_sudahAbsenSet terisi:', window._sudahAbsenSet.size, 'dari cache lokal');
 
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
+  hitungBelumMasuk(); // dataSiswa sudah ada, hitung sekarang
   fokusNisn();
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
@@ -2062,6 +2063,12 @@ function renderTabelAbsenHariIni(data, dariCache) {
     tbody.appendChild(tr); // tambah di bawah (urutan kronologis dari server)
   });
 
+  // Renomor semua baris sekaligus (termasuk yang lama dari cache)
+  tbody.querySelectorAll('tr[data-nisn]').forEach(function(row, idx) {
+    var noEl = row.querySelector('td:first-child');
+    if (noEl) noEl.textContent = idx + 1;
+  });
+
   var elTotal = document.getElementById('totalAbsenHariIni');
   if (elTotal) {
     var count = tbody.querySelectorAll('tr[data-nisn]').length;
@@ -2070,7 +2077,8 @@ function renderTabelAbsenHariIni(data, dariCache) {
     if (count > prevCount) elTotal.textContent = count;
   }
   updateBelumPulangDariDOM();
-  hitungBelumMasuk();
+  // hitungBelumMasuk dipanggil dari luar setelah dataSiswa tersedia
+  if (dataSiswa && dataSiswa.length) hitungBelumMasuk();
 }
 
 // ── Update tabel absensi langsung setelah scan ──────────────────
@@ -2123,7 +2131,7 @@ async function loadTabelAbsenHariIni() {
     // Fetch gagal - tabel sudah tampil dari cache, tidak apa-apa
     console.log('loadTabelAbsenHariIni error:', e);
   }
-  // Hitung belum masuk setelah tabel terisi (cache atau server)
+  // Hitung belum masuk setelah tabel terisi
   hitungBelumMasuk();
 }
 
