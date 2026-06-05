@@ -705,7 +705,7 @@ tr:hover td{background:#f8fafc;}
       <div style="overflow-x:auto;max-height:320px;overflow-y:auto;">
         <table>
           <thead><tr>
-            <th>Nama Siswa</th><th>Kelas</th><th>Masuk</th><th>Pulang</th><th>Status</th>
+            <th style="width:32px;text-align:center;">No</th><th>Nama Siswa</th><th>Kelas</th><th>Masuk</th><th>Pulang</th><th>Status</th>
           </tr></thead>
           <tbody id="tabelAbsenHariIni">
             <tr><td colspan="5" class="loading">Memuat data...</td></tr>
@@ -779,7 +779,7 @@ tr:hover td{background:#f8fafc;}
   <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.06);overflow:hidden;">
     <div style="overflow-x:auto;">
       <table>
-        <thead><tr><th>Tanggal</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Masuk</th><th>Pulang</th><th>Status</th><th>Keterangan</th></tr></thead>
+        <thead><tr><th>Tanggal</th><th>NISN</th><th style="width:32px;text-align:center;">No</th><th>Nama Siswa</th><th>Kelas</th><th>Masuk</th><th>Pulang</th><th>Status</th><th>Keterangan</th></tr></thead>
         <tbody id="tabelRekam"><tr><td colspan="8" class="loading">Pilih tanggal dan klik Tampilkan</td></tr></tbody>
       </table>
     </div>
@@ -1396,6 +1396,7 @@ window.addEventListener('load', async () => {
   console.log('_sudahAbsenSet terisi:', window._sudahAbsenSet.size, 'dari cache lokal');
 
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
+  hitungBelumMasuk(); // hitung dari DOM setelah dataSiswa tersedia
   fokusNisn();
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
@@ -2051,7 +2052,9 @@ function renderTabelAbsenHariIni(data, dariCache) {
     var dupBadge   = isDuplikat ? ' <span style="font-size:10px;color:#fff;background:#e53935;border-radius:4px;padding:1px 5px;">GANDA</span>' : '';
     var tr = document.createElement('tr');
     tr.dataset.nisn = r.nisn||'';
+    var noUrut = tbody.querySelectorAll('tr[data-nisn]').length + 1;
     tr.innerHTML =
+      '<td style="text-align:center;font-size:11px;color:var(--teks-sub);font-weight:600;">' + noUrut + '</td>' +
       '<td style="' + namaStyle + '">' + (r.nama||'—') + dupBadge + '</td>' +
       '<td>' + (r.kelas||'—') + '</td>' +
       '<td>' + fmtJam(r.jamMasuk) + '</td>' +
@@ -2551,7 +2554,7 @@ function clearSearch(inputId, filterFn) {
   if (el) {
     el.value = ''; filterFn('');
     var dashPage = document.getElementById('page-dashboard');
-    if (inputId === 'cariNama' && dashPage && dashPage.classList.contains('active')) {
+    if ((inputId === 'cariNama' || inputId === 'searchAbsenHariIni') && dashPage && dashPage.classList.contains('active')) {
       fokusNisn();
     } else {
       el.focus();
@@ -3697,6 +3700,38 @@ async function doLogout() {
   window.location.href = 'login.html';
 }
 
+
+// ── KIRIM ULANG CACHE KE SERVER (jalankan via console: kirimUlangCache()) ──
+window.kirimUlangCache = async function() {
+  var cache = ambilCacheAbsen() || [];
+  if (!cache.length) { console.log('[kirimUlangCache] Cache kosong'); return; }
+  console.log('[kirimUlangCache] Total di cache:', cache.length, 'item');
+  var berhasil = 0, gagal = 0, skip = 0;
+  for (var i = 0; i < cache.length; i++) {
+    var d = cache[i];
+    if (!d.nisn) { skip++; continue; }
+    var action = d.jamPulang && d.jamPulang !== '—' ? 'absenPulang' : 'absenMasuk';
+    try {
+      var r = await apiPost({action: action, nisn: d.nisn, token: TOKEN});
+      if (r.ok) {
+        berhasil++;
+        console.log('[kirimUlangCache] OK:', d.nama, d.nisn);
+      } else if (r.error && r.error.toLowerCase().includes('sudah')) {
+        skip++;
+        console.log('[kirimUlangCache] Skip (sudah ada):', d.nama);
+      } else {
+        gagal++;
+        console.warn('[kirimUlangCache] Gagal:', d.nama, r.error);
+      }
+    } catch(e) {
+      gagal++;
+      console.warn('[kirimUlangCache] Error:', d.nama, e.message);
+    }
+    // Jeda 300ms antar request agar tidak flood server
+    await new Promise(function(res){ setTimeout(res, 300); });
+  }
+  console.log('[kirimUlangCache] Selesai — Berhasil:', berhasil, '| Skip:', skip, '| Gagal:', gagal);
+};
 // Load siswa lazy
 window.addEventListener('load', function() {
   document.querySelectorAll('.nav-item').forEach(function(el) {
