@@ -1951,30 +1951,42 @@ function tambahRetryQueue(action, nisn, token) {
     simpanRetryQueue(queue);
   }
 }
+var _sedangProsesRetry = false; // ★ cegah concurrent retry
 async function prosesRetryQueue() {
-  var queue = ambilRetryQueue();
-  // Hapus item yang beda hari (sudah kadaluarsa)
-  var today = getTglHariIni();
-  queue = queue.filter(function(q){ return q.tgl === today; });
-  if (!queue.length) { simpanRetryQueue([]); return; }
+  if (_sedangProsesRetry) return; // sudah jalan, skip
+  _sedangProsesRetry = true;
+  try {
+    var queue = ambilRetryQueue();
+    // Hapus item yang beda hari (sudah kadaluarsa)
+    var today = getTglHariIni();
+    queue = queue.filter(function(q){ return q.tgl === today; });
+    if (!queue.length) { simpanRetryQueue([]); return; }
 
-  var berhasil = [];
-  for (var i = 0; i < queue.length; i++) {
-    var item = queue[i];
-    try {
-      var r = await apiPost({action: item.action, nisn: item.nisn, token: item.token || TOKEN});
-      if (r.ok || (r.error && r.error.toLowerCase().includes('sudah'))) {
-        // Berhasil atau memang sudah tercatat — hapus dari queue
-        berhasil.push(i);
+    var berhasil = [];
+    for (var i = 0; i < queue.length; i++) {
+      var item = queue[i];
+      try {
+        var r = await apiPost({action: item.action, nisn: item.nisn, token: item.token || TOKEN});
+        // ★ Anggap sukses jika: server ok, ATAU server bilang sudah absen/already
+        //   (artinya pengiriman awal sebenarnya sudah masuk, retry ini boleh diabaikan)
+        var sudahTercatat = r.error && (
+          r.error.toLowerCase().includes('sudah') ||
+          r.error.toLowerCase().includes('already')
+        );
+        if (r.ok || sudahTercatat) {
+          berhasil.push(i);
+        }
+      } catch(e) {
+        // Masih gagal (network error), biarkan di queue untuk retry berikutnya
       }
-    } catch(e) {
-      // Masih gagal, biarkan di queue untuk retry berikutnya
     }
-  }
-  if (berhasil.length) {
-    queue = queue.filter(function(_, idx){ return berhasil.indexOf(idx) === -1; });
-    simpanRetryQueue(queue);
-    console.log('[Retry] Berhasil kirim ' + berhasil.length + ' item, sisa: ' + queue.length);
+    if (berhasil.length) {
+      queue = queue.filter(function(_, idx){ return berhasil.indexOf(idx) === -1; });
+      simpanRetryQueue(queue);
+      console.log('[Retry] Berhasil kirim ' + berhasil.length + ' item, sisa: ' + queue.length);
+    }
+  } finally {
+    _sedangProsesRetry = false; // ★ selalu reset meski error
   }
 }
 // Jalankan retry tiap 15 detik, belakang layar
