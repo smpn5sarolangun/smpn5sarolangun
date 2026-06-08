@@ -2156,6 +2156,7 @@ async function loadTabelAbsenHariIni() {
     if (!r.ok || !r.data) return;
     // Merge cache dengan data server
     const serverNisn = new Set(r.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
+    window._serverNisnSet = serverNisn; // ★ simpan untuk kirimUlangCache
     const quickData = cacheAda.filter(function(x){
       return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
     });
@@ -3773,19 +3774,14 @@ window.kirimUlangCache = async function() {
   var modal = document.createElement('div');
   modal.id = 'modalKirimUlang';
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
-  modal.innerHTML = `
-    <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:480px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-      <h3 style="margin:0 0 8px;font-size:16px;color:#1a237e;">🔄 Kirim Ulang Data ke Server</h3>
-      <p style="margin:0 0 16px;font-size:13px;color:#666;">Total cache lokal: <b>${cache.length} siswa</b></p>
-      <div id="kuProgress" style="background:#e3f2fd;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#1565c0;">Memulai pengiriman...</div>
-      <div style="background:#f5f5f5;border-radius:4px;height:8px;margin-bottom:16px;overflow:hidden;">
-        <div id="kuBar" style="height:100%;background:#1976d2;width:0%;transition:width 0.3s;"></div>
-      </div>
-      <div id="kuLog" style="font-size:12px;max-height:220px;overflow-y:auto;background:#fafafa;border-radius:6px;padding:8px;border:1px solid #eee;"></div>
-      <div id="kuFooter" style="margin-top:14px;display:none;text-align:right;">
-        <button onclick="document.getElementById('modalKirimUlang').remove()" style="background:#1976d2;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;cursor:pointer;">Tutup</button>
-      </div>
-    </div>`;
+  modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:480px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">' +
+    '<h3 style="margin:0 0 8px;font-size:16px;color:#1a237e;">📤 Kirim Ulang Data ke Server</h3>' +
+    '<p style="margin:0 0 16px;font-size:13px;color:#666;">Cache lokal: <b>' + cache.length + ' siswa</b></p>' +
+    '<div id="kuProgress" style="background:#e3f2fd;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#1565c0;">⏳ Mengecek data server...</div>' +
+    '<div style="background:#f5f5f5;border-radius:4px;height:8px;margin-bottom:16px;overflow:hidden;"><div id="kuBar" style="height:100%;background:#1976d2;width:0%;transition:width 0.3s;"></div></div>' +
+    '<div id="kuLog" style="font-size:12px;max-height:220px;overflow-y:auto;background:#fafafa;border-radius:6px;padding:8px;border:1px solid #eee;"></div>' +
+    '<div id="kuFooter" style="margin-top:14px;display:none;text-align:right;"><button onclick="document.getElementById(\'modalKirimUlang\').remove()" style="background:#1976d2;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;cursor:pointer;">Tutup</button></div>' +
+    '</div>';
   document.body.appendChild(modal);
 
   var elProgress = document.getElementById('kuProgress');
@@ -3801,23 +3797,56 @@ window.kirimUlangCache = async function() {
     elLog.scrollTop = elLog.scrollHeight;
   }
 
-  var berhasil = 0, gagal = 0, skip = 0;
-  for (var i = 0; i < cache.length; i++) {
-    var d = cache[i];
-    var pct = Math.round(((i+1)/cache.length)*100);
-    elBar.style.width = pct + '%';
-    elProgress.textContent = 'Memproses ' + (i+1) + ' / ' + cache.length + ' — ' + (d.nama||d.nisn||'');
+  // ★ Ambil data server dulu — pakai cache yang sudah ada di background, atau fetch ulang
+  var normN = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
+  var serverNisnSet = window._serverNisnSet;
+  if (!serverNisnSet) {
+    // Belum ada — fetch dulu
+    elProgress.textContent = '⏳ Mengambil data server...';
+    try {
+      var sr = await apiGet('getAbsensiHari', {tanggal: getTglHariIni()});
+      if (sr.ok && sr.data) {
+        serverNisnSet = new Set(sr.data.map(function(d){ return normN(d.nisn); }));
+        window._serverNisnSet = serverNisnSet;
+      } else {
+        serverNisnSet = new Set();
+      }
+    } catch(e) {
+      serverNisnSet = new Set();
+    }
+  }
 
-    if (!d.nisn) { skip++; log('⏭', d.nama||'?', 'tidak ada NISN', '#999'); continue; }
+  // ★ Filter langsung — hanya yang belum ada di server
+  var belumTerkirim = cache.filter(function(d){
+    return d.nisn && !serverNisnSet.has(normN(d.nisn));
+  });
+
+  if (!belumTerkirim.length) {
+    elProgress.style.background = '#e8f5e9';
+    elProgress.style.color = '#1b5e20';
+    elProgress.textContent = '✅ Semua data sudah ada di server, tidak ada yang perlu dikirim.';
+    elFooter.style.display = 'block';
+    return;
+  }
+
+  elProgress.textContent = '📤 Mengirim ' + belumTerkirim.length + ' data yang belum terkirim...';
+  log('ℹ️', 'Total belum terkirim: ' + belumTerkirim.length + ' siswa', '', '#1565c0');
+
+  var berhasil = 0, gagal = 0;
+  for (var i = 0; i < belumTerkirim.length; i++) {
+    var d = belumTerkirim[i];
+    var pct = Math.round(((i+1)/belumTerkirim.length)*100);
+    elBar.style.width = pct + '%';
+    elProgress.textContent = 'Mengirim ' + (i+1) + ' / ' + belumTerkirim.length + ' — ' + (d.nama||d.nisn||'');
+
     var action = (d.jamPulang && d.jamPulang !== '—' && d.jamPulang !== '') ? 'absenPulang' : 'absenMasuk';
     try {
       var r = await apiPost({action: action, nisn: d.nisn, token: TOKEN});
-      if (r.ok) {
+      if (r.ok || (r.error && (r.error.toLowerCase().includes('sudah') || r.error.toLowerCase().includes('already')))) {
         berhasil++;
-        log('✅', d.nama, 'berhasil dikirim', '#2e7d32');
-      } else if (r.error && (r.error.toLowerCase().includes('sudah') || r.error.toLowerCase().includes('already'))) {
-        skip++;
-        log('⏭', d.nama, 'sudah ada di server', '#888');
+        log('✅', d.nama, 'berhasil', '#2e7d32');
+        // Update serverNisnSet supaya tidak kirim ulang kalau dipanggil lagi
+        window._serverNisnSet && window._serverNisnSet.add(normN(d.nisn));
       } else {
         gagal++;
         log('❌', d.nama, r.error||'gagal', '#c62828');
@@ -3826,16 +3855,17 @@ window.kirimUlangCache = async function() {
       gagal++;
       log('❌', d.nama, e.message, '#c62828');
     }
-    await new Promise(function(res){ setTimeout(res, 400); });
+    await new Promise(function(res){ setTimeout(res, 150); });
   }
 
   elBar.style.width = '100%';
   elBar.style.background = gagal > 0 ? '#e53935' : '#43a047';
   elProgress.style.background = gagal > 0 ? '#ffebee' : '#e8f5e9';
   elProgress.style.color = gagal > 0 ? '#b71c1c' : '#1b5e20';
-  elProgress.innerHTML = '✅ Selesai — <b>' + berhasil + ' berhasil</b>, ' + skip + ' skip (sudah ada), ' + (gagal > 0 ? '<b style="color:#c62828">' + gagal + ' gagal</b>' : '0 gagal');
+  elProgress.innerHTML = '✅ Selesai — <b>' + berhasil + ' berhasil</b>' + (gagal > 0 ? ', <b style="color:#c62828">' + gagal + ' gagal</b>' : ', 0 gagal');
   elFooter.style.display = 'block';
-  console.log('[kirimUlangCache] Selesai — Berhasil:', berhasil, '| Skip:', skip, '| Gagal:', gagal);
+  // Refresh tabel setelah selesai
+  if (berhasil > 0) setTimeout(refreshDashboardDanTabel, 1000);
 };
 // Load siswa lazy
 window.addEventListener('load', function() {
