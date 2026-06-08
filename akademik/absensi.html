@@ -1493,22 +1493,15 @@ function startClock() {
 
 // ── API HELPER ─────────────────────────────────────────
 async function apiGet(action, params={}) {
-  // ★ Tambahkan timeout 25 detik — sebelumnya tidak ada timeout sama sekali
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25000);
-  try {
-    const qs = new URLSearchParams({action, token:TOKEN, ...params}).toString();
-    const res = await fetch(`${SCRIPT_URL}?${qs}`, {signal: controller.signal});
-    return res.json();
-  } finally {
-    clearTimeout(timer);
-  }
+  const qs = new URLSearchParams({action, token:TOKEN, ...params}).toString();
+  const res = await fetch(`${SCRIPT_URL}?${qs}`);
+  return res.json();
 }
 
 async function apiPost(body) {
   // Gunakan text/plain untuk hindari CORS preflight
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25000); // ★ dinaikkan dari 20s → 25s
+  const timer = setTimeout(() => controller.abort(), 20000); // ★ timeout 20 detik
   try {
     const res = await fetch(SCRIPT_URL, {
       method:'POST',
@@ -1522,40 +1515,22 @@ async function apiPost(body) {
   }
 }
 
-// ★ SOLUSI PERMANEN: Auto-retry otomatis untuk absensi
-// Jika server sibuk atau timeout, coba ulang hingga MAX_RETRY kali dengan jeda
-// Ini mencegah data hilang saat jam ramai tanpa perlu tombol "Kirim Ulang"
-const ABSEN_MAX_RETRY = 4;       // maksimal 4 percobaan (1 awal + 3 retry)
-const ABSEN_RETRY_DELAY = [3000, 6000, 12000]; // jeda antar retry: 3s, 6s, 12s
-
+// ★ Auto-retry untuk absensi — hanya retry jika "server sibuk", error lain langsung return
 async function apiPostAbsen(body) {
-  for (var attempt = 0; attempt <= ABSEN_MAX_RETRY - 1; attempt++) {
+  const delays = [3000, 6000, 12000];
+  for (var i = 0; i <= 3; i++) {
     try {
       var r = await apiPost(body);
-      // Sukses → langsung return
       if (r.ok) return r;
-      // Server bilang sudah absen → tidak perlu retry (bukan error sebenarnya)
-      if (r.error && (r.error.toLowerCase().includes('sudah') || r.error.toLowerCase().includes('already'))) {
-        return r;
+      if (r.error && (r.error.toLowerCase().includes('sudah') || r.error.toLowerCase().includes('already'))) return r;
+      if (r.error && r.error.toLowerCase().includes('sibuk') && i < 3) {
+        await new Promise(function(res){ setTimeout(res, delays[i]); });
+        continue;
       }
-      // Server sibuk / lock gagal → retry
-      if (r.error && r.error.toLowerCase().includes('sibuk')) {
-        if (attempt < ABSEN_MAX_RETRY - 1) {
-          console.log('[Absen] Server sibuk, retry ke-' + (attempt+1) + ' dalam ' + ABSEN_RETRY_DELAY[attempt]/1000 + 's...');
-          await new Promise(function(res){ setTimeout(res, ABSEN_RETRY_DELAY[attempt]); });
-          continue;
-        }
-      }
-      // Error lain (misal siswa tidak ditemukan) → tidak perlu retry
       return r;
     } catch(e) {
-      // Network error / timeout → retry
-      if (attempt < ABSEN_MAX_RETRY - 1) {
-        console.log('[Absen] Timeout/error, retry ke-' + (attempt+1) + ' dalam ' + ABSEN_RETRY_DELAY[attempt]/1000 + 's...');
-        await new Promise(function(res){ setTimeout(res, ABSEN_RETRY_DELAY[attempt]); });
-      } else {
-        throw e; // semua retry habis, lempar error ke pemanggil
-      }
+      if (i < 3) { await new Promise(function(res){ setTimeout(res, delays[i]); }); }
+      else throw e;
     }
   }
 }
@@ -1934,8 +1909,7 @@ async function konfirmasiAbsen() {
     // ★ tambahKeTabeAbsenHariIni akan menambah NISN ke _sudahAbsenSet sebelum request dikirim
     tambahKeTabeAbsenHariIni(siswaYangDipilih, {status: qStatus, jam: qJam});
     resetInputAbsen(); // siswaYangDipilih jadi null setelah ini
-    // ★ Kirim ke server di background — pakai apiPostAbsen (auto-retry otomatis)
-    // Hanya masuk retryQueue jika semua retry juga gagal
+    // Kirim ke server di background dengan data yang sudah disimpan
     setTimeout(async function() {
       try {
         var r = await apiPostAbsen({action: qAction, nisn: qNisn, token: qToken});
@@ -1943,14 +1917,14 @@ async function konfirmasiAbsen() {
           tambahRetryQueue(qAction, qNisn, qToken);
         }
       } catch(e) {
-        // Semua retry habis — masuk retryQueue sebagai jaring pengaman terakhir
+        // Gagal kirim — masuk retry queue, akan dicoba ulang otomatis
         tambahRetryQueue(qAction, qNisn, qToken);
       }
     }, 0);
     return;
   }
 
-  // ── MODE NORMAL: tunggu server (dengan auto-retry) ──
+  // ── MODE NORMAL: tunggu server ──
   const r = await apiPostAbsen({
     action: MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
     nisn: siswaYangDipilih.nisn
@@ -1962,25 +1936,11 @@ async function konfirmasiAbsen() {
     // _sudahAbsenSet sudah diupdate di dalam tambahKeTabeAbsenHariIni
     resetInputAbsen();
   } else {
-    // ★ "Server sibuk" = sedang di-retry otomatis di background, tidak perlu ditampilkan ke user
-    // Hanya tampilkan error yang relevan untuk user (misal: siswa tidak ditemukan, duplikat)
-    var pesanError = r.error || '';
-    var isSibuk = pesanError.toLowerCase().includes('sibuk');
-    if (isSibuk) {
-      // Diam-diam masuk retryQueue, UI tetap sukses (data sudah ada di cache lokal)
-      tambahRetryQueue(
-        MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang',
-        siswaYangDipilih ? siswaYangDipilih.nisn : '',
-        TOKEN
-      );
-      resetInputAbsen();
-    } else {
-      playGagal();
-      // Tampilkan pesan error dari server (misal: siswa tidak ditemukan, duplikat)
-      tampilNotif('⚠️', pesanError || 'Gagal absen', '', true);
-      document.getElementById('btnAbsen').disabled = false;
-      resetInputAbsen();
-    }
+    playGagal();
+    // Tampilkan pesan error dari server (termasuk pesan duplikat)
+    tampilNotif('⚠️', r.error || 'Gagal absen', '', true);
+    document.getElementById('btnAbsen').disabled = false;
+    resetInputAbsen();
   }
 }
 
@@ -2034,7 +1994,6 @@ async function prosesRetryQueue() {
     for (var i = 0; i < queue.length; i++) {
       var item = queue[i];
       try {
-        // ★ Pakai apiPostAbsen agar retry queue juga dapat proteksi auto-retry
         var r = await apiPostAbsen({action: item.action, nisn: item.nisn, token: item.token || TOKEN});
         // ★ Anggap sukses jika: server ok, ATAU server bilang sudah absen/already
         //   (artinya pengiriman awal sebenarnya sudah masuk, retry ini boleh diabaikan)
@@ -2046,7 +2005,7 @@ async function prosesRetryQueue() {
           berhasil.push(i);
         }
       } catch(e) {
-        // Masih gagal setelah semua retry, biarkan di queue untuk prosesRetryQueue berikutnya
+        // Masih gagal (network error), biarkan di queue untuk retry berikutnya
       }
     }
     if (berhasil.length) {
@@ -2201,20 +2160,10 @@ async function refreshDashboardDanTabel() {
     apiGet('getDashboard'),
     apiGet('getAbsensiHari', {tanggal: today})
   ]);
-  if (rDash.ok) _updateDashboardUI(rDash.data);
-  // ★ Jangan timpa cache dengan data server saja — merge dulu dengan cache lokal
-  // agar data scan yang belum terkirim ke server tidak hilang dari _sudahAbsenSet
-  if (rAbsen.ok && rAbsen.data) {
-    const cacheAda = ambilCacheAbsen() || [];
-    const serverNisnSet = new Set(rAbsen.data.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
-    const quickData = cacheAda.filter(function(x){
-      return !serverNisnSet.has(String(x.nisn||'').replace(/^0+/,''));
-    });
-    const merged = rAbsen.data.concat(quickData);
-    simpanCacheAbsen(merged);
-    if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
-    merged.forEach(function(d){ if(d.nisn) window._sudahAbsenSet.add(String(d.nisn||'').replace(/\.0$/,'').replace(/^0+/,'')); });
-    renderTabelAbsenHariIni(merged);
+  if (rDash.ok) _updateDashboardUI(rDash.data); // simpan ke cache otomatis
+  if (rAbsen.ok) {
+    renderTabelAbsenHariIni(rAbsen.data);
+    simpanCacheAbsen(rAbsen.data);
   }
 }
 
@@ -3911,36 +3860,42 @@ window.kirimUlangCache = async function() {
   log('ℹ️', 'Total belum terkirim: ' + belumTerkirim.length + ' siswa', '', '#1565c0');
 
   var berhasil = 0, gagal = 0;
-  // ★ Kirim satu per satu — server GAS tidak bisa paralel (LockService)
-  // Dengan cache getSiswaList di server, tiap siswa cukup 1-3 detik
-  for (var i = 0; i < belumTerkirim.length; i++) {
-    var d = belumTerkirim[i];
-    var pct = Math.round(((i + 1) / belumTerkirim.length) * 100);
+  // ★ Kirim paralel 5 sekaligus untuk kecepatan
+  var BATCH = 5;
+  for (var i = 0; i < belumTerkirim.length; i += BATCH) {
+    var batch = belumTerkirim.slice(i, i + BATCH);
+    var pct = Math.round(((i + batch.length) / belumTerkirim.length) * 100);
     elBar.style.width = pct + '%';
-    elProgress.textContent = 'Mengirim ' + (i + 1) + ' / ' + belumTerkirim.length + ' — ' + d.nama + '...';
+    elProgress.textContent = 'Mengirim ' + Math.min(i + BATCH, belumTerkirim.length) + ' / ' + belumTerkirim.length + '...';
 
-    var action = (d.jamPulang && d.jamPulang !== '—' && d.jamPulang !== '') ? 'absenPulang' : 'absenMasuk';
-    var jamAsli = action === 'absenMasuk'
-      ? (d.jamMasuk || d.jam || '')
-      : (d.jamPulang || '');
-    var payload = {action: action, nisn: d.nisn, token: TOKEN};
-    if (jamAsli && /^\d{2}:\d{2}/.test(jamAsli)) payload.jamAsli = jamAsli.slice(0,5);
+    var results = await Promise.allSettled(batch.map(function(d) {
+      var action = (d.jamPulang && d.jamPulang !== '—' && d.jamPulang !== '') ? 'absenPulang' : 'absenMasuk';
+      // ★ Sertakan jamAsli dari cache supaya jam di sheet sesuai waktu scan
+      var jamAsli = action === 'absenMasuk'
+        ? (d.jamMasuk || d.jam || '')
+        : (d.jamPulang || '');
+      var payload = {action: action, nisn: d.nisn, token: TOKEN};
+      if (jamAsli && /^\d{2}:\d{2}/.test(jamAsli)) payload.jamAsli = jamAsli.slice(0,5);
+      return apiPost(payload).then(function(r) { return {d: d, r: r}; });
+    }));
 
-    try {
-      // ★ Pakai apiPostAbsen agar ada auto-retry jika server sibuk
-      var r = await apiPostAbsen(payload);
-      if (r.ok || (r.error && (r.error.toLowerCase().includes('sudah') || r.error.toLowerCase().includes('already')))) {
-        berhasil++;
-        log('✅', d.nama, 'berhasil', '#2e7d32');
-        window._serverNisnSet && window._serverNisnSet.add(normN(d.nisn));
+    results.forEach(function(res) {
+      if (res.status === 'fulfilled') {
+        var d = res.value.d, r = res.value.r;
+        if (r.ok || (r.error && (r.error.toLowerCase().includes('sudah') || r.error.toLowerCase().includes('already')))) {
+          berhasil++;
+          log('✅', d.nama, 'berhasil', '#2e7d32');
+          window._serverNisnSet && window._serverNisnSet.add(normN(d.nisn));
+        } else {
+          gagal++;
+          log('❌', d.nama, r.error||'gagal', '#c62828');
+        }
       } else {
+        var d = batch[results.indexOf(res)];
         gagal++;
-        log('❌', d.nama, r.error||'gagal', '#c62828');
+        log('❌', (d&&d.nama)||'?', 'timeout/error', '#c62828');
       }
-    } catch(e) {
-      gagal++;
-      log('❌', d.nama, 'timeout/error', '#c62828');
-    }
+    });
   }
 
   elBar.style.width = '100%';
@@ -3949,8 +3904,8 @@ window.kirimUlangCache = async function() {
   elProgress.style.color = gagal > 0 ? '#b71c1c' : '#1b5e20';
   elProgress.innerHTML = '✅ Selesai — <b>' + berhasil + ' berhasil</b>' + (gagal > 0 ? ', <b style="color:#c62828">' + gagal + ' gagal</b>' : ', 0 gagal');
   elFooter.style.display = 'block';
-  // ★ Pakai refreshStatistikSaja agar cache lokal tidak tertimpa data server
-  if (berhasil > 0) setTimeout(refreshStatistikSaja, 1000);
+  // Refresh tabel setelah selesai
+  if (berhasil > 0) setTimeout(refreshDashboardDanTabel, 1000);
 };
 // Load siswa lazy
 window.addEventListener('load', function() {
