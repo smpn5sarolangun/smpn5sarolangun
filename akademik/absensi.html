@@ -1500,12 +1500,19 @@ async function apiGet(action, params={}) {
 
 async function apiPost(body) {
   // Gunakan text/plain untuk hindari CORS preflight
-  const res = await fetch(SCRIPT_URL, {
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({...body, token:TOKEN})
-  });
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000); // ★ timeout 20 detik
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({...body, token:TOKEN}),
+      signal: controller.signal
+    });
+    return res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ── NAVIGASI ───────────────────────────────────────────
@@ -3833,29 +3840,42 @@ window.kirimUlangCache = async function() {
   log('ℹ️', 'Total belum terkirim: ' + belumTerkirim.length + ' siswa', '', '#1565c0');
 
   var berhasil = 0, gagal = 0;
-  for (var i = 0; i < belumTerkirim.length; i++) {
-    var d = belumTerkirim[i];
-    var pct = Math.round(((i+1)/belumTerkirim.length)*100);
+  // ★ Kirim paralel 5 sekaligus untuk kecepatan
+  var BATCH = 5;
+  for (var i = 0; i < belumTerkirim.length; i += BATCH) {
+    var batch = belumTerkirim.slice(i, i + BATCH);
+    var pct = Math.round(((i + batch.length) / belumTerkirim.length) * 100);
     elBar.style.width = pct + '%';
-    elProgress.textContent = 'Mengirim ' + (i+1) + ' / ' + belumTerkirim.length + ' — ' + (d.nama||d.nisn||'');
+    elProgress.textContent = 'Mengirim ' + Math.min(i + BATCH, belumTerkirim.length) + ' / ' + belumTerkirim.length + '...';
 
-    var action = (d.jamPulang && d.jamPulang !== '—' && d.jamPulang !== '') ? 'absenPulang' : 'absenMasuk';
-    try {
-      var r = await apiPost({action: action, nisn: d.nisn, token: TOKEN});
-      if (r.ok || (r.error && (r.error.toLowerCase().includes('sudah') || r.error.toLowerCase().includes('already')))) {
-        berhasil++;
-        log('✅', d.nama, 'berhasil', '#2e7d32');
-        // Update serverNisnSet supaya tidak kirim ulang kalau dipanggil lagi
-        window._serverNisnSet && window._serverNisnSet.add(normN(d.nisn));
+    var results = await Promise.allSettled(batch.map(function(d) {
+      var action = (d.jamPulang && d.jamPulang !== '—' && d.jamPulang !== '') ? 'absenPulang' : 'absenMasuk';
+      // ★ Sertakan jamAsli dari cache supaya jam di sheet sesuai waktu scan
+      var jamAsli = action === 'absenMasuk'
+        ? (d.jamMasuk || d.jam || '')
+        : (d.jamPulang || '');
+      var payload = {action: action, nisn: d.nisn, token: TOKEN};
+      if (jamAsli && /^\d{2}:\d{2}/.test(jamAsli)) payload.jamAsli = jamAsli.slice(0,5);
+      return apiPost(payload).then(function(r) { return {d: d, r: r}; });
+    }));
+
+    results.forEach(function(res) {
+      if (res.status === 'fulfilled') {
+        var d = res.value.d, r = res.value.r;
+        if (r.ok || (r.error && (r.error.toLowerCase().includes('sudah') || r.error.toLowerCase().includes('already')))) {
+          berhasil++;
+          log('✅', d.nama, 'berhasil', '#2e7d32');
+          window._serverNisnSet && window._serverNisnSet.add(normN(d.nisn));
+        } else {
+          gagal++;
+          log('❌', d.nama, r.error||'gagal', '#c62828');
+        }
       } else {
+        var d = batch[results.indexOf(res)];
         gagal++;
-        log('❌', d.nama, r.error||'gagal', '#c62828');
+        log('❌', (d&&d.nama)||'?', 'timeout/error', '#c62828');
       }
-    } catch(e) {
-      gagal++;
-      log('❌', d.nama, e.message, '#c62828');
-    }
-    await new Promise(function(res){ setTimeout(res, 150); });
+    });
   }
 
   elBar.style.width = '100%';
