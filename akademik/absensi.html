@@ -745,7 +745,7 @@ tr:hover td{background:#f8fafc;}
   <!-- Attendance Percentage per Kelas -->
   <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">📈 Persentase Kehadiran per Kelas</h3>
   <div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;">
-    <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+    <div style="overflow-y:auto;max-height:420px;"><div style="overflow-x:auto;">
       <table>
         <thead><tr>
           <th style="position:sticky;top:0;z-index:2;background:#f8fafc;text-align:center;">Kelas</th>
@@ -2694,7 +2694,7 @@ var _mdStatus = {};
 
 // ★ Bulk action — tandai semua siswa belum masuk sekaligus
 async function bulkMdStatus(st) {
-  var rows = document.querySelectorAll('#mdIsi [id^="mdrow"]');
+  var rows = document.querySelectorAll('#modalDetailIsi [id^="mdrow"]');
   if (!rows.length) return;
 
   var label = {Hadir:'Hadir', Izin:'Izin', Sakit:'Sakit', Alpa:'Alpa'}[st];
@@ -2832,16 +2832,18 @@ function pilihMdStatus(i, st) {
     b.style.color = s===st ? '#fff' : col;
     b.disabled = true; // nonaktifkan semua tombol saat proses
   });
-  // Tampilkan jam saat ini untuk semua status
-  var now = new Date();
-  var hh = String(now.getHours()).padStart(2,'0');
-  var mm = String(now.getMinutes()).padStart(2,'0');
-  var jamStr = hh + ':' + mm;
-  _mdStatus['jam' + i] = jamStr;
+  // Tampilkan jam hanya untuk Hadir
   var jamEl = document.getElementById('mdjam' + i);
-  if (jamEl) {
-    jamEl.textContent = '🕐 ' + jamStr;
-    jamEl.style.display = 'inline-block';
+  if (st === 'Hadir') {
+    var now = new Date();
+    var hh = String(now.getHours()).padStart(2,'0');
+    var mm = String(now.getMinutes()).padStart(2,'0');
+    var jamStr = hh + ':' + mm;
+    _mdStatus['jam' + i] = jamStr;
+    if (jamEl) { jamEl.textContent = '🕐 ' + jamStr; jamEl.style.display = 'inline-block'; }
+  } else {
+    delete _mdStatus['jam' + i];
+    if (jamEl) jamEl.style.display = 'none';
   }
   // ★ Langsung proses simpan
   simpanMdStatus(i);
