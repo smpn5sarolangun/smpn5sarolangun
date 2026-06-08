@@ -2116,14 +2116,24 @@ function renderTabelAbsenHariIni(data, dariCache) {
   var nisnCount = {};
   data.forEach(function(r){ var n=String(r.nisn||r.nama); nisnCount[n]=(nisnCount[n]||0)+1; });
 
-  // Sort berdasarkan timestamp (_ts) jika ada, fallback ke jamMasuk
+  // ★ Sort: terbaru di atas berdasarkan _ts
+  // Data dari server tidak punya _ts — konversi jamMasuk/jamInput ke angka sebagai fallback
+  // Izin/Sakit/Alpa jamMasuk kosong → tetap urut sesuai posisi (tidak terlempar ke bawah)
   var sorted = data.slice().sort(function(a, b) {
+    // Prioritas 1: _ts (timestamp lokal — paling akurat)
     var ta = a._ts || 0;
     var tb = b._ts || 0;
     if (ta && tb) return tb - ta;
-    var ja = String(a.jamMasuk||'').replace(':','') || '0000';
-    var jb = String(b.jamMasuk||'').replace(':','') || '0000';
-    return jb.localeCompare(ja);
+    if (ta) return -1; // a punya _ts, b tidak → a lebih atas
+    if (tb) return 1;  // b punya _ts, a tidak → b lebih atas
+    // Prioritas 2: jamMasuk (dari server) — terbaru di atas
+    var ja = String(a.jamMasuk||'').replace(':','');
+    var jb = String(b.jamMasuk||'').replace(':','');
+    if (ja && jb) return jb.localeCompare(ja);
+    if (ja) return -1; // a punya jam, b tidak → a lebih atas
+    if (jb) return 1;
+    // Keduanya kosong (Izin/Sakit/Alpa dari server) → urut nama
+    return String(a.nama||'').localeCompare(String(b.nama||''));
   });
 
   // Hanya insert baris yang belum ada di DOM
@@ -2641,7 +2651,14 @@ function bukаModalDetail(status) {
       isi.parentNode.insertBefore(mdSticky, isi);
     }
     mdSticky.innerHTML = '<div class="search-wrap" style="margin-bottom:8px;"><input type="text" id="mdSearch" placeholder="🔍 Cari nama..." autocomplete="off" oninput="onSearchInput(this,filterMdList)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;box-sizing:border-box;outline:none;"><button class="search-clear" onclick="clearSearch(&apos;mdSearch&apos;,filterMdList)">✕</button></div>'
-      + '<p style="font-size:12px;color:var(--teks-sub);margin:0;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk — klik nama untuk input</p>';
+      + '<p style="font-size:12px;color:var(--teks-sub);margin:0 0 8px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk — klik nama untuk input</p>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
+      + '<span style="font-size:11px;font-weight:700;color:#666;">Tandai Semua:</span>'
+      + '<button onclick="bulkMdStatus(\'Hadir\')" style="padding:4px 12px;border:2px solid var(--hijau);border-radius:8px;color:var(--hijau);background:#fff;font-weight:700;font-size:12px;cursor:pointer;">✅ Hadir</button>'
+      + '<button onclick="bulkMdStatus(\'Izin\')" style="padding:4px 12px;border:2px solid #1565c0;border-radius:8px;color:#1565c0;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">📋 Izin</button>'
+      + '<button onclick="bulkMdStatus(\'Sakit\')" style="padding:4px 12px;border:2px solid #c62828;border-radius:8px;color:#c62828;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">🤒 Sakit</button>'
+      + '<button onclick="bulkMdStatus(\'Alpa\')" style="padding:4px 12px;border:2px solid #e53935;border-radius:8px;color:#e53935;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">❌ Alpa</button>'
+      + '</div>';
     var html3 = '';
     siswaList.forEach(function(s, i) {
       var nisnVal = (s.nisn && s.nisn !== 'undefined') ? s.nisn : '';
@@ -2657,7 +2674,6 @@ function bukаModalDetail(status) {
       row += '<button onclick="pilihMdStatus('+i+',\'Sakit\')" id="mdbtn'+i+'Sakit" style="padding:5px 12px;border:2px solid #c62828;border-radius:8px;color:#c62828;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Sakit</button>';
       row += '<button onclick="pilihMdStatus('+i+',\'Alpa\')" id="mdbtn'+i+'Alpa" style="padding:5px 12px;border:2px solid #e53935;border-radius:8px;color:#e53935;background:#fff;font-weight:700;font-size:12px;cursor:pointer;">Alpa</button>';
       row += '<span id="mdjam'+i+'" style="display:none;font-size:12px;font-weight:700;color:var(--hijau);align-self:center;"></span>';
-      row += '<button onclick="simpanMdStatus('+i+')" id="mdsave'+i+'" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;font-size:12px;cursor:pointer;">Simpan</button>';
       row += '</div></div>';
       html3 += row;
     });
@@ -2675,6 +2691,78 @@ function bukаModalDetail(status) {
 }
 
 var _mdStatus = {};
+
+// ★ Bulk action — tandai semua siswa belum masuk sekaligus
+async function bulkMdStatus(st) {
+  var rows = document.querySelectorAll('#mdIsi [id^="mdrow"]');
+  if (!rows.length) return;
+
+  var label = {Hadir:'Hadir', Izin:'Izin', Sakit:'Sakit', Alpa:'Alpa'}[st];
+  var konfirm = confirm('Tandai ' + rows.length + ' siswa sebagai ' + label + '?\nTindakan ini tidak bisa dibatalkan.');
+  if (!konfirm) return;
+
+  // Kumpulkan semua data dulu
+  var items = [];
+  rows.forEach(function(row) {
+    var nisn  = row.dataset.nisn  || '';
+    var nama  = row.dataset.nama  || '';
+    var kelas = row.dataset.kelas || '';
+    if (!nisn && nama) {
+      var found = dataSiswa.find(function(s){ return s.nama === nama; });
+      if (found) nisn = found.nisn || '';
+    }
+    items.push({nisn: nisn, nama: nama, kelas: kelas});
+  });
+
+  // Hitung jam sekarang
+  var now = new Date();
+  var jamStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  var batas  = (window._jadwalData && window._jadwalData.jamMasukBatas) ? window._jadwalData.jamMasukBatas : '07:30';
+
+  // Siapkan batch untuk server
+  var batchItems = items.map(function(d) {
+    var stFinal = st;
+    var jamMasuk = '';
+    if (st === 'Hadir') {
+      jamMasuk = jamStr;
+      stFinal  = jamStr <= batas ? 'OnTime' : 'Terlambat';
+    }
+    return {nisn: d.nisn, action: 'absenManual', status: stFinal, jamMasuk: jamMasuk, jamAsli: jamMasuk};
+  });
+
+  // Update UI langsung semua sekaligus
+  playSukses();
+  items.forEach(function(d) {
+    var stFinal  = st === 'Hadir' ? (jamStr <= batas ? 'OnTime' : 'Terlambat') : st;
+    var jamMasuk = st === 'Hadir' ? jamStr : '';
+    tambahKeTabeAbsenHariIni(
+      {nisn: d.nisn, nama: d.nama, kelas: d.kelas},
+      {status: stFinal, fromModal: true, jamMasuk: jamMasuk}
+    );
+  });
+
+  // Hapus semua baris dari modal
+  rows.forEach(function(row) {
+    row.style.opacity = '0';
+    row.style.transition = 'all 0.2s';
+    setTimeout(function(){ row.remove(); }, 200);
+  });
+  setTimeout(function() {
+    var countEl = document.getElementById('mdCountBM');
+    if (countEl) countEl.textContent = '0 siswa belum masuk';
+    hitungStatistikLokal();
+  }, 250);
+
+  // Kirim ke server via batch
+  try {
+    await apiPost({action: 'absenBatch', token: TOKEN, items: batchItems});
+  } catch(e) {
+    // Gagal kirim — masukkan ke retry queue satu per satu
+    batchItems.forEach(function(item) {
+      tambahRetryQueue(item.action, item.nisn, TOKEN, item.jamMasuk);
+    });
+  }
+}
 
 
 function filterTabelAbsen(q) {
@@ -2734,6 +2822,7 @@ function toggleMdForm(i) {
   f.style.display = op ? 'flex' : 'none';
 }
 function pilihMdStatus(i, st) {
+  // ★ Langsung simpan tanpa klik Simpan lagi
   _mdStatus[i] = st;
   var colMap = {Hadir:'var(--hijau)', Izin:'#1565c0', Sakit:'#c62828', Alpa:'#e53935'};
   ['Hadir','Izin','Sakit','Alpa'].forEach(function(s) {
@@ -2741,30 +2830,25 @@ function pilihMdStatus(i, st) {
     var col = colMap[s];
     b.style.background = s===st ? col : '#fff';
     b.style.color = s===st ? '#fff' : col;
+    b.disabled = true; // nonaktifkan semua tombol saat proses
   });
-  // Tampilkan jam jika Hadir
+  // Tampilkan jam saat ini untuk semua status
+  var now = new Date();
+  var hh = String(now.getHours()).padStart(2,'0');
+  var mm = String(now.getMinutes()).padStart(2,'0');
+  var jamStr = hh + ':' + mm;
+  _mdStatus['jam' + i] = jamStr;
   var jamEl = document.getElementById('mdjam' + i);
   if (jamEl) {
-    if (st === 'Hadir') {
-      var now = new Date();
-      var hh = String(now.getHours()).padStart(2,'0');
-      var mm = String(now.getMinutes()).padStart(2,'0');
-      var jamStr = hh + ':' + mm;
-      jamEl.textContent = '🕐 ' + jamStr;
-      jamEl.style.display = 'inline-block';
-      _mdStatus['jam' + i] = jamStr;
-    } else {
-      jamEl.style.display = 'none';
-      delete _mdStatus['jam' + i];
-    }
+    jamEl.textContent = '🕐 ' + jamStr;
+    jamEl.style.display = 'inline-block';
   }
-  var sv = document.getElementById('mdsave' + i);
-  if (sv) sv.style.display = 'inline-block';
+  // ★ Langsung proses simpan
+  simpanMdStatus(i);
 }
 async function simpanMdStatus(i) {
   var st = _mdStatus[i]; if (!st) return;
-  var btnSave = document.getElementById('mdsave' + i);
-  if (btnSave) { if (btnSave.disabled) return; btnSave.disabled = true; btnSave.textContent = 'Menyimpan...'; }
+  // Tombol Simpan sudah dihapus — langsung proses
 
   // Ambil data dari data-* attribute — aman untuk nama dengan apostrof/petik
   var row = document.getElementById('mdrow' + i);
