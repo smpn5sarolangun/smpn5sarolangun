@@ -2201,10 +2201,20 @@ async function refreshDashboardDanTabel() {
     apiGet('getDashboard'),
     apiGet('getAbsensiHari', {tanggal: today})
   ]);
-  if (rDash.ok) _updateDashboardUI(rDash.data); // simpan ke cache otomatis
-  if (rAbsen.ok) {
-    renderTabelAbsenHariIni(rAbsen.data);
-    simpanCacheAbsen(rAbsen.data);
+  if (rDash.ok) _updateDashboardUI(rDash.data);
+  // ★ Jangan timpa cache dengan data server saja — merge dulu dengan cache lokal
+  // agar data scan yang belum terkirim ke server tidak hilang dari _sudahAbsenSet
+  if (rAbsen.ok && rAbsen.data) {
+    const cacheAda = ambilCacheAbsen() || [];
+    const serverNisnSet = new Set(rAbsen.data.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
+    const quickData = cacheAda.filter(function(x){
+      return !serverNisnSet.has(String(x.nisn||'').replace(/^0+/,''));
+    });
+    const merged = rAbsen.data.concat(quickData);
+    simpanCacheAbsen(merged);
+    if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
+    merged.forEach(function(d){ if(d.nisn) window._sudahAbsenSet.add(String(d.nisn||'').replace(/\.0$/,'').replace(/^0+/,'')); });
+    renderTabelAbsenHariIni(merged);
   }
 }
 
@@ -3939,8 +3949,8 @@ window.kirimUlangCache = async function() {
   elProgress.style.color = gagal > 0 ? '#b71c1c' : '#1b5e20';
   elProgress.innerHTML = '✅ Selesai — <b>' + berhasil + ' berhasil</b>' + (gagal > 0 ? ', <b style="color:#c62828">' + gagal + ' gagal</b>' : ', 0 gagal');
   elFooter.style.display = 'block';
-  // Refresh tabel setelah selesai
-  if (berhasil > 0) setTimeout(refreshDashboardDanTabel, 1000);
+  // ★ Pakai refreshStatistikSaja agar cache lokal tidak tertimpa data server
+  if (berhasil > 0) setTimeout(refreshStatistikSaja, 1000);
 };
 // Load siswa lazy
 window.addEventListener('load', function() {
