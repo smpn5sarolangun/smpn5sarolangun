@@ -1413,7 +1413,7 @@ window.addEventListener('load', async () => {
   console.log('_sudahAbsenSet terisi:', window._sudahAbsenSet.size, 'dari cache lokal');
 
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
-  hitungBelumMasuk(); // dataSiswa sudah ada, hitung sekarang
+  hitungStatistikLokal(); // ★ hitung statistik dari cache lokal saat load
   fokusNisn();
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
@@ -1691,21 +1691,34 @@ async function loadDashboard() {
 
 // ── LOAD KELAS ──────────────────────────────────────────
 async function loadKelas() {
+  // ★ Fungsi render dropdown kelas
+  function renderDropdownKelas(data) {
+    ['filterKelasRekam','izinKelas','filterKelasSiswa','rekapKelas','rekapKelas','bulananKelasCustom','bulananKelas'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const cur = sel.value;
+      while (sel.options.length > 1) sel.remove(1);
+      data.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k; opt.textContent = k;
+        sel.appendChild(opt);
+      });
+      if (cur) sel.value = cur;
+    });
+  }
+
+  // ★ Baca cache lokal dulu — dropdown langsung terisi saat reload
+  try {
+    var cached = JSON.parse(localStorage.getItem(KELAS_CACHE_KEY) || 'null');
+    if (cached && cached.length) { dataKelas = cached; renderDropdownKelas(dataKelas); }
+  } catch(e) {}
+
+  // ★ Fetch server di background
   const r = await apiGet('getKelas');
   if (!r.ok) return;
   dataKelas = r.data;
-  ['filterKelasRekam','izinKelas','filterKelasSiswa','rekapKelas','rekapKelas','bulananKelasCustom','bulananKelas'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    const cur = sel.value;
-    while (sel.options.length > 1) sel.remove(1);
-    dataKelas.forEach(k => {
-      const opt = document.createElement('option');
-      opt.value = k; opt.textContent = k;
-      sel.appendChild(opt);
-    });
-    if (cur) sel.value = cur;
-  });
+  try { localStorage.setItem(KELAS_CACHE_KEY, JSON.stringify(dataKelas)); } catch(e) {}
+  renderDropdownKelas(dataKelas);
 }
 
 // ── MODE MASUK/PULANG ───────────────────────────────────
@@ -1962,7 +1975,9 @@ const ABSEN_CACHE_KEY   = 'absensi_hari_ini_v6';
 const DASHBOARD_CACHE_KEY = 'dashboard_hari_ini_v6';
 // ── RETRY QUEUE — kirim ulang scan yang gagal ke server ────────────
 const RETRY_QUEUE_KEY = 'absensi_retry_queue_v6';
-const TOTAL_SISWA_KEY = 'total_siswa_v6'; // cache khusus totalSiswa dari getSiswa
+const TOTAL_SISWA_KEY = 'total_siswa_v6';   // cache khusus totalSiswa dari getSiswa
+const SISWA_CACHE_KEY = 'data_siswa_v6';       // ★ cache dataSiswa — instan saat reload
+const KELAS_CACHE_KEY = 'data_kelas_v6';       // ★ cache daftar kelas
 
 function simpanRetryQueue(queue) {
   try { localStorage.setItem(RETRY_QUEUE_KEY, JSON.stringify(queue)); } catch(e) {}
@@ -2211,20 +2226,30 @@ async function refreshStatistikSaja() {
       apiGet('getDashboard'),
       apiGet('getAbsensiHari', {tanggal: today})
     ]);
-    if (!rDash.ok) return;
-    _updateDashboardUI(rDash.data);
+
+    // ★ Update jadwal & info dari server (totalKelas, tanggal, jadwal)
+    // tapi statistik dihitung dari lokal (realtime)
+    if (rDash.ok) {
+      var d = rDash.data;
+      var upd = function(id, val) { var el=document.getElementById(id); if(el && val!=null) el.textContent=val; };
+      if (d.totalSiswa) {
+        var totalAkurat = (dataSiswa && dataSiswa.length) ? dataSiswa.length : d.totalSiswa;
+        upd('stTotalSiswa', totalAkurat);
+      }
+      upd('stTotalKelas', d.totalKelas);
+      upd('stTglDash',    d.tanggal);
+      if (d.jadwal) { window._jadwalData = d.jadwal; }
+      if (d.perKelas) simpanCacheDashboard(d); // simpan perKelas untuk referensi
+    }
+
     // Server hanya menambah data ke cache/tabel — tidak pernah mengurangi
     if (rAbsen.ok && rAbsen.data && rAbsen.data.length > 0) {
       const serverData = rAbsen.data;
-      // Merge: ambil cache lokal, tambahkan data server yang belum ada
       const cacheAda = ambilCacheAbsen() || [];
       const serverNisnSet = new Set(serverData.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
-      // quickData = data lokal yang belum ada di server (scan quick belum dikonfirmasi)
-      // Tidak ada batas waktu — simpan sampai server konfirmasi
       const quickData = cacheAda.filter(function(x){
         return !serverNisnSet.has(String(x.nisn||'').replace(/^0+/,''));
       });
-      // Update field jamPulang/status dari server jika ada (misal absen pulang dari device lain)
       const serverByNisn = {};
       serverData.forEach(function(d){ serverByNisn[String(d.nisn||'').replace(/^0+/,'')] = d; });
       const quickUpdated = quickData.map(function(x){
@@ -2233,12 +2258,42 @@ async function refreshStatistikSaja() {
       });
       const merged = serverData.concat(quickUpdated);
       simpanCacheAbsen(merged);
-      // renderTabelAbsenHariIni sudah patch-based: hanya menambah baris baru, tidak hapus yang ada
-      // JANGAN clear tbody di sini — data lokal yang belum dikonfirmasi server harus tetap tampil
       renderTabelAbsenHariIni(merged);
     }
-    // Jika server kirim kosong/error → skip, jangan hapus tampilan yang ada
+
+    // ★ Hitung statistik dari cache lokal — realtime, tidak tunggu server
+    hitungStatistikLokal();
+
   } catch(e) {}
+}
+
+// ★ Hitung semua statistik dari cache lokal — dipanggil setiap kali ada scan baru
+function hitungStatistikLokal() {
+  var cache = ambilCacheAbsen() || [];
+  var onTime = 0, terlambat = 0, izin = 0, sakit = 0, alpa = 0, belumPulang = 0;
+
+  cache.forEach(function(d) {
+    var st = (d.status || '').toLowerCase();
+    if (st === 'ontime')      onTime++;
+    else if (st === 'terlambat') terlambat++;
+    else if (st === 'izin')   izin++;
+    else if (st === 'sakit')  sakit++;
+    else if (st === 'alpa')   alpa++;
+
+    // Belum pulang: sudah masuk tapi jam pulang kosong
+    var jamMasuk  = d.jamMasuk  || d.jam || '';
+    var jamPulang = d.jamPulang || '';
+    if (jamMasuk && !jamPulang && st !== 'izin' && st !== 'sakit' && st !== 'alpa') belumPulang++;
+  });
+
+  var upd = function(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; };
+  upd('stOnTime',      onTime);
+  upd('stTerlambat',   terlambat);
+  upd('stIzin',        izin);
+  upd('stSakit',       sakit);
+  upd('stAlpa',        alpa);
+  upd('stBelumPulang', belumPulang);
+  hitungBelumMasuk(); // Belum masuk = totalSiswa - jumlah di cache
 }
 
 function tambahKeTabeAbsenHariIni(siswa, result) {
@@ -2322,6 +2377,8 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
     if (count > 0) elTotal.textContent = count;
   }
   updateBelumPulangDariDOM();
+  // ★ Hitung statistik realtime dari cache lokal setiap ada scan baru
+  hitungStatistikLokal();
   // Scroll tabel ke atas agar baris terbaru terlihat
   var tabelWrap = document.querySelector('#tabelAbsenHariIni')?.closest('[style*="overflow-y"]');
   if (tabelWrap) tabelWrap.scrollTop = 0;
@@ -3052,11 +3109,24 @@ async function loadAbsensiHari() {
 
 // ── LOAD SISWA ──────────────────────────────────────────
 async function loadSiswa() {
+  // ★ Baca cache lokal dulu — tampil instan tanpa delay
+  try {
+    var cached = JSON.parse(localStorage.getItem(SISWA_CACHE_KEY) || 'null');
+    if (cached && cached.length) {
+      dataSiswa = cached;
+      renderTabelSiswa(dataSiswa);
+      var elTS = document.getElementById('stTotalSiswa');
+      if (elTS) { elTS.textContent = dataSiswa.length; hitungBelumMasuk(); }
+    }
+  } catch(e) {}
+
+  // ★ Fetch server di background — update cache + UI kalau ada perubahan
   const r = await apiGet('getSiswa');
   if (!r.ok) return;
   dataSiswa = r.data;
+  // Simpan ke cache lokal
+  try { localStorage.setItem(SISWA_CACHE_KEY, JSON.stringify(dataSiswa)); } catch(e) {}
   renderTabelSiswa(dataSiswa);
-  // Simpan totalSiswa di cache khusus — sumber kebenaran untuk stTotalSiswa
   if (dataSiswa.length) {
     try { localStorage.setItem(TOTAL_SISWA_KEY, dataSiswa.length); } catch(e) {}
     var elTS = document.getElementById('stTotalSiswa');
