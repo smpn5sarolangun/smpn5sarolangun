@@ -1419,7 +1419,7 @@ window.addEventListener('load', async () => {
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
   await loadToggleAlpa(); // load status toggle alpa
-  setInterval(refreshStatistikSaja, 30 * 1000);
+  setInterval(refreshStatistikSaja, 10 * 1000);
   // Kirim ulang scan yang mungkin gagal di sesi sebelumnya
   setTimeout(prosesRetryQueue, 5000);
   // Restore mode scan dari localStorage
