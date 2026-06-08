@@ -2252,13 +2252,26 @@ async function refreshStatistikSaja() {
       if (d.perKelas) simpanCacheDashboard(d); // simpan perKelas untuk referensi
     }
 
-    // Server hanya menambah data ke cache/tabel — tidak pernah mengurangi
-    if (rAbsen.ok && rAbsen.data && rAbsen.data.length > 0) {
-      const serverData = rAbsen.data;
+    // ★ Merge: data server adalah sumber kebenaran
+    // Data lokal yang tidak ada di server dipertahankan HANYA jika:
+    // 1. Ada di retry queue (belum berhasil terkirim ke server), ATAU
+    // 2. _ts < 2 menit (request sedang dalam perjalanan, belum sempat masuk queue)
+    if (rAbsen.ok && rAbsen.data !== undefined) {
+      const serverData = rAbsen.data || [];
       const cacheAda = ambilCacheAbsen() || [];
       const serverNisnSet = new Set(serverData.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
+      const BATAS_BUFFER = 10 * 60 * 1000; // 10 menit — buffer untuk request yg sedang berjalan
+      const now = Date.now();
+      // Ambil NISN yang ada di retry queue
+      const retryQueue = ambilRetryQueue() || [];
+      const retryNisnSet = new Set(retryQueue.map(function(q){ return String(q.nisn||'').replace(/^0+/,''); }));
+
       const quickData = cacheAda.filter(function(x){
-        return !serverNisnSet.has(String(x.nisn||'').replace(/^0+/,''));
+        var nisnKey = String(x.nisn||'').replace(/^0+/,'');
+        if (serverNisnSet.has(nisnKey)) return false; // sudah ada di server, pakai data server
+        if (retryNisnSet.has(nisnKey)) return true;   // ★ ada di queue → pertahankan selamanya
+        var umur = now - (x._ts || 0);
+        return umur < BATAS_BUFFER;                    // ★ masih baru → pertahankan (sedang kirim)
       });
       const serverByNisn = {};
       serverData.forEach(function(d){ serverByNisn[String(d.nisn||'').replace(/^0+/,'')] = d; });
