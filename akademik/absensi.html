@@ -2325,14 +2325,15 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
 
   if (tbody.innerHTML.includes('Belum ada absensi')) tbody.innerHTML = '';
 
-  const jam    = result.jam || (result.manual ? '' : new Date().toTimeString().slice(0,5));
   const status = result.status || (MODE_ABSEN === 'masuk' ? 'OnTime' : 'Pulang');
   const nama   = siswa?.nama  || '—';
   const kelas  = siswa?.kelas || '—';
   const nisn   = siswa?.nisn  || '';
-  // Manual (Izin/Sakit/Alpa) tidak punya jam masuk/pulang
-  const jamMasuk  = result.manual ? '—' : (MODE_ABSEN === 'masuk'  ? jam : '—');
-  const jamPulang = result.manual ? '—' : (MODE_ABSEN === 'pulang' ? jam : '—');
+  // ★ Izin/Sakit/Alpa tidak punya jam — baik dari modal maupun manual
+  const isNoJam = result.manual || ['Izin','Sakit','Alpa'].includes(status);
+  const jam     = result.jam || result.jamMasuk || (isNoJam ? '' : new Date().toTimeString().slice(0,5));
+  const jamMasuk  = isNoJam ? '—' : (MODE_ABSEN === 'masuk'  ? (jam||'—') : (result.jamMasuk||'—'));
+  const jamPulang = isNoJam ? '—' : (MODE_ABSEN === 'pulang' ? (jam||'—') : '—');
 
   // ★ Selalu tandai NISN sudah absen di sini — semua jalur (quick/normal/manual) lewat fungsi ini
   if (nisn) {
