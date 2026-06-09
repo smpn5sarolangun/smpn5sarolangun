@@ -2111,12 +2111,18 @@ function renderTabelAbsenHariIni(data, dariCache) {
   data.forEach(function(r){ var n=String(r.nisn||r.nama); nisnCount[n]=(nisnCount[n]||0)+1; });
 
   // Sort: terbaru di atas — murni berdasarkan jamMasuk agar konsisten di semua perangkat
+  var toMenit = function(j) {
+    var s = String(j||'').replace('.', ':');
+    var p = s.split(':');
+    if (p.length < 2) return -1;
+    return parseInt(p[0]||0) * 60 + parseInt(p[1]||0);
+  };
   var sorted = data.slice().sort(function(a, b) {
-    var ja = String(a.jamMasuk||'').replace(':','');
-    var jb = String(b.jamMasuk||'').replace(':','');
-    if (ja && jb) return jb.localeCompare(ja); // terbaru di atas
-    if (ja) return -1; // a punya jam, b tidak → a lebih atas
-    if (jb) return 1;
+    var ma = toMenit(a.jamMasuk);
+    var mb = toMenit(b.jamMasuk);
+    if (ma >= 0 && mb >= 0) return mb - ma; // terbaru di atas
+    if (ma >= 0) return -1; // a punya jam, b tidak → a lebih atas
+    if (mb >= 0) return 1;
     // Keduanya kosong (Izin/Sakit/Alpa) → urut nama
     return String(a.nama||'').localeCompare(String(b.nama||''));
   });
