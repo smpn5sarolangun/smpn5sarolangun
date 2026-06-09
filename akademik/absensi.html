@@ -2038,7 +2038,10 @@ async function prosesRetryQueue() {
     queue = queue.filter(function(q){ return q.tgl === today; });
     if (!queue.length) { simpanRetryQueue([]); return; }
 
-    var berhasil = [];
+    // Hapus semua item dari queue SEBELUM kirim — cegah retry ganda
+    // kalau response hilang tapi data sudah masuk server
+    simpanRetryQueue([]);
+
     for (var i = 0; i < queue.length; i++) {
       var item = queue[i];
       try {
@@ -2047,18 +2050,15 @@ async function prosesRetryQueue() {
           r.error.toLowerCase().includes('sudah') ||
           r.error.toLowerCase().includes('already')
         );
-        if (r.ok || sudahTercatat) {
-          berhasil.push(i);
+        if (!r.ok && !sudahTercatat) {
+          // Benar-benar gagal → tambah balik ke queue
+          tambahRetryQueue(item.action, item.nisn, item.token || TOKEN, item.jam);
         }
       } catch(e) {
-        // Masih gagal, biarkan di queue
+        // Network error → tambah balik ke queue
+        tambahRetryQueue(item.action, item.nisn, item.token || TOKEN, item.jam);
       }
-      // Jeda 300ms antar item agar server tidak kewalahan
       if (i < queue.length - 1) await new Promise(function(res){ setTimeout(res, 300); });
-    }
-    if (berhasil.length) {
-      queue = queue.filter(function(_, idx){ return berhasil.indexOf(idx) === -1; });
-      simpanRetryQueue(queue);
     }
   } finally {
     _sedangProsesRetry = false;
