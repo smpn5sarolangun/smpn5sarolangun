@@ -1869,6 +1869,15 @@ async function prosesAbsenNisn(nisn) {
   }
 
   siswaYangDipilih = siswa;
+
+  // Mode quick: langsung absen tanpa render preview — sama cepatnya dengan klik hadir
+  if (MODE_SCAN === 'quick') {
+    setTimeout(function(){ konfirmasiAbsen(); }, 0);
+    if (window._sedangDiproses) delete window._sedangDiproses[nisnKey];
+    return;
+  }
+
+  // Mode normal: render preview dulu
   document.getElementById('siswaNama').textContent  = siswa.nama;
   document.getElementById('siswaKelas').textContent = 'Kelas ' + siswa.kelas;
   document.getElementById('siswaNisn').textContent  = 'NISN: ' + siswa.nisn;
@@ -1880,10 +1889,6 @@ async function prosesAbsenNisn(nisn) {
   }
   document.getElementById('siswaPreview').classList.add('show');
   document.getElementById('btnAbsen').disabled = false;
-
-  if (MODE_SCAN === 'quick') {
-    await konfirmasiAbsen();
-  }
 
   if (window._sedangDiproses) delete window._sedangDiproses[nisnKey];
 }
@@ -2566,7 +2571,7 @@ function pilihSiswaDariCari(idx) {
   }
   document.getElementById('siswaPreview').classList.add('show');
   document.getElementById('btnAbsen').disabled = false;
-  if (MODE_SCAN === 'quick') konfirmasiAbsen();
+  if (MODE_SCAN === 'quick') setTimeout(function(){ konfirmasiAbsen(); }, 0);
 }
 
 // Tutup dropdown saat klik di luar
