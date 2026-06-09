@@ -1536,6 +1536,35 @@ async function apiPostAbsen(body) {
   }
 }
 
+// ── SEND QUEUE — kirim ke server 1 per 1, jeda 300ms ──────────────
+var _sendQueue = [];
+var _sendQueueRunning = false;
+
+function tambahSendQueue(body, onSuccess, onFail) {
+  _sendQueue.push({body: body, onSuccess: onSuccess, onFail: onFail});
+  if (!_sendQueueRunning) prosesSendQueue();
+}
+
+async function prosesSendQueue() {
+  if (_sendQueueRunning) return;
+  _sendQueueRunning = true;
+  while (_sendQueue.length > 0) {
+    var item = _sendQueue.shift();
+    try {
+      var r = await apiPost(item.body);
+      if (r.ok || (r.error && (r.error.toLowerCase().includes('sudah') || r.error.toLowerCase().includes('already')))) {
+        if (item.onSuccess) item.onSuccess(r);
+      } else {
+        if (item.onFail) item.onFail(r);
+      }
+    } catch(e) {
+      if (item.onFail) item.onFail(null);
+    }
+    if (_sendQueue.length > 0) await new Promise(function(res){ setTimeout(res, 300); });
+  }
+  _sendQueueRunning = false;
+}
+
 // ── NAVIGASI ───────────────────────────────────────────
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1923,18 +1952,12 @@ async function konfirmasiAbsen() {
     // ★ tambahKeTabeAbsenHariIni akan menambah NISN ke _sudahAbsenSet sebelum request dikirim
     tambahKeTabeAbsenHariIni(siswaYangDipilih, {status: qStatus, jam: qJam});
     resetInputAbsen(); // siswaYangDipilih jadi null setelah ini
-    // Kirim ke server di background dengan data yang sudah disimpan
-    setTimeout(async function() {
-      try {
-        var r = await apiPostAbsen({action: qAction, nisn: qNisn, token: qToken, jamAsli: qJam});
-        if (!r.ok && !(r.error && r.error.toLowerCase().includes('sudah'))) {
-          tambahRetryQueue(qAction, qNisn, qToken, qJam);
-        }
-      } catch(e) {
-        // Gagal kirim — masuk retry queue, akan dicoba ulang otomatis
-        tambahRetryQueue(qAction, qNisn, qToken, qJam);
-      }
-    }, 0);
+    // Kirim ke server via send queue — 1 per 1, jeda 300ms, tidak kewalahan
+    tambahSendQueue(
+      {action: qAction, nisn: qNisn, token: qToken, jamAsli: qJam},
+      null,
+      function() { tambahRetryQueue(qAction, qNisn, qToken, qJam); }
+    );
     return;
   }
 
@@ -2766,16 +2789,14 @@ async function bulkMdStatus(st) {
     hitungStatistikLokal();
   }, 250);
 
-  // Kirim ke server per anak, 1 detik per anak
-  for (var bi = 0; bi < batchItems.length; bi++) {
-    var bitem = batchItems[bi];
-    try {
-      await apiPost({action: bitem.action, nisn: bitem.nisn, token: TOKEN, jamAsli: bitem.jamAsli, status: bitem.status, jamMasuk: bitem.jamMasuk});
-    } catch(e) {
-      tambahRetryQueue(bitem.action, bitem.nisn, TOKEN, bitem.jamMasuk);
-    }
-    if (bi < batchItems.length - 1) await new Promise(function(res){ setTimeout(res, 1000); });
-  }
+  // Kirim ke server via send queue — 1 per 1, jeda 300ms
+  batchItems.forEach(function(bitem) {
+    tambahSendQueue(
+      {action: bitem.action, nisn: bitem.nisn, token: TOKEN, jamAsli: bitem.jamAsli, status: bitem.status, jamMasuk: bitem.jamMasuk},
+      null,
+      function() { tambahRetryQueue(bitem.action, bitem.nisn, TOKEN, bitem.jamMasuk); }
+    );
+  });
 }
 
 
