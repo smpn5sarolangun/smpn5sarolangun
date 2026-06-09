@@ -2153,20 +2153,9 @@ function renderTabelAbsenHariIni(data, dariCache) {
     return String(a.nama||'').localeCompare(String(b.nama||''));
   });
 
-  // Render ulang seluruh tbody sesuai urutan sort
-  // Simpan baris DOM lama agar data atribut tidak hilang
-  var domRows = {};
-  tbody.querySelectorAll('tr[data-nisn]').forEach(function(row) {
-    var n = String(row.dataset.nisn||'').replace(/\.0$/,'').replace(/^0+/,'');
-    if (n) domRows[n] = row;
-  });
-
+  // Render ulang seluruh tbody — hapus semua lalu render ulang sesuai sort
+  tbody.innerHTML = '';
   sorted.forEach(function(r) {
-    var nisnNorm = String(r.nisn||'').replace(/\.0$/,'').replace(/^0+/,'');
-    if (nisnNorm && domRows[nisnNorm]) {
-      tbody.appendChild(domRows[nisnNorm]); // pindahkan baris lama ke posisi sort baru
-      return;
-    }
     var isDuplikat = nisnCount[String(r.nisn||r.nama)] > 1;
     var namaStyle  = isDuplikat ? 'font-weight:700;color:#e53935;' : 'font-weight:600;';
     var dupBadge   = isDuplikat ? ' <span style="font-size:10px;color:#fff;background:#e53935;border-radius:4px;padding:1px 5px;">GANDA</span>' : '';
