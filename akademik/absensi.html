@@ -2025,11 +2025,10 @@ function tambahRetryQueue(action, nisn, token, jam) {
 }
 var _sedangProsesRetry = false; // ★ cegah concurrent retry
 async function prosesRetryQueue() {
-  if (_sedangProsesRetry) return; // sudah jalan, skip
+  if (_sedangProsesRetry) return;
   _sedangProsesRetry = true;
   try {
     var queue = ambilRetryQueue();
-    // Hapus item yang beda hari (sudah kadaluarsa)
     var today = getTglHariIni();
     queue = queue.filter(function(q){ return q.tgl === today; });
     if (!queue.length) { simpanRetryQueue([]); return; }
@@ -2038,9 +2037,7 @@ async function prosesRetryQueue() {
     for (var i = 0; i < queue.length; i++) {
       var item = queue[i];
       try {
-        var r = await apiPostAbsen({action: item.action, nisn: item.nisn, token: item.token || TOKEN, jamAsli: item.jam||''});
-        // ★ Anggap sukses jika: server ok, ATAU server bilang sudah absen/already
-        //   (artinya pengiriman awal sebenarnya sudah masuk, retry ini boleh diabaikan)
+        var r = await apiPost({action: item.action, nisn: item.nisn, token: item.token || TOKEN, jamAsli: item.jam||''});
         var sudahTercatat = r.error && (
           r.error.toLowerCase().includes('sudah') ||
           r.error.toLowerCase().includes('already')
@@ -2049,16 +2046,17 @@ async function prosesRetryQueue() {
           berhasil.push(i);
         }
       } catch(e) {
-        // Masih gagal (network error), biarkan di queue untuk retry berikutnya
+        // Masih gagal, biarkan di queue
       }
+      // Jeda 300ms antar item agar server tidak kewalahan
+      if (i < queue.length - 1) await new Promise(function(res){ setTimeout(res, 300); });
     }
     if (berhasil.length) {
       queue = queue.filter(function(_, idx){ return berhasil.indexOf(idx) === -1; });
       simpanRetryQueue(queue);
-      console.log('[Retry] Berhasil kirim ' + berhasil.length + ' item, sisa: ' + queue.length);
     }
   } finally {
-    _sedangProsesRetry = false; // ★ selalu reset meski error
+    _sedangProsesRetry = false;
   }
 }
 // Jalankan retry tiap 15 detik, belakang layar
