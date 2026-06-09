@@ -2960,8 +2960,16 @@ async function simpanMdStatus(i) {
   if (srch) { srch.value = ''; filterMdList(''); }
 
   // 7. Kirim ke server di background
-  apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni, jamMasuk:jamMasuk||''})
-    .catch(function() {});
+  setTimeout(async function() {
+    try {
+      var r = await apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni, jamMasuk:jamMasuk||''});
+      if (!r.ok && !(r.error && r.error.toLowerCase().includes('sudah'))) {
+        tambahRetryQueue('absenManual', nisnFinal, TOKEN, jamMasuk);
+      }
+    } catch(e) {
+      tambahRetryQueue('absenManual', nisnFinal, TOKEN, jamMasuk);
+    }
+  }, 0);
 }
 
 
