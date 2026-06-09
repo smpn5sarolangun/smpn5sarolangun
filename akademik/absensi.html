@@ -1917,15 +1917,29 @@ async function konfirmasiAbsen() {
       : 'Pulang';
     // Simpan semua data SEBELUM reset (penting!)
     const qNisn   = siswaYangDipilih.nisn;
-    const qAction = MODE_ABSEN === 'masuk' ? 'absenMasuk' : 'absenPulang';
-    const qToken  = TOKEN;
+    const qNama   = siswaYangDipilih.nama;
+    const qKelas  = siswaYangDipilih.kelas;
+    const qTgl    = getTglHariIni();
     playSukses();
     // ★ tambahKeTabeAbsenHariIni akan menambah NISN ke _sudahAbsenSet sebelum request dikirim
     tambahKeTabeAbsenHariIni(siswaYangDipilih, {status: qStatus, jam: qJam});
     resetInputAbsen(); // siswaYangDipilih jadi null setelah ini
-    // Kirim ke server di background — sama persis dengan klik hadir
-    apiPost({action: qAction, nisn: qNisn, token: qToken, jamAsli: qJam})
-      .catch(function() {});
+    // ★ Kirim pakai absenManual — tidak kena LockService, langsung tulis ke sheet
+    //   Status sudah dihitung di client (OnTime/Terlambat/Pulang), server tinggal catat
+    if (MODE_ABSEN === 'masuk') {
+      apiPost({action: 'absenManual', nisn: qNisn, nama: qNama, kelas: qKelas,
+               status: qStatus, tanggal: qTgl, jamMasuk: qJam, keterangan: ''})
+        .catch(function() {
+          // Gagal network → masuk retry queue, dicoba ulang tiap 15 detik
+          tambahRetryQueue('absenMasuk', qNisn, TOKEN, qJam);
+        });
+    } else {
+      // Pulang tetap pakai absenPulang (update kolom jam pulang di baris yang sudah ada)
+      apiPost({action: 'absenPulang', nisn: qNisn, token: TOKEN, jamAsli: qJam})
+        .catch(function() {
+          tambahRetryQueue('absenPulang', qNisn, TOKEN, qJam);
+        });
+    }
     return;
   }
 
@@ -2195,10 +2209,18 @@ async function refreshDashboardDanTabel() {
     apiGet('getDashboard'),
     apiGet('getAbsensiHari', {tanggal: today})
   ]);
-  if (rDash.ok) _updateDashboardUI(rDash.data); // simpan ke cache otomatis
+  if (rDash.ok) _updateDashboardUI(rDash.data);
   if (rAbsen.ok) {
-    renderTabelAbsenHariIni(rAbsen.data);
-    simpanCacheAbsen(rAbsen.data);
+    // Merge seperti loadTabelAbsenHariIni — jangan timpa cache lokal
+    var cacheAda = ambilCacheAbsen() || [];
+    var serverNisn = new Set(rAbsen.data.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
+    window._serverNisnSet = serverNisn;
+    var quickData = cacheAda.filter(function(x){
+      return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
+    });
+    var merged = rAbsen.data.concat(quickData);
+    simpanCacheAbsen(merged);
+    renderTabelAbsenHariIni(merged);
   }
 }
 
