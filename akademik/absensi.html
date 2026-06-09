@@ -2730,7 +2730,7 @@ function bukаModalDetail(status) {
     // Urut per kelas lalu abjad
     siswaList.sort(function(a,b){ return a.kelas.localeCompare(b.kelas)||a.nama.localeCompare(b.nama); });
     siswaList.forEach(function(s, i) {
-      html4 += '<div class="modal-detail-item" id="mdrow'+i+'"><div class="modal-detail-no">'+(i+1)+'</div><div class="modal-detail-nama">'+s.nama+'</div><div class="modal-detail-kelas">'+s.kelas+'</div><div class="modal-detail-jam">'+s.info+'</div></div>';
+      html4 += '<div class="modal-detail-item" id="mdrow'+i+'" data-nisn="'+(s.nisn||'')+'" data-nama="'+s.nama.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'" data-kelas="'+s.kelas+'"><div class="modal-detail-no">'+(i+1)+'</div><div class="modal-detail-nama">'+s.nama+'</div><div class="modal-detail-kelas">'+s.kelas+'</div><div class="modal-detail-jam">'+s.info+'</div></div>';
     });
     isi.innerHTML = html4;
   }
@@ -2799,13 +2799,23 @@ async function bulkMdStatus(st) {
     hitungStatistikLokal();
   }, 250);
 
-  // Kirim ke server per anak — sama persis dengan klik hadir
-  for (var bi = 0; bi < batchItems.length; bi++) {
-    var bitem = batchItems[bi];
-    apiPost({action: bitem.action, nisn: bitem.nisn, token: TOKEN, jamAsli: bitem.jamAsli, status: bitem.status, jamMasuk: bitem.jamMasuk})
-      .catch(function() {});
-    if (bi < batchItems.length - 1) await new Promise(function(res){ setTimeout(res, 300); });
-  }
+  // Kirim SATU request batch ke server — buka sheet sekali, tulis semua sekaligus
+  var tgl = getTglHariIni();
+  var serverItems = items.map(function(d) {
+    var stFinal  = st === 'Hadir' ? (jamStr <= batas ? 'OnTime' : 'Terlambat') : st;
+    var jamMasuk = st === 'Hadir' ? jamStr : '';
+    return {nisn: d.nisn, nama: d.nama, kelas: d.kelas, status: stFinal, jamMasuk: jamMasuk, tanggal: tgl};
+  });
+
+  apiPost({action: 'absenManualBatch', items: serverItems, token: TOKEN})
+    .catch(function() {
+      // Gagal network → masuk retry queue satu per satu
+      serverItems.forEach(function(d) {
+        if (d.status === 'OnTime' || d.status === 'Terlambat') {
+          tambahRetryQueue('absenMasuk', d.nisn, TOKEN, d.jamMasuk);
+        }
+      });
+    });
 }
 
 
@@ -4053,46 +4063,75 @@ window.kirimUlangCache = async function() {
     return;
   }
 
-  // Step 3: Siapkan array batch dengan jamAsli
-  var items = belumTerkirim.map(function(d) {
-    var action = (d.jamPulang && d.jamPulang !== '—' && d.jamPulang !== '') ? 'absenPulang' : 'absenMasuk';
-    var jamAsli = action === 'absenMasuk' ? (d.jamMasuk || d.jam || '') : (d.jamPulang || '');
-    return {
-      nisn:    d.nisn,
-      action:  action,
-      jamAsli: (jamAsli && /^\d{2}:\d{2}/.test(jamAsli)) ? jamAsli.slice(0,5) : ''
-    };
+  // Step 3: Siapkan array batch dengan data lengkap
+  var tgl    = getTglHariIni();
+  var batas  = (window._jadwalData && window._jadwalData.jamMasukBatas) ? window._jadwalData.jamMasukBatas : '07:30';
+  var itemsMasuk  = [];
+  var itemsPulang = [];
+
+  belumTerkirim.forEach(function(d) {
+    var jamMasuk  = (d.jamMasuk  && /^\d{2}:\d{2}/.test(d.jamMasuk))  ? d.jamMasuk.slice(0,5)  : '';
+    var jamPulang = (d.jamPulang && /^\d{2}:\d{2}/.test(d.jamPulang)) ? d.jamPulang.slice(0,5) : '';
+    var status    = d.status || (jamMasuk ? (jamMasuk <= batas ? 'OnTime' : 'Terlambat') : '');
+    if (jamMasuk && status) {
+      itemsMasuk.push({nisn: d.nisn, nama: d.nama||'', kelas: d.kelas||'', status: status, jamMasuk: jamMasuk, tanggal: tgl});
+    }
+    if (jamPulang) {
+      itemsPulang.push({nisn: d.nisn, jamAsli: jamPulang, token: TOKEN});
+    }
   });
 
-  elProgress.textContent = '📤 Mengirim ' + items.length + ' data ke server...';
+  elProgress.textContent = '📤 Mengirim ' + itemsMasuk.length + ' data masuk ke server...';
   elBar.style.width = '30%';
 
-  // Step 4: Kirim per anak, 1 detik per anak
+  // Step 4: Kirim SATU batch untuk semua data masuk
   var berhasil = 0, skip = 0, gagal = 0;
-  for (var i = 0; i < items.length; i++) {
-    var item = items[i];
-    var d = belumTerkirim.find(function(x){ return normN(x.nisn) === normN(item.nisn); });
-    var nama = (d && d.nama) || item.nisn;
-    elProgress.textContent = '📤 Mengirim ' + (i+1) + ' / ' + items.length + ' — ' + nama;
-    elBar.style.width = Math.round(((i+1) / items.length) * 100) + '%';
-    try {
-      var resp = await apiPost({action: item.action, nisn: item.nisn, jamAsli: item.jamAsli, token: TOKEN});
-      if (resp.ok) {
-        log('✅', nama, (resp.status || '') + (resp.jam ? ' (' + resp.jam + ')' : ''), '#2e7d32');
-        window._serverNisnSet && window._serverNisnSet.add(normN(item.nisn));
-        berhasil++;
+  try {
+    if (itemsMasuk.length) {
+      var resp = await apiPost({action: 'absenManualBatch', items: itemsMasuk, token: TOKEN});
+      if (resp.ok && resp.hasil) {
+        resp.hasil.forEach(function(h) {
+          var d = belumTerkirim.find(function(x){ return normN(x.nisn) === normN(h.nisn); });
+          var nama = (d && d.nama) || h.nisn;
+          if (h.ok) {
+            log('✅', nama, h.status || '', '#2e7d32');
+            window._serverNisnSet && window._serverNisnSet.add(normN(h.nisn));
+            berhasil++;
+          } else if (h.error && h.error.toLowerCase().includes('sudah')) {
+            log('⏭', nama, 'sudah ada di server', '#888');
+            skip++;
+          } else {
+            log('❌', nama, h.error || 'gagal', '#c62828');
+            gagal++;
+          }
+        });
       } else if (resp.error && resp.error.toLowerCase().includes('sudah')) {
-        log('⏭', nama, 'sudah ada di server', '#888');
-        skip++;
+        skip += itemsMasuk.length;
       } else {
-        log('❌', nama, resp.error || 'gagal', '#c62828');
-        gagal++;
+        log('❌', 'Batch masuk', resp.error || 'gagal', '#c62828');
+        gagal += itemsMasuk.length;
       }
-    } catch(e) {
-      log('❌', nama, e.name === 'AbortError' ? 'timeout' : e.message, '#c62828');
-      gagal++;
     }
-    if (i < items.length - 1) await new Promise(function(res){ setTimeout(res, 1000); });
+
+    // Kirim pulang satu per satu (update kolom berbeda, tidak bisa batch)
+    if (itemsPulang.length) {
+      elProgress.textContent = '📤 Mengirim ' + itemsPulang.length + ' data pulang...';
+      elBar.style.width = '70%';
+      for (var j = 0; j < itemsPulang.length; j++) {
+        var ip = itemsPulang[j];
+        var dp = belumTerkirim.find(function(x){ return normN(x.nisn) === normN(ip.nisn); });
+        var namaPulang = (dp && dp.nama) || ip.nisn;
+        try {
+          var rp = await apiPost({action: 'absenPulang', nisn: ip.nisn, jamAsli: ip.jamAsli, token: TOKEN});
+          if (rp.ok) { log('✅', namaPulang, 'pulang ' + ip.jamAsli, '#2e7d32'); berhasil++; }
+          else if (rp.error && rp.error.toLowerCase().includes('sudah')) { log('⏭', namaPulang, 'sudah tercatat', '#888'); skip++; }
+          else { log('❌', namaPulang, rp.error || 'gagal', '#c62828'); gagal++; }
+        } catch(e) { log('❌', namaPulang, 'timeout', '#c62828'); gagal++; }
+      }
+    }
+  } catch(e) {
+    log('❌', 'Batch request', e.message || 'network error', '#c62828');
+    gagal += itemsMasuk.length;
   }
 
   elBar.style.width = '100%';
