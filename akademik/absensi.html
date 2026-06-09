@@ -1929,15 +1929,17 @@ async function konfirmasiAbsen() {
     if (MODE_ABSEN === 'masuk') {
       apiPost({action: 'absenManual', nisn: qNisn, nama: qNama, kelas: qKelas,
                status: qStatus, tanggal: qTgl, jamMasuk: qJam, keterangan: ''})
+        .then(function(r) { if (r && r.ok) tandaiCacheTerkirim(qNisn); })
         .catch(function() {
           // Gagal network → masuk retry queue, dicoba ulang tiap 15 detik
-          tambahRetryQueue('absenMasuk', qNisn, TOKEN, qJam);
+          tambahRetryQueue('absenMasuk', qNisn, TOKEN, qJam, qNama, qKelas, qStatus);
         });
     } else {
       // Pulang tetap pakai absenPulang (update kolom jam pulang di baris yang sudah ada)
       apiPost({action: 'absenPulang', nisn: qNisn, token: TOKEN, jamAsli: qJam})
+        .then(function(r) { if (r && r.ok) tandaiCacheTerkirim(qNisn); })
         .catch(function() {
-          tambahRetryQueue('absenPulang', qNisn, TOKEN, qJam);
+          tambahRetryQueue('absenPulang', qNisn, TOKEN, qJam, qNama, qKelas, 'Pulang');
         });
     }
     return;
@@ -1991,51 +1993,103 @@ function simpanRetryQueue(queue) {
 function ambilRetryQueue() {
   try { return JSON.parse(localStorage.getItem(RETRY_QUEUE_KEY)||'[]'); } catch(e) { return []; }
 }
-function tambahRetryQueue(action, nisn, token, jam) {
+function tambahRetryQueue(action, nisn, token, jam, nama, kelas, status) {
   var queue = ambilRetryQueue();
   // Hindari duplikat action+nisn di queue
   var exists = queue.find(function(q){ return q.nisn === nisn && q.action === action; });
   if (!exists) {
-    queue.push({action: action, nisn: nisn, token: token, jam: jam||'', tgl: getTglHariIni(), ts: Date.now()});
+    queue.push({action: action, nisn: nisn, token: token, jam: jam||'',
+                nama: nama||'', kelas: kelas||'', status: status||'',
+                tgl: getTglHariIni(), ts: Date.now()});
     simpanRetryQueue(queue);
   }
 }
 var _sedangProsesRetry = false; // ★ cegah concurrent retry
 async function prosesRetryQueue() {
-  if (_sedangProsesRetry) return; // sudah jalan, skip
+  if (_sedangProsesRetry) return;
   _sedangProsesRetry = true;
   try {
     var queue = ambilRetryQueue();
-    // Hapus item yang beda hari (sudah kadaluarsa)
     var today = getTglHariIni();
     queue = queue.filter(function(q){ return q.tgl === today; });
     if (!queue.length) { simpanRetryQueue([]); return; }
 
-    var berhasil = [];
-    for (var i = 0; i < queue.length; i++) {
-      var item = queue[i];
+    var tgl    = today;
+    var batas  = (window._jadwalData && window._jadwalData.jamMasukBatas) ? window._jadwalData.jamMasukBatas : '07:30';
+    var normN  = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
+
+    // Pisahkan masuk vs pulang
+    var qMasuk  = queue.filter(function(q){ return q.action !== 'absenPulang'; });
+    var qPulang = queue.filter(function(q){ return q.action === 'absenPulang'; });
+    var hapusIdx = [];
+
+    // ── Batch masuk: satu request untuk semua ──
+    if (qMasuk.length) {
+      var items = qMasuk.map(function(q) {
+        // Ambil nama/kelas dari cache lokal kalau tidak ada di queue
+        var cacheEntry = (ambilCacheAbsen()||[]).find(function(c){ return normN(c.nisn) === normN(q.nisn); });
+        var nama   = q.nama  || (cacheEntry && cacheEntry.nama)  || '';
+        var kelas  = q.kelas || (cacheEntry && cacheEntry.kelas) || '';
+        var jam    = q.jam || '';
+        var status = q.status || (jam ? (jam <= batas ? 'OnTime' : 'Terlambat') : 'OnTime');
+        return {nisn: q.nisn, nama: nama, kelas: kelas, status: status, jamMasuk: jam, tanggal: tgl};
+      });
       try {
-        var r = await apiPostAbsen({action: item.action, nisn: item.nisn, token: item.token || TOKEN, jamAsli: item.jam||''});
-        // ★ Anggap sukses jika: server ok, ATAU server bilang sudah absen/already
-        //   (artinya pengiriman awal sebenarnya sudah masuk, retry ini boleh diabaikan)
-        var sudahTercatat = r.error && (
-          r.error.toLowerCase().includes('sudah') ||
-          r.error.toLowerCase().includes('already')
-        );
-        if (r.ok || sudahTercatat) {
-          berhasil.push(i);
+        var r = await apiPost({action: 'absenManualBatch', items: items, token: TOKEN});
+        if (r && r.hasil) {
+          r.hasil.forEach(function(h) {
+            var idx = queue.findIndex(function(q){ return normN(q.nisn) === normN(h.nisn) && q.action !== 'absenPulang'; });
+            if (idx === -1) return;
+            var sudahTercatat = h.error && (h.error.toLowerCase().includes('sudah') || h.error.toLowerCase().includes('already'));
+            if (h.ok || sudahTercatat) {
+              hapusIdx.push(idx);
+              tandaiCacheTerkirim(h.nisn);
+            }
+            // error lain (bukan network, bukan sibuk) → hapus juga agar tidak loop selamanya
+            // data sudah ada di cache lokal, bisa kirim ulang manual via tombol Kirim Ulang
+            else if (!h.error || !h.error.toLowerCase().includes('sibuk')) {
+              hapusIdx.push(idx);
+              console.warn('[Retry] Drop item nisn=' + h.nisn + ' error: ' + h.error);
+            }
+          });
+        } else if (r && r.ok === false && r.error && r.error.toLowerCase().includes('sibuk')) {
+          // Server sibuk → biarkan semua di queue, coba lagi 15 detik
+        } else if (r && r.ok === false) {
+          // Error lain dari server → hapus semua batch ini agar tidak loop
+          qMasuk.forEach(function(q){
+            var idx = queue.indexOf(q);
+            if (idx !== -1) hapusIdx.push(idx);
+          });
         }
       } catch(e) {
-        // Masih gagal (network error), biarkan di queue untuk retry berikutnya
+        // Network error / timeout → biarkan di queue, coba lagi 15 detik
       }
     }
-    if (berhasil.length) {
-      queue = queue.filter(function(_, idx){ return berhasil.indexOf(idx) === -1; });
+
+    // ── Pulang: satu per satu (update kolom berbeda) ──
+    for (var j = 0; j < qPulang.length; j++) {
+      var item = qPulang[j];
+      var qIdx = queue.indexOf(item);
+      try {
+        var rp = await apiPost({action: 'absenPulang', nisn: item.nisn, jamAsli: item.jam, token: TOKEN});
+        var sudahP = rp && rp.error && (rp.error.toLowerCase().includes('sudah') || rp.error.toLowerCase().includes('already'));
+        if ((rp && rp.ok) || sudahP) {
+          hapusIdx.push(qIdx);
+          tandaiCacheTerkirim(item.nisn);
+        } else if (rp && rp.error && !rp.error.toLowerCase().includes('sibuk')) {
+          hapusIdx.push(qIdx); // error permanen → drop
+        }
+        // sibuk / network error → biarkan di queue
+      } catch(e) { /* network error → retry berikutnya */ }
+    }
+
+    if (hapusIdx.length) {
+      queue = queue.filter(function(_, idx){ return hapusIdx.indexOf(idx) === -1; });
       simpanRetryQueue(queue);
-      console.log('[Retry] Berhasil kirim ' + berhasil.length + ' item, sisa: ' + queue.length);
+      console.log('[Retry] Selesai, sisa queue: ' + queue.length);
     }
   } finally {
-    _sedangProsesRetry = false; // ★ selalu reset meski error
+    _sedangProsesRetry = false;
   }
 }
 // Jalankan retry tiap 15 detik, belakang layar
@@ -2067,6 +2121,24 @@ function ambilCacheAbsen() {
     }
     return obj.data;
   } catch(e) { return null; }
+}
+
+// Tandai NISN sebagai sudah terkirim ke server — agar langsung hilang dari cache kalau dihapus di sheet
+function tandaiCacheTerkirim(nisn) {
+  try {
+    var normN = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
+    var cache = ambilCacheAbsen();
+    if (!cache) return;
+    var key = normN(nisn);
+    var changed = false;
+    cache.forEach(function(d) {
+      if (normN(d.nisn) === key && !d._terkirim) {
+        d._terkirim = true;
+        changed = true;
+      }
+    });
+    if (changed) simpanCacheAbsen(cache);
+  } catch(e) {}
 }
 
 // Cache dashboard stats
@@ -2299,11 +2371,12 @@ async function refreshStatistikSaja() {
       const retryNisnSet = new Set(retryQueue.map(function(q){ return String(q.nisn||'').replace(/^0+/,''); }));
 
       const quickData = cacheAda.filter(function(x){
-        var nisnKey = String(x.nisn||'').replace(/^0+/,'');
+        var nisnKey = String(x.nisn||"").replace(/^0+/,"");
         if (serverNisnSet.has(nisnKey)) return false; // sudah ada di server, pakai data server
-        if (retryNisnSet.has(nisnKey)) return true;   // ★ ada di queue → pertahankan selamanya
+        if (x._terkirim) return false;                // sudah terkirim tapi server hapus -> langsung hilang
+        if (retryNisnSet.has(nisnKey)) return true;   // ada di queue -> pertahankan
         var umur = now - (x._ts || 0);
-        return umur < BATAS_BUFFER;                    // ★ masih baru → pertahankan (sedang kirim)
+        return umur < BATAS_BUFFER;                   // belum terkirim, masih baru -> pertahankan sementara
       });
       const serverByNisn = {};
       serverData.forEach(function(d){ serverByNisn[String(d.nisn||'').replace(/^0+/,'')] = d; });
@@ -2808,11 +2881,16 @@ async function bulkMdStatus(st) {
   });
 
   apiPost({action: 'absenManualBatch', items: serverItems, token: TOKEN})
+    .then(function(r) {
+      if (r && r.ok && r.hasil) {
+        r.hasil.forEach(function(h) { if (h.ok) tandaiCacheTerkirim(h.nisn); });
+      }
+    })
     .catch(function() {
       // Gagal network → masuk retry queue satu per satu
       serverItems.forEach(function(d) {
         if (d.status === 'OnTime' || d.status === 'Terlambat') {
-          tambahRetryQueue('absenMasuk', d.nisn, TOKEN, d.jamMasuk);
+          tambahRetryQueue('absenMasuk', d.nisn, TOKEN, d.jamMasuk, d.nama, d.kelas, d.status);
         }
       });
     });
@@ -2975,7 +3053,10 @@ async function simpanMdStatus(i) {
 
   // 7. Kirim ke server di background
   apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni, jamMasuk:jamMasuk||''})
-    .catch(function() {});
+    .then(function(r) { if (r && r.ok) tandaiCacheTerkirim(nisnFinal); })
+    .catch(function() {
+      if (st === 'OnTime' || st === 'Terlambat') tambahRetryQueue('absenMasuk', nisnFinal, TOKEN, jamMasuk, nama, kelas, st);
+    });
 }
 
 
@@ -4096,6 +4177,7 @@ window.kirimUlangCache = async function() {
           if (h.ok) {
             log('✅', nama, h.status || '', '#2e7d32');
             window._serverNisnSet && window._serverNisnSet.add(normN(h.nisn));
+            tandaiCacheTerkirim(h.nisn);
             berhasil++;
           } else if (h.error && h.error.toLowerCase().includes('sudah')) {
             log('⏭', nama, 'sudah ada di server', '#888');
