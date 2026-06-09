@@ -2759,14 +2759,12 @@ async function bulkMdStatus(st) {
     hitungStatistikLokal();
   }, 250);
 
-  // Kirim ke server via batch
-  try {
-    await apiPost({action: 'absenBatch', token: TOKEN, items: batchItems});
-  } catch(e) {
-    // Gagal kirim — masukkan ke retry queue satu per satu
-    batchItems.forEach(function(item) {
-      tambahRetryQueue(item.action, item.nisn, TOKEN, item.jamMasuk);
-    });
+  // Kirim ke server per anak — sama persis dengan klik hadir
+  for (var bi = 0; bi < batchItems.length; bi++) {
+    var bitem = batchItems[bi];
+    apiPost({action: bitem.action, nisn: bitem.nisn, token: TOKEN, jamAsli: bitem.jamAsli, status: bitem.status, jamMasuk: bitem.jamMasuk})
+      .catch(function() {});
+    if (bi < batchItems.length - 1) await new Promise(function(res){ setTimeout(res, 300); });
   }
 }
 
@@ -4029,44 +4027,43 @@ window.kirimUlangCache = async function() {
   elProgress.textContent = '📤 Mengirim ' + items.length + ' data ke server...';
   elBar.style.width = '30%';
 
-  // Step 4: Kirim SEMUA sekaligus dalam 1 request batch
-  try {
-    var resp = await apiPost({action: 'absenBatch', token: TOKEN, items: items});
-    elBar.style.width = '100%';
-
-    if (resp.ok && resp.hasil) {
-      resp.hasil.forEach(function(h) {
-        var d = belumTerkirim.find(function(x){ return normN(x.nisn) === normN(h.nisn); });
-        var nama = (d && d.nama) || h.nisn;
-        if (h.ok) {
-          log('✅', nama, (h.status || '') + (h.jam ? ' (' + h.jam + ')' : ''), '#2e7d32');
-          window._serverNisnSet && window._serverNisnSet.add(normN(h.nisn));
-        } else if (h.error && h.error.toLowerCase().includes('sudah')) {
-          log('⏭', nama, 'sudah ada di server', '#888');
-        } else {
-          log('❌', nama, h.error || 'gagal', '#c62828');
-        }
-      });
-      elBar.style.background   = resp.gagal > 0 ? '#e53935' : '#43a047';
-      elProgress.style.background = resp.gagal > 0 ? '#ffebee' : '#e8f5e9';
-      elProgress.style.color   = resp.gagal > 0 ? '#b71c1c' : '#1b5e20';
-      elProgress.innerHTML = '✅ Selesai — <b>' + resp.berhasil + ' berhasil</b>, ' + resp.skip + ' skip' +
-        (resp.gagal > 0 ? ', <b style="color:#c62828">' + resp.gagal + ' gagal</b>' : ', 0 gagal');
-    } else {
-      elBar.style.background = '#e53935';
-      elProgress.style.background = '#ffebee';
-      elProgress.style.color = '#b71c1c';
-      elProgress.textContent = '❌ Gagal: ' + (resp.error || 'Server error');
+  // Step 4: Kirim per anak, 1 detik per anak
+  var berhasil = 0, skip = 0, gagal = 0;
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var d = belumTerkirim.find(function(x){ return normN(x.nisn) === normN(item.nisn); });
+    var nama = (d && d.nama) || item.nisn;
+    elProgress.textContent = '📤 Mengirim ' + (i+1) + ' / ' + items.length + ' — ' + nama;
+    elBar.style.width = Math.round(((i+1) / items.length) * 100) + '%';
+    try {
+      var resp = await apiPost({action: item.action, nisn: item.nisn, jamAsli: item.jamAsli, token: TOKEN});
+      if (resp.ok) {
+        log('✅', nama, (resp.status || '') + (resp.jam ? ' (' + resp.jam + ')' : ''), '#2e7d32');
+        window._serverNisnSet && window._serverNisnSet.add(normN(item.nisn));
+        berhasil++;
+      } else if (resp.error && resp.error.toLowerCase().includes('sudah')) {
+        log('⏭', nama, 'sudah ada di server', '#888');
+        skip++;
+      } else {
+        log('❌', nama, resp.error || 'gagal', '#c62828');
+        gagal++;
+      }
+    } catch(e) {
+      log('❌', nama, e.name === 'AbortError' ? 'timeout' : e.message, '#c62828');
+      gagal++;
     }
-  } catch(e) {
-    elBar.style.background = '#e53935';
-    elProgress.style.background = '#ffebee';
-    elProgress.style.color = '#b71c1c';
-    elProgress.textContent = '❌ Gagal: ' + e.message;
+    if (i < items.length - 1) await new Promise(function(res){ setTimeout(res, 1000); });
   }
 
+  elBar.style.width = '100%';
+  elBar.style.background = gagal > 0 ? '#e53935' : '#43a047';
+  elProgress.style.background = gagal > 0 ? '#ffebee' : '#e8f5e9';
+  elProgress.style.color = gagal > 0 ? '#b71c1c' : '#1b5e20';
+  elProgress.innerHTML = '✅ Selesai — <b>' + berhasil + ' berhasil</b>, ' + skip + ' skip' +
+    (gagal > 0 ? ', <b style="color:#c62828">' + gagal + ' gagal</b>' : ', 0 gagal');
+
   elFooter.style.display = 'block';
-  setTimeout(refreshDashboardDanTabel, 1000);
+  setTimeout(refreshStatistikSaja, 1000);
 };
 
 // Load siswa lazy
