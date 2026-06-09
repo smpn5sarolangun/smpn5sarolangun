@@ -1952,12 +1952,17 @@ async function konfirmasiAbsen() {
     // ★ tambahKeTabeAbsenHariIni akan menambah NISN ke _sudahAbsenSet sebelum request dikirim
     tambahKeTabeAbsenHariIni(siswaYangDipilih, {status: qStatus, jam: qJam});
     resetInputAbsen(); // siswaYangDipilih jadi null setelah ini
-    // Kirim ke server via send queue — 1 per 1, jeda 300ms, tidak kewalahan
-    tambahSendQueue(
-      {action: qAction, nisn: qNisn, token: qToken, jamAsli: qJam},
-      null,
-      function() { tambahRetryQueue(qAction, qNisn, qToken, qJam); }
-    );
+    // Kirim ke server langsung di background
+    setTimeout(async function() {
+      try {
+        var r = await apiPost({action: qAction, nisn: qNisn, token: qToken, jamAsli: qJam});
+        if (!r.ok && !(r.error && r.error.toLowerCase().includes('sudah'))) {
+          tambahRetryQueue(qAction, qNisn, qToken, qJam);
+        }
+      } catch(e) {
+        tambahRetryQueue(qAction, qNisn, qToken, qJam);
+      }
+    }, 0);
     return;
   }
 
