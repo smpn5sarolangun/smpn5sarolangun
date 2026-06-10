@@ -1567,13 +1567,10 @@ function _updateDashboardUI(d) {
     loadJadwalInputs(); // update input jam dari server
   }
   const s = d.statistik;
-  upd('stOnTime',      s.onTime);
-  upd('stTerlambat',   s.terlambat);
+  // Counter absensi selalu dihitung dari cache lokal agar sinkron dengan tabel
+  // Server hanya dipakai untuk belumPulang (tidak ada di cache lokal dengan akurat)
+  hitungStatistikLokal();
   // stBelumMasuk dihitung dari hitungBelumMasuk() setelah tabel render selesai
-  upd('stBelumPulang', s.belumPulang);
-  upd('stIzin',        s.izin);
-  upd('stSakit',       s.sakit);
-  upd('stAlpa',        s.alpa);
 
   // Tabel per kelas
   const tbKelas = document.getElementById('tabelKelas');
@@ -2467,23 +2464,10 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
     if (noEl) noEl.textContent = idx + 1;
   });
 
-  // Update counter statistik lokal
-  // fromModal = sudah diupdate di simpanMdStatus, skip di sini
-  const upd = (id, fn) => { const el=document.getElementById(id); if(el) el.textContent=fn(parseInt(el.textContent||0)); };
-  if (result.fromModal) {
-    // Counter sudah diupdate di simpanMdStatus — skip semua
-  } else if (result.manual) {
-    // Input manual Izin / Sakit / Alpa dari halaman siswa
+  // Update counter statistik — hitungStatistikLokal() di bawah akan hitung ulang dari cache
+  // Tidak ada increment manual di sini agar tidak double-count
+  if (!result.fromModal) {
     setTimeout(hitungBelumMasuk, 50);
-    if (status==='Izin')  upd('stIzin',  v => v+1);
-    if (status==='Sakit') upd('stSakit', v => v+1);
-    if (status==='Alpa')  upd('stAlpa',  v => v+1);
-  } else if (MODE_ABSEN === 'masuk') {
-    setTimeout(hitungBelumMasuk, 50);
-    if (status==='OnTime')    upd('stOnTime',    v => v+1);
-    if (status==='Terlambat') upd('stTerlambat', v => v+1);
-  } else {
-    upd('stBelumPulang', v => Math.max(0,v-1));
   }
 
   // Update cache - tambah item baru ke cache yang ada
@@ -3036,14 +3020,9 @@ async function simpanMdStatus(i) {
     }
   }, 320); // setelah row.remove() selesai (300ms)
 
-  // 4. Update counter status (SATU TEMPAT SAJA — tidak lewat tambahKeTabeAbsenHariIni)
-  var stIdMap = {OnTime:'stOnTime', Terlambat:'stTerlambat', Izin:'stIzin', Sakit:'stSakit', Alpa:'stAlpa'};
-  if (stIdMap[st]) {
-    var elSt = document.getElementById(stIdMap[st]);
-    if (elSt) elSt.textContent = parseInt(elSt.textContent || 0) + 1;
-  }
+  // 4. Counter diupdate oleh hitungStatistikLokal() di dalam tambahKeTabeAbsenHariIni
 
-  // 5. Tambah ke tabel absen hari ini TANPA update counter (pass flag skipCounter)
+  // 5. Tambah ke tabel absen hari ini
   var tglHariIni = getTglHariIni();
   tambahKeTabeAbsenHariIni({nisn:nisnFinal, nama:nama, kelas:kelas}, {status:st, fromModal:true, jamMasuk:jamMasuk});
 
