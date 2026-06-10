@@ -468,7 +468,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .page-hero p{font-size:14px;opacity:0.85;}
 
 /* TABS */
-.tab-bar{display:flex;background:#ffffff;gap:6px;margin:-26px auto 28px;position:relative;z-index:10;max-width:848px;padding:8px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.10);}
+.tab-bar{display:flex;background:#ffffff;gap:6px;margin:-26px auto 28px;position:relative;z-index:10;max-width:800px;width:calc(100% - 48px);padding:8px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.10);}
 .tab-btn{flex:1;padding:11px 8px;border:2px solid #c8d8ee;border-radius:10px;background:#fff;color:#4a6285;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 6px rgba(0,0,0,0.06);}
 .tab-btn:hover:not(.active){background:#eef4fb;border-color:#a0bcd8;color:#1a3a6b;}
 .tab-btn.active{background:#0d3b6e;color:#fff;border-color:#0d3b6e;box-shadow:0 3px 10px rgba(13,59,110,0.35);font-weight:700;}
@@ -586,6 +586,7 @@ select.f-input{appearance:auto;}
         <div class="dropdown-menu">
           <a href="ppdb.html#info">Informasi &amp; Syarat</a>
 <a href="ppdb.html#registrasi">Registrasi Online</a>
+<a href="ppdb.html#peserta">Daftar Peserta</a>
 <a href="ppdb.html#cek">Cek Status</a>
         </div>
       </div>
@@ -636,6 +637,7 @@ select.f-input{appearance:auto;}
 <div class="mob-sub">
     <a href="ppdb.html#info" class="mob-child">— Informasi &amp; Syarat</a>
     <a href="ppdb.html#registrasi" class="mob-child">— Registrasi Online</a>
+    <a href="ppdb.html#peserta" class="mob-child">— Daftar Peserta</a>
     <a href="ppdb.html#cek" class="mob-child">— Cek Status</a>
 </div>
     <div class="mob-parent-row"><a href="#" onclick="toggleMobSub(this.parentElement.querySelector('.mob-arrow'));return false;" class="mob-parent">Akademik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
@@ -1259,7 +1261,7 @@ select.f-input{appearance:auto;}
         <option value="">Semua</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
       </select>
     </div>
-    <div style="overflow-x:auto;border-radius:10px;border:1.5px solid #dde5f0;">
+    <div style="overflow-x:auto;border-radius:10px;border:1.5px solid #dde5f0;max-width:100%;">
       <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;"><colgroup><col style="width:5%"><col style="width:18%"><col style="width:25%"><col style="width:15%"><col style="width:37%"></colgroup>
         <thead><tr style="background:#0d3b6e;color:#fff;">
           <th style="padding:11px 14px;text-align:left;font-weight:600;">No</th>
@@ -1397,7 +1399,6 @@ let _pesertaData = [];
 let _pesertaSudahMuat = false;
 
 function muatDaftarPeserta() {
-  if(_pesertaSudahMuat) { renderPeserta(); return; }
   document.getElementById('tbodyPeserta').innerHTML =
     '<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--teks-sub);">Memuat data...</td></tr>';
   document.getElementById('pesertaMsg').style.display = 'none';
@@ -1406,7 +1407,6 @@ function muatDaftarPeserta() {
     .then(r => r.json())
     .then(d => {
       _pesertaData = d.data || [];
-      _pesertaSudahMuat = true;
       renderPeserta();
     })
     .catch(() => {
@@ -1977,6 +1977,9 @@ document.addEventListener('DOMContentLoaded', function(){
   } else if(hash === '#info'){
     const btn = document.querySelector('.tab-btn[onclick*="info"]');
     switchTab('info', btn);
+  } else if(hash === '#peserta'){
+    const btn = document.querySelector('.tab-btn[onclick*="peserta"]');
+    switchTab('peserta', btn);
   }
 
   muatDraft();
