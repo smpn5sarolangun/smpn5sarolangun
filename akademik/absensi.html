@@ -1772,7 +1772,7 @@ async function startScan() {
 }
 
 function stopScan() {
-  Quagga.stop();
+  try { Quagga.stop(); } catch(e) {}
   if (scanStream) {
     scanStream.getTracks().forEach(t => t.stop());
     scanStream = null;
