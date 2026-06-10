@@ -468,7 +468,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
 .page-hero p{font-size:14px;opacity:0.85;}
 
 /* TABS */
-.tab-bar{display:flex;background:transparent;gap:6px;margin:-26px auto 28px;position:relative;z-index:10;max-width:860px;padding:0 24px;}
+.tab-bar{display:flex;background:rgba(255,255,255,0.15);gap:6px;margin:-26px auto 28px;position:relative;z-index:10;max-width:860px;padding:8px;border-radius:12px;backdrop-filter:blur(4px);}
 .tab-btn{flex:1;padding:11px 8px;border:2px solid #c8d8ee;border-radius:10px;background:#fff;color:#4a6285;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 6px rgba(0,0,0,0.06);}
 .tab-btn:hover:not(.active){background:#eef4fb;border-color:#a0bcd8;color:#1a3a6b;}
 .tab-btn.active{background:#0d3b6e;color:#fff;border-color:#0d3b6e;box-shadow:0 3px 10px rgba(13,59,110,0.35);font-weight:700;}
@@ -1245,7 +1245,7 @@ select.f-input{appearance:auto;}
   </div>
 
   <!-- ═══════ TAB PESERTA ═══════ -->
-  <div class="tab-content" id="tabPeserta" style="display:none;">
+  <div class="tab-content" id="tabPeserta" style="display:none;padding-top:0;">
     <div class="sec-title">👥 Daftar Peserta Sementara</div>
     <p style="font-size:13px;color:var(--teks-sub);margin:4px 0 16px;">Data bersifat sementara dan akan diperbarui secara berkala.</p>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
@@ -1260,9 +1260,10 @@ select.f-input{appearance:auto;}
       </select>
     </div>
     <div style="overflow-x:auto;border-radius:10px;border:1.5px solid #dde5f0;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;"><colgroup><col style="width:5%"><col style="width:18%"><col style="width:25%"><col style="width:15%"><col style="width:37%"></colgroup>
         <thead><tr style="background:#0d3b6e;color:#fff;">
           <th style="padding:11px 14px;text-align:left;font-weight:600;">No</th>
+          <th style="padding:11px 14px;text-align:left;font-weight:600;">Tanggal Daftar</th>
           <th style="padding:11px 14px;text-align:left;font-weight:600;">Nama</th>
           <th style="padding:11px 14px;text-align:left;font-weight:600;">Jenis Kelamin</th>
           <th style="padding:11px 14px;text-align:left;font-weight:600;">Sekolah Asal</th>
@@ -1398,7 +1399,7 @@ let _pesertaSudahMuat = false;
 function muatDaftarPeserta() {
   if(_pesertaSudahMuat) { renderPeserta(); return; }
   document.getElementById('tbodyPeserta').innerHTML =
-    '<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--teks-sub);">Memuat data...</td></tr>';
+    '<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--teks-sub);">Memuat data...</td></tr>';
   document.getElementById('pesertaMsg').style.display = 'none';
 
   fetch(PPDB_SCRIPT + '?action=getDaftarPeserta')
@@ -1425,8 +1426,8 @@ function renderPeserta() {
   );
 
   // Update statistik
-  const lk = _pesertaData.filter(p => p.jk === 'Laki-laki').length;
-  const pr = _pesertaData.filter(p => p.jk === 'Perempuan').length;
+  const lk = _pesertaData.filter(p => (p.jk||'').toLowerCase().includes('laki')).length;
+  const pr = _pesertaData.filter(p => (p.jk||'').toLowerCase().includes('perempuan')).length;
   document.getElementById('statTotal').textContent     = _pesertaData.length;
   document.getElementById('statLaki').textContent      = lk;
   document.getElementById('statPerempuan').textContent = pr;
@@ -1451,6 +1452,7 @@ function renderPeserta() {
   tbody.innerHTML = filtered.map((p, i) => `
     <tr style="border-bottom:1.5px solid #dde5f0;${i%2===1?'background:#f7faff;':''}">
       <td style="padding:10px 14px;color:#888;">${i+1}</td>
+      <td style="padding:10px 14px;color:#4a6285;">${p.tglDaftar||'-'}</td>
       <td style="padding:10px 14px;font-weight:600;color:#1e2a3a;">${p.nama}</td>
       <td style="padding:10px 14px;color:#4a6285;">${p.jk}</td>
       <td style="padding:10px 14px;color:#4a6285;">${p.sekolahAsal}</td>
