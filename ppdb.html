@@ -1248,6 +1248,7 @@ select.f-input{appearance:auto;}
 
   <!-- ═══════ TAB PESERTA ═══════ -->
   <div class="tab-content" id="tabPeserta" style="display:none;padding-top:0;">
+    <div style="max-width:752px;margin:0 auto;">
     <div class="sec-title">👥 Daftar Peserta Sementara</div>
     <p style="font-size:13px;color:var(--teks-sub);margin:4px 0 16px;">Data bersifat sementara dan akan diperbarui secara berkala.</p>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
@@ -1264,16 +1265,17 @@ select.f-input{appearance:auto;}
     <div style="overflow-x:auto;border-radius:10px;border:1.5px solid #dde5f0;max-width:100%;">
       <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;"><colgroup><col style="width:5%"><col style="width:18%"><col style="width:25%"><col style="width:15%"><col style="width:37%"></colgroup>
         <thead><tr style="background:#0d3b6e;color:#fff;">
-          <th style="padding:11px 14px;text-align:left;font-weight:600;">No</th>
-          <th style="padding:11px 14px;text-align:left;font-weight:600;">Tanggal Daftar</th>
-          <th style="padding:11px 14px;text-align:left;font-weight:600;">Nama</th>
-          <th style="padding:11px 14px;text-align:left;font-weight:600;">Jenis Kelamin</th>
-          <th style="padding:11px 14px;text-align:left;font-weight:600;">Sekolah Asal</th>
+          <th style="padding:11px 14px;text-align:center;font-weight:600;">No</th>
+          <th style="padding:11px 14px;text-align:center;font-weight:600;">Tanggal Daftar</th>
+          <th style="padding:11px 14px;text-align:center;font-weight:600;">Nama</th>
+          <th style="padding:11px 14px;text-align:center;font-weight:600;">Jenis Kelamin</th>
+          <th style="padding:11px 14px;text-align:center;font-weight:600;">Sekolah Asal</th>
         </tr></thead>
         <tbody id="tbodyPeserta"></tbody>
       </table>
     </div>
     <p id="pesertaMsg" style="text-align:center;padding:28px;color:var(--teks-sub);font-size:13px;display:none;">Belum ada pendaftar.</p>
+    </div>
   </div>
 
   <!-- ═══════ TAB CEK ═══════ -->
@@ -1566,6 +1568,10 @@ function renderPPDBInfo(d) {
   // Kuota
   const kuotaEl = document.getElementById('kuotaNum');
   if(kuotaEl && p.kuota) kuotaEl.textContent = p.kuota;
+
+  // Link e-Rapor & CBT dari sheet
+  updateLinkERapor(p.url_erapor || '');
+  updateLinkCBT(p.url_cbt_admin || '', p.url_cbt_guru || '', p.url_cbt_siswa || '');
 }
 
 
@@ -1987,6 +1993,25 @@ document.addEventListener('DOMContentLoaded', function(){
     el.addEventListener('input', function(){ resetFieldError(this); });
     el.addEventListener('change', function(){ resetFieldError(this); });
   });
+});
+
+function handleHashSwitch(hash){
+  if(hash === '#registrasi' || hash === '#daftar'){
+    const btn = document.querySelector('.tab-btn[onclick*="daftar"]');
+    switchTab('daftar', btn);
+  } else if(hash === '#cek' || hash === '#status'){
+    const btn = document.querySelector('.tab-btn[onclick*="cek"]');
+    switchTab('cek', btn);
+  } else if(hash === '#info'){
+    const btn = document.querySelector('.tab-btn[onclick*="info"]');
+    switchTab('info', btn);
+  } else if(hash === '#peserta'){
+    const btn = document.querySelector('.tab-btn[onclick*="peserta"]');
+    switchTab('peserta', btn);
+  }
+}
+window.addEventListener('hashchange', function(){
+  handleHashSwitch(window.location.hash);
 });
 function resetFieldError(el){
   el.style.borderColor = '';
