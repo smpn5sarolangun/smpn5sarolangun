@@ -767,6 +767,8 @@ tr:hover td{background:#f8fafc;}
   </div>
 </div>
 
+</div><!-- end page-dashboard -->
+
 <!-- ═══ PAGE: REKAM ABSEN ═══ -->
 <div class="page" id="page-absensi">
   <h2 style="font-size:20px;font-weight:800;margin-bottom:20px;">📋 Rekam Absensi Harian</h2>
@@ -1540,11 +1542,15 @@ async function apiPostAbsen(body) {
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  // ★ pakai event?.currentTarget agar tidak error kalau dipanggil tanpa event
-  if (typeof event !== 'undefined' && event && event.currentTarget) {
-    event.currentTarget.classList.add('active');
-  }
+  var pageEl = document.getElementById('page-' + id);
+  if (pageEl) pageEl.classList.add('active');
+  // Aktifkan nav-item yang sesuai berdasarkan onclick attribute
+  document.querySelectorAll('.nav-item').forEach(function(n) {
+    if ((n.getAttribute('onclick') || '').includes("'" + id + "'") ||
+        (n.getAttribute('onclick') || '').includes('"' + id + '"')) {
+      n.classList.add('active');
+    }
+  });
   stopScan();
 }
 
@@ -2941,6 +2947,11 @@ function toggleMdForm(i) {
   f.style.display = op ? 'flex' : 'none';
 }
 function pilihMdStatus(i, st) {
+  // ★ Guard: cegah double-click / double-submit
+  if (!window._sedangSimpanMd) window._sedangSimpanMd = {};
+  if (window._sedangSimpanMd[i]) return;
+  window._sedangSimpanMd[i] = true;
+
   // ★ Langsung simpan tanpa klik Simpan lagi
   _mdStatus[i] = st;
   var colMap = {Hadir:'var(--hijau)', Izin:'#1565c0', Sakit:'#c62828', Alpa:'#e53935'};
@@ -3003,6 +3014,7 @@ async function simpanMdStatus(i) {
     row.style.transition = 'all 0.3s';
     setTimeout(function() {
       row.remove();
+      if (window._sedangSimpanMd) delete window._sedangSimpanMd[i];
       var allRows = document.querySelectorAll('[id^="mdrow"]');
       allRows.forEach(function(r, idx) {
         var noEl = r.querySelector('.modal-detail-no');
