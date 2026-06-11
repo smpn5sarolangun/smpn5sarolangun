@@ -410,7 +410,7 @@ nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,59,110,0.97)
     transition:background 0.15s;white-space:nowrap;
   }
   .dropdown-menu a:hover{background:rgba(13,59,110,0.08);color:#0d3b6e;}
-  /* Menu kanan (PPDB, Akademik) → buka ke kiri */
+  /* Menu kanan (SPMB, Akademik) → buka ke kiri */
   .nav-dropdown.dd-right .dropdown-menu{
     left:auto;right:0;transform:translateY(-8px);
   }
@@ -621,12 +621,12 @@ select.f-input{appearance:auto;}
       <a href="berita.html" class="nav-link ">Berita</a>
       <a href="pengumuman.html" class="nav-link ">Pengumuman</a>
       <div class="nav-dropdown dd-right">
-        <a href="ppdb.html" class="nav-link ">PPDB <span class="dd-arrow">▾</span></a>
+        <a href="spmb.html" class="nav-link ">SPMB <span class="dd-arrow">▾</span></a>
         <div class="dropdown-menu">
-          <a href="ppdb.html#info">Informasi &amp; Syarat</a>
-<a href="ppdb.html#registrasi">Registrasi Online</a>
-<a href="ppdb.html#peserta">Daftar Peserta</a>
-<a href="ppdb.html#cek">Cek Status</a>
+          <a href="spmb.html#info">Informasi &amp; Syarat</a>
+<a href="spmb.html#registrasi">Registrasi Online</a>
+<a href="spmb.html#peserta">Daftar Peserta</a>
+<a href="spmb.html#cek">Cek Status</a>
         </div>
       </div>
       <div class="nav-dropdown dd-right">
@@ -672,12 +672,12 @@ select.f-input{appearance:auto;}
     <a href="galeri.html">Galeri</a>
     <a href="berita.html">Berita</a>
     <a href="pengumuman.html">Pengumuman</a>
-    <div class="mob-parent-row"><a href="ppdb.html" class="mob-parent">PPDB</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
+    <div class="mob-parent-row"><a href="spmb.html" class="mob-parent">SPMB</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
 <div class="mob-sub">
-    <a href="ppdb.html#info" class="mob-child">— Informasi &amp; Syarat</a>
-    <a href="ppdb.html#registrasi" class="mob-child">— Registrasi Online</a>
-    <a href="ppdb.html#peserta" class="mob-child">— Daftar Peserta</a>
-    <a href="ppdb.html#cek" class="mob-child">— Cek Status</a>
+    <a href="spmb.html#info" class="mob-child">— Informasi &amp; Syarat</a>
+    <a href="spmb.html#registrasi" class="mob-child">— Registrasi Online</a>
+    <a href="spmb.html#peserta" class="mob-child">— Daftar Peserta</a>
+    <a href="spmb.html#cek" class="mob-child">— Cek Status</a>
 </div>
     <div class="mob-parent-row"><a href="#" onclick="toggleMobSub(this.parentElement.querySelector('.mob-arrow'));return false;" class="mob-parent">Akademik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
 <div class="mob-sub">
@@ -710,7 +710,7 @@ select.f-input{appearance:auto;}
 
   <!-- ═══════ TAB INFO ═══════ -->
   <div class="tab-content" id="tabInfo" style="display:block;padding-top:12px;">
-    <div class="sec-title">📅 Jadwal PPDB</div>
+    <div class="sec-title">📅 Jadwal SPMB</div>
     <div id="jadwalGrid" style="margin-top:8px;"></div>
 
     <div style="margin-top:28px;border-top:2px solid #eef2f7;padding-top:20px;">
@@ -1248,7 +1248,7 @@ select.f-input{appearance:auto;}
     <div style="font-weight:700;color:#e65100;margin-bottom:6px;">⚠️ Catatan Penting:</div>
     <ol style="margin:0;padding-left:16px;color:#555;line-height:1.8;">
       <li>Simpan kartu ini sebagai bukti bahwa Anda telah mendaftar SPMB SMP Negeri 05 Sarolangun TA 2026/2027.</li>
-      <li>Nomor Pendaftaran (<strong id="kNomor2"></strong>) digunakan untuk mengecek status di menu PPDB → Cek Status.</li>
+      <li>Nomor Pendaftaran (<strong id="kNomor2"></strong>) digunakan untuk mengecek status di menu SPMB → Cek Status.</li>
       <li>Pengumuman hasil seleksi akan diumumkan sesuai jadwal yang telah ditetapkan di halaman Pengumuman.</li>
       <li>Untuk informasi lebih lanjut hubungi: <strong>smpn5sarolangun@gmail.com</strong></li>
     </ol>
@@ -1324,7 +1324,7 @@ select.f-input{appearance:auto;}
       
       <div id="bannerPengumuman" style="margin-bottom:16px;"></div>
       <div class="cek-input-wrap">
-        <input type="text" id="cekInput" class="f-input" placeholder="Masukkan No. Pendaftaran (contoh: PPDB-2026-XXX-001)" onkeydown="if(event.key==='Enter')cekStatus()">
+        <input type="text" id="cekInput" class="f-input" placeholder="Masukkan No. Pendaftaran (contoh: SPMB-2026-XXX-001)" onkeydown="if(event.key==='Enter')cekStatus()">
         <button onclick="cekStatus()" style="background:var(--biru);color:#fff;border:none;border-radius:10px;padding:0 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Cek</button>
       </div>
       <div class="result-card" id="resultCard">
@@ -1356,7 +1356,7 @@ select.f-input{appearance:auto;}
     <span style="opacity:0.3;">·</span>
     <a href="pengumuman.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Pengumuman</a>
     <span style="opacity:0.3;">·</span>
-    <a href="ppdb.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">PPDB</a>
+    <a href="spmb.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">SPMB</a>
     <span style="opacity:0.3;">·</span>
     <a href="kontak.html" style="color:rgba(255,255,255,0.65);text-decoration:none;font-size:13px;">Kontak</a>
   </div>
@@ -1538,7 +1538,7 @@ function toggleWaliSection() {
   sec.classList.toggle('open', cb.checked);
 }
 
-// ── MUAT INFO PPDB ──
+// ── MUAT INFO SPMB ──
 async function muatPPDBInfo() {
   const cached = localStorage.getItem('cache_ppdb_info');
   if(cached) renderPPDBInfo(JSON.parse(cached));
@@ -1640,7 +1640,7 @@ function setFormDisabled(disabled) {
   }
 }
 
-// ── SUBMIT PPDB ──
+// ── SUBMIT SPMB ──
 async function submitPPDB() {
   if (ppdbStatus !== 'BUKA') {
     tampilError('Pendaftaran SPMB sedang ditutup.');
