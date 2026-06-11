@@ -1629,6 +1629,18 @@ function _updateDashboardUI(d) {
             <td>${fmtJam(r.jamPulang)||'—'}</td>
             <td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','')}">${r.status}</span></td>
           </tr>`).join('');
+        // ★ Simpan ke cache agar kirimUlangCache bisa baca
+        var _cacheAda = ambilCacheAbsen() || [];
+        var _normNx = function(n){ return String(n||'').replace(/\.0$/,'').replace(/^0+/,''); };
+        var _cacheNisn = new Set(_cacheAda.map(function(c){ return _normNx(c.nisn); }));
+        d.terbaru.forEach(function(r) {
+          if (!_cacheNisn.has(_normNx(r.nisn))) {
+            _cacheAda.push({tanggal: r.tanggal||getTglHariIni(), nisn: r.nisn||'', nama: r.nama||'',
+              kelas: r.kelas||'', jamMasuk: r.jamMasuk||'', jamPulang: r.jamPulang||'',
+              status: r.status||'', ket: '', _terkirim: true});
+          }
+        });
+        simpanCacheAbsen(_cacheAda);
       }
     }
   }
@@ -2292,9 +2304,13 @@ async function refreshDashboardDanTabel() {
     // Merge seperti loadTabelAbsenHariIni — jangan timpa cache lokal
     var cacheAda = ambilCacheAbsen() || [];
     var serverNisn = new Set(rAbsen.data.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
+    var serverNama = new Set(rAbsen.data.map(function(d){ return String(d.nama||'').trim().toLowerCase(); }));
     window._serverNisnSet = serverNisn;
     var quickData = cacheAda.filter(function(x){
-      return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
+      if (!x.nisn && !x.nama) return false;
+      if (x.nisn && serverNisn.has(String(x.nisn||'').replace(/^0+/,''))) return false;
+      if (!x.nisn && serverNama.has(String(x.nama||'').trim().toLowerCase())) return false;
+      return true;
     });
     var merged = rAbsen.data.concat(quickData);
     simpanCacheAbsen(merged);
@@ -2318,9 +2334,13 @@ async function loadTabelAbsenHariIni() {
     if (!r.ok || !r.data) return;
     // Merge cache dengan data server
     const serverNisn = new Set(r.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
+    const serverNama = new Set(r.data.map(function(d){return String(d.nama||'').trim().toLowerCase();}));
     window._serverNisnSet = serverNisn; // ★ simpan untuk kirimUlangCache
     const quickData = cacheAda.filter(function(x){
-      return !serverNisn.has(String(x.nisn||'').replace(/^0+/,''));
+      if (!x.nisn && !x.nama) return false; // skip entry benar-benar kosong
+      if (x.nisn && serverNisn.has(String(x.nisn||'').replace(/^0+/,''))) return false; // ada di server via nisn
+      if (!x.nisn && serverNama.has(String(x.nama||'').trim().toLowerCase())) return false; // ada via nama
+      return true; // belum ada di server → pertahankan
     });
     const merged = r.data.concat(quickData);
     simpanCacheAbsen(merged);
@@ -4079,15 +4099,47 @@ async function doLogout() {
 
 // ── KIRIM ULANG CACHE KE SERVER ──────────────────────────────────────────────
 window.kirimUlangCache = async function() {
+  // ★ Baca dari DOM tabel — lebih lengkap dari cache (bisa ada entry yang tidak tersimpan ke cache)
+  var domData = [];
+  var batas = (window._jadwalData && window._jadwalData.jamMasukBatas) ? window._jadwalData.jamMasukBatas : '07:30';
+  var tgl = getTglHariIni();
+  document.querySelectorAll('#tabelAbsenHariIni tr[data-nisn]').forEach(function(row) {
+    var nisn   = row.dataset.nisn || '';
+    var nama   = (row.querySelector('td:nth-child(2)') || {}).textContent || '';
+    var kelas  = (row.querySelector('td:nth-child(3)') || {}).textContent || '';
+    var jam    = (row.querySelector('td:nth-child(4)') || {}).textContent || '';
+    var status = (row.querySelector('.badge') || {}).textContent || '';
+    jam = jam.trim().replace('—','');
+    if (!status) status = jam ? (jam <= batas ? 'OnTime' : 'Terlambat') : '';
+    if (nama.trim() && status.trim()) {
+      domData.push({nisn: nisn.trim(), nama: nama.trim(), kelas: kelas.trim(),
+                    jamMasuk: jam, status: status.trim(), tanggal: tgl});
+    }
+  });
+
+  // Gabung dengan cache — ambil entry cache yang tidak ada di DOM (misal nisn kosong)
   var cache = ambilCacheAbsen() || [];
-  if (!cache.length) { alert('Cache kosong, tidak ada data lokal hari ini.'); return; }
+  var normN2 = function(n){ return String(n||'').replace(/\.0$/,'').replace(/^0+/,''); };
+  var domNisn = new Set(domData.map(function(d){ return normN2(d.nisn); }).filter(Boolean));
+  var domNama = new Set(domData.map(function(d){ return d.nama.toLowerCase(); }));
+  cache.forEach(function(d) {
+    var inDom = (d.nisn && domNisn.has(normN2(d.nisn))) || (d.nama && domNama.has(d.nama.toLowerCase()));
+    if (!inDom && (d.nama || d.nisn)) domData.push(d);
+  });
+
+  if (!domData.length) { alert('Tidak ada data absensi hari ini.'); return; }
+
+  // Reset flag _terkirim di cache
+  var resetFlag = false;
+  cache.forEach(function(d){ if (d._terkirim) { d._terkirim = false; resetFlag = true; } });
+  if (resetFlag) simpanCacheAbsen(cache);
 
   var modal = document.createElement('div');
   modal.id = 'modalKirimUlang';
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
   modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:480px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">' +
     '<h3 style="margin:0 0 8px;font-size:16px;color:#1a237e;">📤 Kirim Ulang Data ke Server</h3>' +
-    '<p style="margin:0 0 16px;font-size:13px;color:#666;">Cache lokal: <b>' + cache.length + ' siswa</b></p>' +
+    '<p style="margin:0 0 16px;font-size:13px;color:#666;">Data tabel: <b>' + domData.length + ' siswa</b></p>' +
     '<div id="kuProgress" style="background:#e3f2fd;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#1565c0;">⏳ Mengecek data server...</div>' +
     '<div style="background:#f5f5f5;border-radius:4px;height:8px;margin-bottom:16px;overflow:hidden;"><div id="kuBar" style="height:100%;background:#1976d2;width:0%;transition:width 0.3s;"></div></div>' +
     '<div id="kuLog" style="font-size:12px;max-height:220px;overflow-y:auto;background:#fafafa;border-radius:6px;padding:8px;border:1px solid #eee;"></div>' +
@@ -4110,30 +4162,43 @@ window.kirimUlangCache = async function() {
 
   var normN = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
 
-  // Step 1: Ambil NISN yang sudah ada di server
-  var serverNisnSet = window._serverNisnSet;
-  if (!serverNisnSet) {
-    elProgress.textContent = '⏳ Mengambil data server...';
-    try {
-      var sr = await apiGet('getAbsensiHari', {tanggal: getTglHariIni()});
-      if (sr.ok && sr.data) {
-        serverNisnSet = new Set(sr.data.map(function(d){ return normN(d.nisn); }));
-        window._serverNisnSet = serverNisnSet;
-      } else {
-        serverNisnSet = new Set();
-      }
-    } catch(e) { serverNisnSet = new Set(); }
+  // Step 1: Selalu ambil FRESH dari server — jangan pakai _serverNisnSet yang mungkin stale
+  elProgress.textContent = '⏳ Mengambil data terbaru dari server...';
+  var serverNisnSet = new Set();
+  try {
+    var sr = await apiGet('getAbsensiHari', {tanggal: getTglHariIni()});
+    if (sr.ok && sr.data) {
+      sr.data.forEach(function(d){ serverNisnSet.add(normN(d.nisn)); });
+      window._serverNisnSet = serverNisnSet; // update juga yang di memory
+    }
+  } catch(e) {
+    elProgress.textContent = '⚠️ Gagal cek server, kirim semua cache...';
   }
 
-  // Step 2: Filter hanya yang belum ada di server
-  var belumTerkirim = cache.filter(function(d){
-    return d.nisn && !serverNisnSet.has(normN(d.nisn));
+  // Step 2: Filter belum terkirim — abaikan flag _terkirim, percaya server sebagai kebenaran
+  // Cek via NISN kalau ada, kalau tidak ada cek via nama
+  var serverNamaSet = new Set();
+  try {
+    var sr2 = await apiGet('getAbsensiHari', {tanggal: getTglHariIni()});
+    if (sr2.ok && sr2.data) {
+      sr2.data.forEach(function(d){ if (d.nama) serverNamaSet.add(d.nama.trim().toLowerCase()); });
+    }
+  } catch(e) {}
+
+  var belumTerkirim = domData.filter(function(d){
+    if (!d.nama && !d.nisn) return false;
+    if (d.nisn && serverNisnSet.has(normN(d.nisn))) return false;
+    if (!d.nisn && d.nama && serverNamaSet.has(d.nama.trim().toLowerCase())) return false;
+    return true;
   });
 
   if (!belumTerkirim.length) {
     elProgress.style.background = '#e8f5e9';
     elProgress.style.color = '#1b5e20';
-    elProgress.textContent = '✅ Semua data sudah ada di server.';
+    elProgress.textContent = '✅ Semua ' + domData.length + ' data tabel sudah ada di server.';
+    domData.forEach(function(d) {
+      log('✅', (d.nama||d.nisn||'?'), (d.status||'') + ' ' + (d.jamMasuk||''), '#2e7d32');
+    });
     elFooter.style.display = 'block';
     return;
   }
