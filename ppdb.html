@@ -1494,14 +1494,26 @@ function renderPeserta() {
   }
 
   msg.style.display = 'none';
-  tbody.innerHTML = filtered.map((p, i) => `
+  tbody.innerHTML = filtered.map((p, i) => {
+    // Format tanggal d-m-yyyy
+    let tgl = '-';
+    if(p.tglDaftar) {
+      const d = new Date(p.tglDaftar);
+      if(!isNaN(d)) tgl = d.getDate()+'-'+(d.getMonth()+1)+'-'+d.getFullYear();
+      else tgl = p.tglDaftar; // fallback jika format tak dikenal
+    }
+    // Singkat JK
+    const jkStr = (p.jk||'').toLowerCase();
+    const jkSingkat = jkStr.includes('perempuan') ? 'P' : jkStr.includes('laki') ? 'L' : (p.jk||'-');
+    return `
     <tr style="border-bottom:1.5px solid #dde5f0;${i%2===1?'background:#f7faff;':''}">
       <td style="padding:10px 14px;color:#888;">${i+1}</td>
-      <td style="padding:10px 14px;color:#4a6285;">${p.tglDaftar||'-'}</td>
+      <td style="padding:10px 14px;color:#4a6285;">${tgl}</td>
       <td style="padding:10px 14px;font-weight:600;color:#1e2a3a;">${p.nama}</td>
-      <td style="padding:10px 14px;color:#4a6285;text-align:center;">${p.jk}</td>
+      <td style="padding:10px 14px;color:#4a6285;text-align:center;">${jkSingkat}</td>
       <td style="padding:10px 14px;color:#4a6285;">${p.sekolahAsal}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 // ── DROPDOWN LAINNYA ──
