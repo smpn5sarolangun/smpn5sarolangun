@@ -1424,6 +1424,13 @@ window.addEventListener('load', async () => {
   setInterval(refreshStatistikSaja, 10 * 1000);
   // Kirim ulang scan yang mungkin gagal di sesi sebelumnya
   setTimeout(prosesRetryQueue, 5000);
+  // Notif kalau ada retry queue dari sesi sebelumnya
+  setTimeout(function() {
+    var q = ambilRetryQueue();
+    if (q.length) {
+      tampilNotif('⚠️', q.length + ' data belum terkirim ke server', 'Sedang mengirim ulang otomatis...', false);
+    }
+  }, 2000);
   // Restore mode scan dari localStorage
   var savedMode = localStorage.getItem('mode_scan') || 'quick';
   setMode(savedMode);
@@ -1947,15 +1954,26 @@ async function konfirmasiAbsen() {
     if (MODE_ABSEN === 'masuk') {
       apiPost({action: 'absenManual', nisn: qNisn, nama: qNama, kelas: qKelas,
                status: qStatus, tanggal: qTgl, jamMasuk: qJam, keterangan: ''})
-        .then(function(r) { if (r && r.ok) tandaiCacheTerkirim(qNisn); })
+        .then(function(r) {
+          if (r && r.ok) {
+            tandaiCacheTerkirim(qNisn);
+          } else if (!r || !r.error || !r.error.toLowerCase().includes('sudah')) {
+            // Server error (bukan duplikat) → masuk retry queue
+            tambahRetryQueue('absenMasuk', qNisn, TOKEN, qJam, qNama, qKelas, qStatus);
+          }
+        })
         .catch(function() {
-          // Gagal network → masuk retry queue, dicoba ulang tiap 15 detik
           tambahRetryQueue('absenMasuk', qNisn, TOKEN, qJam, qNama, qKelas, qStatus);
         });
     } else {
-      // Pulang tetap pakai absenPulang (update kolom jam pulang di baris yang sudah ada)
       apiPost({action: 'absenPulang', nisn: qNisn, token: TOKEN, jamAsli: qJam})
-        .then(function(r) { if (r && r.ok) tandaiCacheTerkirim(qNisn); })
+        .then(function(r) {
+          if (r && r.ok) {
+            tandaiCacheTerkirim(qNisn);
+          } else if (!r || !r.error || !r.error.toLowerCase().includes('sudah')) {
+            tambahRetryQueue('absenPulang', qNisn, TOKEN, qJam, qNama, qKelas, 'Pulang');
+          }
+        })
         .catch(function() {
           tambahRetryQueue('absenPulang', qNisn, TOKEN, qJam, qNama, qKelas, 'Pulang');
         });
@@ -2029,6 +2047,22 @@ async function prosesRetryQueue() {
   try {
     var queue = ambilRetryQueue();
     var today = getTglHariIni();
+
+    // Item beda hari — coba kirim sekali lagi dengan tanggal asli sebelum dibuang
+    var qBedaHari = queue.filter(function(q){ return q.tgl !== today; });
+    if (qBedaHari.length) {
+      var itemsLama = qBedaHari.map(function(q) {
+        var jamMasuk = q.jam || '';
+        var status   = q.status || (jamMasuk ? 'Terlambat' : 'OnTime');
+        return {nisn: q.nisn, nama: q.nama||'', kelas: q.kelas||'',
+                status: status, jamMasuk: jamMasuk, tanggal: q.tgl};
+      }).filter(function(d){ return d.nama || d.nisn; });
+      if (itemsLama.length) {
+        apiPost({action: 'absenManualBatch', items: itemsLama, token: TOKEN}).catch(function(){});
+        console.log('[Retry] Kirim ' + itemsLama.length + ' item beda hari sebelum dibuang');
+      }
+    }
+
     queue = queue.filter(function(q){ return q.tgl === today; });
     if (!queue.length) { simpanRetryQueue([]); return; }
 
@@ -3070,7 +3104,13 @@ async function simpanMdStatus(i) {
 
   // 7. Kirim ke server di background
   apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni, jamMasuk:jamMasuk||''})
-    .then(function(r) { if (r && r.ok) tandaiCacheTerkirim(nisnFinal); })
+    .then(function(r) {
+      if (r && r.ok) {
+        tandaiCacheTerkirim(nisnFinal);
+      } else if (!r || !r.error || !r.error.toLowerCase().includes('sudah')) {
+        if (st === 'OnTime' || st === 'Terlambat') tambahRetryQueue('absenMasuk', nisnFinal, TOKEN, jamMasuk, nama, kelas, st);
+      }
+    })
     .catch(function() {
       if (st === 'OnTime' || st === 'Terlambat') tambahRetryQueue('absenMasuk', nisnFinal, TOKEN, jamMasuk, nama, kelas, st);
     });
