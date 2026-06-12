@@ -714,7 +714,7 @@ select.f-input{appearance:auto;}
     <div id="jadwalGrid" style="margin-top:8px;"></div>
 
     <div style="margin-top:28px;border-top:2px solid #eef2f7;padding-top:20px;">
-      <div class="sec-title">📋 Persyaratan Daftar Ulang</div>
+      <div class="sec-title">📋 Persyaratan Pendaftaran</div>
       <ul class="syarat-list" id="syaratList" style="margin-top:8px;padding-left:8px;">
         <li>Memuat data...</li>
       </ul>
@@ -1507,11 +1507,11 @@ function renderPeserta() {
     const jkSingkat = jkStr.includes('perempuan') ? 'P' : jkStr.includes('laki') ? 'L' : (p.jk||'-');
     return `
     <tr style="border-bottom:1.5px solid #dde5f0;${i%2===1?'background:#f7faff;':''}">
-      <td style="padding:10px 14px;color:#888;">${i+1}</td>
-      <td style="padding:10px 14px;color:#4a6285;">${tgl}</td>
-      <td style="padding:10px 14px;font-weight:600;color:#1e2a3a;">${p.nama}</td>
-      <td style="padding:10px 14px;color:#4a6285;text-align:center;">${jkSingkat}</td>
-      <td style="padding:10px 14px;color:#4a6285;">${p.sekolahAsal}</td>
+      <td style="padding:10px 14px;color:#888;white-space:nowrap;">${i+1}</td>
+      <td style="padding:10px 14px;color:#4a6285;white-space:nowrap;">${tgl}</td>
+      <td style="padding:10px 14px;font-weight:600;color:#1e2a3a;white-space:nowrap;">${p.nama}</td>
+      <td style="padding:10px 14px;color:#4a6285;text-align:center;white-space:nowrap;">${jkSingkat}</td>
+      <td style="padding:10px 14px;color:#4a6285;white-space:nowrap;">${p.sekolahAsal}</td>
     </tr>`;
   }).join('');
 }
