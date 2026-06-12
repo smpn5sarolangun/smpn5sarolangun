@@ -1301,14 +1301,14 @@ select.f-input{appearance:auto;}
         <option value="">Semua</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
       </select>
     </div>
-    <div style="overflow-x:auto;border-radius:10px;border:1.5px solid #dde5f0;max-width:100%;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;"><colgroup><col style="width:6%"><col style="width:17%"><col style="width:27%"><col style="width:10%"><col style="width:40%"></colgroup>
+    <div style="overflow-x:auto;border-radius:10px;border:1.5px solid #dde5f0;max-width:100%;-webkit-overflow-scrolling:touch;">
+      <table style="min-width:520px;width:100%;border-collapse:collapse;font-size:13px;table-layout:auto;">
         <thead><tr style="background:#0d3b6e;color:#fff;">
-          <th style="padding:11px 14px;text-align:left;font-weight:600;">No</th>
-          <th style="padding:11px 14px;text-align:left;font-weight:600;">Tgl Daftar</th>
-          <th style="padding:11px 14px;text-align:left;font-weight:600;">Nama</th>
-          <th style="padding:11px 14px;text-align:center;font-weight:600;">JK</th>
-          <th style="padding:11px 14px;text-align:left;font-weight:600;">Sekolah Asal</th>
+          <th style="padding:11px 14px;text-align:left;font-weight:600;white-space:nowrap;">No</th>
+          <th style="padding:11px 14px;text-align:left;font-weight:600;white-space:nowrap;">Tanggal Daftar</th>
+          <th style="padding:11px 14px;text-align:left;font-weight:600;white-space:nowrap;">Nama</th>
+          <th style="padding:11px 14px;text-align:center;font-weight:600;white-space:nowrap;">JK</th>
+          <th style="padding:11px 14px;text-align:left;font-weight:600;white-space:nowrap;">Sekolah Asal</th>
         </tr></thead>
         <tbody id="tbodyPeserta"></tbody>
       </table>
@@ -1981,6 +1981,24 @@ if(history.scrollRestoration) history.scrollRestoration='manual';
 window.scrollTo(0,0);
 muatPPDBInfo();
 
+// ── MUAT PROFIL (untuk link e-Rapor & CBT) ──
+async function muatProfil() {
+  const cached = localStorage.getItem('cache_profil_beranda');
+  if (cached) renderProfilLinks(JSON.parse(cached));
+  try {
+    const r = await fetch(`${PPDB_SCRIPT}?action=getProfil`);
+    const d = await r.json();
+    if (!d.ok || !d.data) return;
+    localStorage.setItem('cache_profil_beranda', JSON.stringify(d));
+    renderProfilLinks(d);
+  } catch(e) {}
+}
+function renderProfilLinks(d) {
+  const p = d.data;
+  updateLinkERapor(p.url_erapor || '');
+  updateLinkCBT(p.url_cbt_admin || '', p.url_cbt_guru || '', p.url_cbt_siswa || '');
+}
+muatProfil();
 
 // ── VALIDASI PANJANG LANGSUNG DI FIELD ──
 function cekPanjang(el, panjang, label){
