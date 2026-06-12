@@ -1291,9 +1291,9 @@ select.f-input{appearance:auto;}
     <div class="sec-title" style="margin-top:0;">👥 Daftar Peserta Sementara</div>
     <p style="font-size:13px;color:var(--teks-sub);margin:4px 0 16px;">Data bersifat sementara dan akan diperbarui secara berkala.</p>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
-      <div style="background:#f0f4f8;border-radius:10px;padding:10px 14px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#0d3b6e;" id="statTotal">-</div><div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Total Pendaftar</div></div>
-      <div style="background:#f0f4f8;border-radius:10px;padding:10px 14px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#0d3b6e;" id="statLaki">-</div><div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Laki-laki</div></div>
-      <div style="background:#f0f4f8;border-radius:10px;padding:10px 14px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#0d3b6e;" id="statPerempuan">-</div><div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Perempuan</div></div>
+      <div style="background:#f0f4f8;border-radius:10px;padding:10px 14px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#0d3b6e;" id="statTotal">-</div><div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Total Pendaftar</div></div>
+      <div style="background:#f0f4f8;border-radius:10px;padding:10px 14px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#0d3b6e;" id="statLaki">-</div><div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Laki-laki</div></div>
+      <div style="background:#f0f4f8;border-radius:10px;padding:10px 14px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#0d3b6e;" id="statPerempuan">-</div><div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Perempuan</div></div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
       <input type="text" id="cariPeserta" placeholder="🔍 Cari nama..." oninput="filterPeserta()" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid #c8d8ee;border-radius:8px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;">
@@ -1302,7 +1302,7 @@ select.f-input{appearance:auto;}
       </select>
     </div>
     <div style="overflow-x:auto;border-radius:10px;border:1.5px solid #dde5f0;max-width:100%;-webkit-overflow-scrolling:touch;">
-      <table style="min-width:520px;width:100%;border-collapse:collapse;font-size:13px;table-layout:auto;">
+      <table style="width:auto;min-width:100%;border-collapse:collapse;font-size:13px;table-layout:auto;">
         <thead><tr style="background:#0d3b6e;color:#fff;">
           <th style="padding:11px 14px;text-align:left;font-weight:600;white-space:nowrap;">No</th>
           <th style="padding:11px 14px;text-align:left;font-weight:600;white-space:nowrap;">Tanggal Daftar</th>
@@ -1495,11 +1495,11 @@ function renderPeserta() {
 
   msg.style.display = 'none';
   tbody.innerHTML = filtered.map((p, i) => {
-    // Format tanggal d-m-yyyy
+    // Format tanggal d Bulan yyyy
     let tgl = '-';
     if(p.tglDaftar) {
       const d = new Date(p.tglDaftar);
-      if(!isNaN(d)) tgl = d.getDate()+'-'+(d.getMonth()+1)+'-'+d.getFullYear();
+      if(!isNaN(d)) tgl = d.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
       else tgl = p.tglDaftar; // fallback jika format tak dikenal
     }
     // Singkat JK
@@ -1623,10 +1623,6 @@ function renderPPDBInfo(d) {
   // Kuota
   const kuotaEl = document.getElementById('kuotaNum');
   if(kuotaEl && p.kuota) kuotaEl.textContent = p.kuota;
-
-  // Link e-Rapor & CBT dari sheet
-  updateLinkERapor(p.url_erapor || '');
-  updateLinkCBT(p.url_cbt_admin || '', p.url_cbt_guru || '', p.url_cbt_siswa || '');
 }
 
 
