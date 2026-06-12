@@ -139,11 +139,12 @@
       <a href="berita.html" class="nav-link ">Berita</a>
       <a href="pengumuman.html" class="nav-link ">Pengumuman</a>
       <div class="nav-dropdown dd-right">
-        <a href="ppdb.html" class="nav-link ">PPDB <span class="dd-arrow">▾</span></a>
+        <a href="spmb.html" class="nav-link ">SPMB <span class="dd-arrow">▾</span></a>
         <div class="dropdown-menu">
-          <a href="ppdb.html#info">Informasi &amp; Syarat</a>
-<a href="ppdb.html#registrasi">Registrasi Online</a>
-<a href="ppdb.html#cek">Cek Status</a>
+          <a href="spmb.html#info">Informasi &amp; Syarat</a>
+<a href="spmb.html#registrasi">Registrasi Online</a>
+<a href="spmb.html#peserta">Daftar Peserta</a>
+<a href="spmb.html#cek">Cek Status</a>
         </div>
       </div>
       <div class="nav-dropdown dd-right">
@@ -183,10 +184,11 @@
     <a href="galeri.html">Galeri</a>
     <a href="berita.html">Berita</a>
     <a href="pengumuman.html">Pengumuman</a>
-    <a href="ppdb.html" class="mob-parent">▸ PPDB</a>
-    <a href="ppdb.html#info" class="mob-child">— Informasi &amp; Syarat</a>
-    <a href="ppdb.html#registrasi" class="mob-child">— Registrasi Online</a>
-    <a href="ppdb.html#cek" class="mob-child">— Cek Status</a>
+    <a href="spmb.html" class="mob-parent">▸ SPMB</a>
+    <a href="spmb.html#info" class="mob-child">— Informasi &amp; Syarat</a>
+    <a href="spmb.html#registrasi" class="mob-child">— Registrasi Online</a>
+    <a href="spmb.html#peserta" class="mob-child">— Daftar Peserta</a>
+    <a href="spmb.html#cek" class="mob-child">— Cek Status</a>
     <div class="mob-parent-row"><a href="#" onclick="toggleMobSub(this.parentElement.querySelector('.mob-arrow'));return false;" class="mob-parent">Akademik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
 <div class="mob-sub">
     <a href="akademik/login.html" class="mob-child">— Absensi Siswa</a>
@@ -369,7 +371,17 @@ document.addEventListener('click', function(e){
     });
   }
 });
-function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}</script>
+function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open');}
+
+// ── MUAT PROFIL (link e-Rapor & CBT) ──
+(function(){
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
+  var cached = localStorage.getItem('cache_profil_beranda');
+  if(cached){ try{ var d=JSON.parse(cached); if(d.ok&&d.data){ updateLinkERapor(d.data.url_erapor); updateLinkCBT(d.data.url_cbt_admin,d.data.url_cbt_guru,d.data.url_cbt_siswa); } }catch(e){} }
+  fetch(GAS_URL+'?action=getProfil').then(function(r){return r.json();}).then(function(d){
+    if(d.ok&&d.data){ updateLinkERapor(d.data.url_erapor); updateLinkCBT(d.data.url_cbt_admin,d.data.url_cbt_guru,d.data.url_cbt_siswa); localStorage.setItem('cache_profil_beranda',JSON.stringify(d)); }
+  }).catch(function(){});
+})();</script>
 
 </body>
 </html>
