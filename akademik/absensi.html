@@ -2421,23 +2421,26 @@ async function refreshStatistikSaja() {
   } catch(e) {}
 }
 
-// ★ Hitung semua statistik dari cache lokal — dipanggil setiap kali ada scan baru
+// ★ Hitung semua statistik dari DOM tabel — realtime, tidak tunggu cache/server
 function hitungStatistikLokal() {
-  var cache = ambilCacheAbsen() || [];
   var onTime = 0, terlambat = 0, izin = 0, sakit = 0, alpa = 0, belumPulang = 0;
 
-  cache.forEach(function(d) {
-    var st = (d.status || '').toLowerCase();
-    if (st === 'ontime')      onTime++;
+  document.querySelectorAll('#tabelAbsenHariIni tr[data-nisn]').forEach(function(row) {
+    var badge = row.querySelector('.badge');
+    var st = badge ? (badge.textContent || '').trim().toLowerCase() : '';
+    if (st === 'ontime')         onTime++;
     else if (st === 'terlambat') terlambat++;
-    else if (st === 'izin')   izin++;
-    else if (st === 'sakit')  sakit++;
-    else if (st === 'alpa')   alpa++;
+    else if (st === 'izin')      izin++;
+    else if (st === 'sakit')     sakit++;
+    else if (st === 'alpa')      alpa++;
 
-    // Belum pulang: sudah masuk tapi jam pulang kosong
-    var jamMasuk  = d.jamMasuk  || d.jam || '';
-    var jamPulang = d.jamPulang || '';
-    if (jamMasuk && !jamPulang && st !== 'izin' && st !== 'sakit' && st !== 'alpa') belumPulang++;
+    // Belum pulang: jam pulang kolom ke-5 masih —
+    var jamPulang = (row.querySelector('td:nth-child(5)') || {}).textContent || '';
+    var jamMasuk  = (row.querySelector('td:nth-child(4)') || {}).textContent || '';
+    jamPulang = jamPulang.trim();
+    jamMasuk  = jamMasuk.trim();
+    if (jamMasuk && jamMasuk !== '—' && (!jamPulang || jamPulang === '—')
+        && st !== 'izin' && st !== 'sakit' && st !== 'alpa') belumPulang++;
   });
 
   var upd = function(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; };
@@ -2447,7 +2450,7 @@ function hitungStatistikLokal() {
   upd('stSakit',       sakit);
   upd('stAlpa',        alpa);
   upd('stBelumPulang', belumPulang);
-  hitungBelumMasuk(); // Belum masuk = totalSiswa - jumlah di cache
+  hitungBelumMasuk();
 }
 
 function tambahKeTabeAbsenHariIni(siswa, result) {
