@@ -1510,7 +1510,7 @@ async function apiGet(action, params={}) {
 async function apiPost(body) {
   // Gunakan text/plain untuk hindari CORS preflight
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20000); // ★ timeout 20 detik
+  const timer = setTimeout(() => controller.abort(), 35000); // timeout 35 detik (handle GAS cold start)
   try {
     const res = await fetch(SCRIPT_URL, {
       method:'POST',
@@ -1634,21 +1634,25 @@ function _updateDashboardUI(d) {
             <td>${r.kelas}</td>
             <td>${fmtJam(r.jamMasuk)||'—'}</td>
             <td>${fmtJam(r.jamPulang)||'—'}</td>
-            <td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','')}">${r.status}</span></td>
+            <td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','')}>${r.status}</span></td>
           </tr>`).join('');
-        // ★ Simpan ke cache agar kirimUlangCache bisa baca
-        var _cacheAda = ambilCacheAbsen() || [];
-        var _normNx = function(n){ return String(n||'').replace(/\.0$/,'').replace(/^0+/,''); };
-        var _cacheNisn = new Set(_cacheAda.map(function(c){ return _normNx(c.nisn); }));
-        d.terbaru.forEach(function(r) {
-          if (!_cacheNisn.has(_normNx(r.nisn))) {
-            _cacheAda.push({tanggal: r.tanggal||getTglHariIni(), nisn: r.nisn||'', nama: r.nama||'',
-              kelas: r.kelas||'', jamMasuk: r.jamMasuk||'', jamPulang: r.jamPulang||'',
-              status: r.status||'', ket: '', _terkirim: true});
-          }
-        });
-        simpanCacheAbsen(_cacheAda);
       }
+    }
+    // ★ Selalu sync d.terbaru ke cache — terlepas tabel sudah ada isi atau tidak
+    if (d.terbaru && d.terbaru.length) {
+      var _cacheAda = ambilCacheAbsen() || [];
+      var _normNx = function(n){ return String(n||'').replace(/\.0$/,'').replace(/^0+/,''); };
+      var _cacheNisn = new Set(_cacheAda.map(function(c){ return _normNx(c.nisn); }));
+      var changed = false;
+      d.terbaru.forEach(function(r) {
+        if (r.nisn && !_cacheNisn.has(_normNx(r.nisn))) {
+          _cacheAda.push({tanggal: r.tanggal||getTglHariIni(), nisn: r.nisn||'', nama: r.nama||'',
+            kelas: r.kelas||'', jamMasuk: r.jamMasuk||'', jamPulang: r.jamPulang||'',
+            status: r.status||'', ket: '', _terkirim: true});
+          changed = true;
+        }
+      });
+      if (changed) simpanCacheAbsen(_cacheAda);
     }
   }
 }
@@ -1957,8 +1961,9 @@ async function konfirmasiAbsen() {
         .then(function(r) {
           if (r && r.ok) {
             tandaiCacheTerkirim(qNisn);
-          } else if (!r || !r.error || !r.error.toLowerCase().includes('sudah')) {
-            // Server error (bukan duplikat) → masuk retry queue
+          } else {
+            // Apapun errornya (termasuk false positive "sudah") → masuk retry
+            // Server akan cek ulang dan tolak kalau memang sudah ada
             tambahRetryQueue('absenMasuk', qNisn, TOKEN, qJam, qNama, qKelas, qStatus);
           }
         })
@@ -1970,7 +1975,7 @@ async function konfirmasiAbsen() {
         .then(function(r) {
           if (r && r.ok) {
             tandaiCacheTerkirim(qNisn);
-          } else if (!r || !r.error || !r.error.toLowerCase().includes('sudah')) {
+          } else {
             tambahRetryQueue('absenPulang', qNisn, TOKEN, qJam, qNama, qKelas, 'Pulang');
           }
         })
@@ -2447,6 +2452,51 @@ async function refreshStatistikSaja() {
       const merged = serverData.concat(quickUpdated);
       simpanCacheAbsen(merged);
       renderTabelAbsenHariIni(merged);
+
+      // ★ AUTO-KIRIM: cek DOM tabel vs server — kalau ada di tabel tapi tidak di server, kirim otomatis
+      // Ini menangani kasus data masuk tabel tapi gagal terkirim ke server
+      var _normN = function(n){ return String(n||'').replace(/\.0$/,'').replace(/^0+/,''); };
+      var domRows = document.querySelectorAll('#tabelAbsenHariIni tr[data-nisn]');
+      var itemsKirim = [];
+      domRows.forEach(function(row) {
+        var nisn = row.dataset.nisn || '';
+        if (!nisn) return;
+        if (serverNisnSet.has(_normN(nisn))) return; // sudah ada di server
+        if (retryNisnSet.has(_normN(nisn))) return;  // sudah ada di retry queue
+        // Ada di tabel tapi tidak di server dan tidak di retry queue — kirim otomatis
+        var jam    = (row.querySelector('td:nth-child(4)') || {}).textContent || '';
+        var status = (row.querySelector('.badge') || {}).textContent || '';
+        var nama   = (row.querySelector('td:nth-child(2)') || {}).textContent || '';
+        var kelas  = (row.querySelector('td:nth-child(3)') || {}).textContent || '';
+        jam    = jam.trim().replace('—','');
+        status = status.trim();
+        nama   = nama.trim();
+        kelas  = kelas.trim();
+        // Hanya kirim kalau belum lama (max 2 jam) untuk hindari kirim data lama
+        var cacheEntry = cacheAda.find(function(c){ return _normN(c.nisn) === _normN(nisn); });
+        var umurEntry  = cacheEntry ? Date.now() - (cacheEntry._ts || 0) : 0;
+        if (cacheEntry && cacheEntry._terkirim) return; // sudah pernah terkirim, skip
+        if (nama && status) {
+          itemsKirim.push({nisn: nisn, nama: nama, kelas: kelas,
+                          status: status, jamMasuk: jam, tanggal: getTglHariIni()});
+        }
+      });
+      if (itemsKirim.length) {
+        console.log('[AutoKirim] Deteksi ' + itemsKirim.length + ' data belum di server, kirim otomatis...');
+        apiPost({action: 'absenManualBatch', items: itemsKirim, token: TOKEN})
+          .then(function(r) {
+            if (r && r.ok && r.hasil) {
+              r.hasil.forEach(function(h) { if (h.ok) tandaiCacheTerkirim(h.nisn); });
+              console.log('[AutoKirim] Berhasil: ' + r.berhasil + ', skip: ' + r.skip);
+            }
+          })
+          .catch(function() {
+            // Gagal network → masuk retry queue
+            itemsKirim.forEach(function(d) {
+              tambahRetryQueue('absenMasuk', d.nisn, TOKEN, d.jamMasuk, d.nama, d.kelas, d.status);
+            });
+          });
+      }
     }
 
     // ★ Hitung statistik dari cache lokal — realtime, tidak tunggu server
@@ -3107,7 +3157,7 @@ async function simpanMdStatus(i) {
     .then(function(r) {
       if (r && r.ok) {
         tandaiCacheTerkirim(nisnFinal);
-      } else if (!r || !r.error || !r.error.toLowerCase().includes('sudah')) {
+      } else {
         if (st === 'OnTime' || st === 'Terlambat') tambahRetryQueue('absenMasuk', nisnFinal, TOKEN, jamMasuk, nama, kelas, st);
       }
     })
@@ -4208,26 +4258,25 @@ window.kirimUlangCache = async function() {
   // Step 1: Selalu ambil FRESH dari server — jangan pakai _serverNisnSet yang mungkin stale
   elProgress.textContent = '⏳ Mengambil data terbaru dari server...';
   var serverNisnSet = new Set();
+  var serverNamaSet = new Set();
+  var serverCount = 0;
   try {
     var sr = await apiGet('getAbsensiHari', {tanggal: getTglHariIni()});
     if (sr.ok && sr.data) {
-      sr.data.forEach(function(d){ serverNisnSet.add(normN(d.nisn)); });
-      window._serverNisnSet = serverNisnSet; // update juga yang di memory
+      serverCount = sr.data.length;
+      sr.data.forEach(function(d){
+        serverNisnSet.add(normN(d.nisn));
+        if (d.nama) serverNamaSet.add(d.nama.trim().toLowerCase());
+      });
+      window._serverNisnSet = serverNisnSet;
+    } else {
+      elProgress.textContent = '⚠️ Gagal cek server, kirim semua dari tabel...';
     }
   } catch(e) {
-    elProgress.textContent = '⚠️ Gagal cek server, kirim semua cache...';
+    elProgress.textContent = '⚠️ Gagal cek server, kirim semua dari tabel...';
   }
 
-  // Step 2: Filter belum terkirim — abaikan flag _terkirim, percaya server sebagai kebenaran
-  // Cek via NISN kalau ada, kalau tidak ada cek via nama
-  var serverNamaSet = new Set();
-  try {
-    var sr2 = await apiGet('getAbsensiHari', {tanggal: getTglHariIni()});
-    if (sr2.ok && sr2.data) {
-      sr2.data.forEach(function(d){ if (d.nama) serverNamaSet.add(d.nama.trim().toLowerCase()); });
-    }
-  } catch(e) {}
-
+  // Step 2: Filter belum terkirim
   var belumTerkirim = domData.filter(function(d){
     if (!d.nama && !d.nisn) return false;
     if (d.nisn && serverNisnSet.has(normN(d.nisn))) return false;
@@ -4238,13 +4287,18 @@ window.kirimUlangCache = async function() {
   if (!belumTerkirim.length) {
     elProgress.style.background = '#e8f5e9';
     elProgress.style.color = '#1b5e20';
-    elProgress.textContent = '✅ Semua ' + domData.length + ' data tabel sudah ada di server.';
+    elProgress.textContent = '✅ Tabel ' + domData.length + ' siswa = Server ' + serverCount + ' siswa. Semua sudah sinkron.';
+    elBar.style.width = '100%';
+    elBar.style.background = '#4caf50';
     domData.forEach(function(d) {
       log('✅', (d.nama||d.nisn||'?'), (d.status||'') + ' ' + (d.jamMasuk||''), '#2e7d32');
     });
     elFooter.style.display = 'block';
     return;
   }
+
+  // Ada yang belum terkirim — tampilkan info selisih
+  elProgress.textContent = '⚠️ Tabel ' + domData.length + ' siswa, Server ' + serverCount + ' siswa. Selisih ' + belumTerkirim.length + ' — mengirim...';
 
   // Step 3: Siapkan array batch dengan data lengkap
   var tgl    = getTglHariIni();
