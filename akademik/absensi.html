@@ -1634,7 +1634,7 @@ function _updateDashboardUI(d) {
             <td>${r.kelas}</td>
             <td>${fmtJam(r.jamMasuk)||'—'}</td>
             <td>${fmtJam(r.jamPulang)||'—'}</td>
-            <td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','')}>${r.status}</span></td>
+            <td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','')}">${r.status}</span></td>
           </tr>`).join('');
       }
     }
