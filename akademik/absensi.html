@@ -2452,51 +2452,6 @@ async function refreshStatistikSaja() {
       const merged = serverData.concat(quickUpdated);
       simpanCacheAbsen(merged);
       renderTabelAbsenHariIni(merged);
-
-      // ★ AUTO-KIRIM: cek DOM tabel vs server — kalau ada di tabel tapi tidak di server, kirim otomatis
-      // Ini menangani kasus data masuk tabel tapi gagal terkirim ke server
-      var _normN = function(n){ return String(n||'').replace(/\.0$/,'').replace(/^0+/,''); };
-      var domRows = document.querySelectorAll('#tabelAbsenHariIni tr[data-nisn]');
-      var itemsKirim = [];
-      domRows.forEach(function(row) {
-        var nisn = row.dataset.nisn || '';
-        if (!nisn) return;
-        if (serverNisnSet.has(_normN(nisn))) return; // sudah ada di server
-        if (retryNisnSet.has(_normN(nisn))) return;  // sudah ada di retry queue
-        // Ada di tabel tapi tidak di server dan tidak di retry queue — kirim otomatis
-        var jam    = (row.querySelector('td:nth-child(4)') || {}).textContent || '';
-        var status = (row.querySelector('.badge') || {}).textContent || '';
-        var nama   = (row.querySelector('td:nth-child(2)') || {}).textContent || '';
-        var kelas  = (row.querySelector('td:nth-child(3)') || {}).textContent || '';
-        jam    = jam.trim().replace('—','');
-        status = status.trim();
-        nama   = nama.trim();
-        kelas  = kelas.trim();
-        // Hanya kirim kalau belum lama (max 2 jam) untuk hindari kirim data lama
-        var cacheEntry = cacheAda.find(function(c){ return _normN(c.nisn) === _normN(nisn); });
-        var umurEntry  = cacheEntry ? Date.now() - (cacheEntry._ts || 0) : 0;
-        if (cacheEntry && cacheEntry._terkirim) return; // sudah pernah terkirim, skip
-        if (nama && status) {
-          itemsKirim.push({nisn: nisn, nama: nama, kelas: kelas,
-                          status: status, jamMasuk: jam, tanggal: getTglHariIni()});
-        }
-      });
-      if (itemsKirim.length) {
-        console.log('[AutoKirim] Deteksi ' + itemsKirim.length + ' data belum di server, kirim otomatis...');
-        apiPost({action: 'absenManualBatch', items: itemsKirim, token: TOKEN})
-          .then(function(r) {
-            if (r && r.ok && r.hasil) {
-              r.hasil.forEach(function(h) { if (h.ok) tandaiCacheTerkirim(h.nisn); });
-              console.log('[AutoKirim] Berhasil: ' + r.berhasil + ', skip: ' + r.skip);
-            }
-          })
-          .catch(function() {
-            // Gagal network → masuk retry queue
-            itemsKirim.forEach(function(d) {
-              tambahRetryQueue('absenMasuk', d.nisn, TOKEN, d.jamMasuk, d.nama, d.kelas, d.status);
-            });
-          });
-      }
     }
 
     // ★ Hitung statistik dari cache lokal — realtime, tidak tunggu server
