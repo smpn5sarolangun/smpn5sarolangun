@@ -235,6 +235,7 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
 
 @media(max-width:768px){
   html,body{overflow-x:hidden;}
+  .hero-slider{width:100% !important; margin-left:0 !important;}
   .hero-title{word-break:break-word;}
   .vm-card{word-break:break-word;}
   .hero-inner{padding:0 16px !important;}
@@ -789,7 +790,10 @@ function renderSlider(d){
     dots.appendChild(dot);
   });
   sliderTotal=d.data.length;sliderIdx=0;
+  track.style.transition='none';
   track.style.transform='translateX(0%)';
+  void track.offsetHeight; // force reflow
+  track.style.transition='';
   const el=document.getElementById('heroSlider');
   if(!el._swipe){
     el._swipe=true;let x0=null;
