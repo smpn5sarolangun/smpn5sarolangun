@@ -743,7 +743,11 @@ select.f-input{appearance:auto;}
         <div><div class="fg"><label class="f-label">NIK Siswa <span class="req">*</span></label><input type="text" id="fNIK" class="f-input" placeholder="16 digit angka" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,16,'NIK Siswa')" required><span id="hint_fNIK" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
         <div><div class="fg"><label class="f-label">Nomor Kartu Keluarga <span class="req">*</span></label><input type="text" id="fNoKK" class="f-input" placeholder="16 digit angka" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,16,'Nomor KK')" required><span id="hint_fNoKK" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
         <div><div class="fg"><label class="f-label">Tempat Lahir <span class="req">*</span></label><input type="text" id="fTmptLahir" class="f-input" placeholder="Kota/Kabupaten" required></div></div>
-        <div><div class="fg"><label class="f-label">Tanggal Lahir <span class="req">*</span></label><input type="text" id="fTglLahir" class="f-input" placeholder="contoh: 1 Januari 2013" required></div></div>
+        <div><div class="fg"><label class="f-label">Tanggal Lahir <span class="req">*</span></label>
+<input type="date" id="fTglLahirPicker" class="f-input" max="2015-12-31" min="2005-01-01"
+  oninput="(function(v){const BULAN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];if(v){const p=v.split('-');document.getElementById('fTglLahir').value=parseInt(p[2])+' '+BULAN[parseInt(p[1])-1]+' '+p[0];}else{document.getElementById('fTglLahir').value='';}})(this.value);resetFieldError(document.getElementById('fTglLahir'))" required>
+<input type="hidden" id="fTglLahir">
+<span id="hint_fTglLahir" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
         <div><div class="fg"><label class="f-label">Agama <span class="req">*</span></label><select id="fAgama" class="f-input" required onchange="cekLain('fAgama')">
 <option value="">-- Pilih Agama --</option>
 <option value="Islam">Islam</option>
@@ -1000,7 +1004,7 @@ select.f-input{appearance:auto;}
     </div></div>
         <div><div class="fg">
       <label class="f-label">NIK Ayah <span class="req">*</span></label>
-      <input type="text" id="fNIKAyah" class="f-input" placeholder="NIK ayah" required>
+      <input type="text" id="fNIKAyah" class="f-input" placeholder="16 digit angka" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,16,'NIK Ayah')" required><span id="hint_fNIKAyah" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span>
     </div></div>
         <div><div class="fg">
       <label class="f-label">Tanggal Lahir Ayah <span class="req">*</span></label>
@@ -1067,7 +1071,7 @@ select.f-input{appearance:auto;}
     </div></div>
         <div><div class="fg">
       <label class="f-label">NIK Ibu <span class="req">*</span></label>
-      <input type="text" id="fNIKIbu" class="f-input" placeholder="NIK ibu" required>
+      <input type="text" id="fNIKIbu" class="f-input" placeholder="16 digit angka" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,16,'NIK Ibu')" required><span id="hint_fNIKIbu" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span>
     </div></div>
         <div><div class="fg">
       <label class="f-label">Tanggal Lahir Ibu <span class="req">*</span></label>
@@ -1698,7 +1702,7 @@ async function submitPPDB() {
   // Map key data ke id elemen
   const fieldMap = {
     nama:'fNama', jk:'fJK', nisn:'fNISN', nik:'fNIK', nokk:'fNoKK',
-    tmptLahir:'fTmptLahir', tglLahir:'fTglLahir', agama:'fAgama',
+    tmptLahir:'fTmptLahir', tglLahir:'fTglLahirPicker', agama:'fAgama',
     alamatRT:'fRT', alamatDusun:'fDusun', alamatDesa:'fDesa', kecamatan:'fKecamatan',
     tinggal:'fTinggal', transportasi:'fTransportasi', anakKe:'fAnakKe',
     jmlSaudara:'fJmlSaudara', hobi:'fHobi', citaCita:'fCitaCita',
@@ -1734,8 +1738,10 @@ async function submitPPDB() {
 
   // Validasi panjang digit
   if(!validasiDigit('fNISN', 10, 'NISN')) return;
-  if(!validasiDigit('fNIK',  16, 'NIK Siswa')) return;
-  if(!validasiDigit('fNoKK', 16, 'Nomor KK')) return;
+  if(!validasiDigit('fNIK',     16, 'NIK Siswa')) return;
+  if(!validasiDigit('fNoKK',   16, 'Nomor KK')) return;
+  if(!validasiDigit('fNIKAyah',16, 'NIK Ayah')) return;
+  if(!validasiDigit('fNIKIbu', 16, 'NIK Ibu')) return;
 
   // Cek duplikat dari cache browser
   const nisnInput = data.nisn;
