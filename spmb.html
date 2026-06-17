@@ -714,7 +714,7 @@ select.f-input{appearance:auto;}
     <div id="jadwalGrid" style="margin-top:8px;"></div>
 
     <div style="margin-top:28px;border-top:2px solid #eef2f7;padding-top:20px;">
-      <div class="sec-title">📋 Persyaratan Daftar Ulang</div>
+      <div class="sec-title">📋 Persyaratan Pendaftaran</div>
       <ul class="syarat-list" id="syaratList" style="margin-top:8px;padding-left:8px;">
         <li>Memuat data...</li>
       </ul>
@@ -1496,11 +1496,20 @@ function renderPeserta() {
   msg.style.display = 'none';
   tbody.innerHTML = filtered.map((p, i) => {
     // Format tanggal d Bulan yyyy
+    // Data dari sheet: "17/06/2026 09:13:52" (DD/MM/YYYY HH:MM:SS)
     let tgl = '-';
     if(p.tglDaftar) {
-      const d = new Date(p.tglDaftar);
-      if(!isNaN(d)) tgl = d.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
-      else tgl = p.tglDaftar; // fallback jika format tak dikenal
+      let d = null;
+      const raw = String(p.tglDaftar).trim();
+      // Coba parse format DD/MM/YYYY atau DD/MM/YYYY HH:MM:SS
+      const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if(m) {
+        d = new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+      } else {
+        d = new Date(raw);
+      }
+      if(d && !isNaN(d)) tgl = d.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+      else tgl = raw;
     }
     // Singkat JK
     const jkStr = (p.jk||'').toLowerCase();
