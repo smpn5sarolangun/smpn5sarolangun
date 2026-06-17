@@ -568,15 +568,17 @@ select.f-input{appearance:auto;}
   #tabPeserta{padding-top:0 !important;}
   #tabCek{padding-top:0 !important;}
 
-  /* Tabel peserta */
+  /* Tabel peserta — scrollable horizontal, font lebih kecil */
   #tabPeserta table{font-size:11px;}
   #tabPeserta th,#tabPeserta td{padding:7px 6px;}
-  #tabPeserta colgroup col:nth-child(1){width:6%}
-  #tabPeserta colgroup col:nth-child(2){width:17%}
-  #tabPeserta colgroup col:nth-child(3){width:27%}
-  #tabPeserta colgroup col:nth-child(4){width:10%}
-  #tabPeserta colgroup col:nth-child(5){width:40%}
   #tabPeserta th:nth-child(4),#tabPeserta td:nth-child(4){text-align:center;}
+
+  /* Statistik peserta lebih compact */
+  #tabPeserta [id^="stat"]{font-size:12px !important;}
+
+  /* Hero lebih compact */
+  .page-hero h1{font-size:22px;}
+  .page-hero p{font-size:13px;}
 }
 </style>
 </head>
@@ -1495,22 +1497,8 @@ function renderPeserta() {
 
   msg.style.display = 'none';
   tbody.innerHTML = filtered.map((p, i) => {
-    // Format tanggal d Bulan yyyy
-    // Data dari sheet: "17/06/2026 09:13:52" (DD/MM/YYYY HH:MM:SS)
-    let tgl = '-';
-    if(p.tglDaftar) {
-      let d = null;
-      const raw = String(p.tglDaftar).trim();
-      // Coba parse format DD/MM/YYYY atau DD/MM/YYYY HH:MM:SS
-      const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-      if(m) {
-        d = new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
-      } else {
-        d = new Date(raw);
-      }
-      if(d && !isNaN(d)) tgl = d.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
-      else tgl = raw;
-    }
+    // Tanggal sudah diformat di server (Apps Script) sebagai string, langsung tampilkan
+    const tgl = p.tglDaftar || '-';
     // Singkat JK
     const jkStr = (p.jk||'').toLowerCase();
     const jkSingkat = jkStr.includes('perempuan') ? 'P' : jkStr.includes('laki') ? 'L' : (p.jk||'-');
