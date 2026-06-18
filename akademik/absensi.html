@@ -1416,6 +1416,7 @@ window.addEventListener('load', async () => {
 
   await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
   hitungStatistikLokal(); // ★ hitung statistik dari cache lokal saat load
+  setTimeout(hitungStatistikLokal, 300); // ★ ulang setelah render tabel benar-benar selesai
   fokusNisn();
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
@@ -1714,6 +1715,9 @@ async function loadDashboard() {
         </td>
       </tr>`;
     }).join('');
+
+    // ★ Hitung ulang statistik SETELAH tabel d.terbaru selesai dirender
+    hitungStatistikLokal();
   } catch(e) {
     console.error('Dashboard error:', e);
   }
@@ -2324,6 +2328,7 @@ function renderTabelAbsenHariIni(data, dariCache) {
   }
   updateBelumPulangDariDOM();
   hitungBelumMasuk(); // totalAbsenHariIni sudah diset di atas — rumus pasti benar
+  hitungStatistikLokal(); // ★ sama pola dengan updateBelumPulangDariDOM — selalu setelah tabel selesai render
 }
 
 // ── Update tabel absensi langsung setelah scan ──────────────────
