@@ -1575,7 +1575,7 @@ function renderPPDBInfo(d) {
   const bannerDaftar = document.getElementById('bannerDaftar');
   if(bannerDaftar) {
     if(ppdbStatus === 'BUKA') {
-      bannerDaftar.innerHTML = `<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#1a7a4a;margin-bottom:16px;">✅ Pendaftaran DIBUKA: ${p.tgl_buka||''} s/d ${p.tgl_tutup||''}</div>`;
+      bannerDaftar.innerHTML = `<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#1a7a4a;margin-bottom:16px;">✅ Pendaftaran dibuka: ${p.tgl_buka||''} s/d ${p.tgl_tutup||''}</div>`;
     } else {
       bannerDaftar.innerHTML = `<div style="background:#fdecea;border:1px solid #f5c6c2;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#c0392b;margin-bottom:16px;">🔒 Pendaftaran SPMB saat ini DITUTUP. Formulir tidak dapat diisi.</div>`;
       setFormDisabled(true);
