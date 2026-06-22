@@ -9,23 +9,36 @@
 <style>
 /* Kartu bukti - hanya aktif saat print */
 @media print {
-  @page { size: A4 portrait; margin: 8mm; }
+  @page { size: A4 portrait; margin: 6mm; }
   body, html { margin: 0 !important; padding: 0 !important; background: #fff !important; }
   nav, .tab-bar, .page-hero, footer, .aksi-bar, #tabInfo, #tabCek, #tabPeserta, .hamburger,
-  #mobileMenu, #bannerDaftar, #alertError, #alertSukses, #tabDaftar > *:not(#kartuSection) {
-    display: none !important;
-  }
+  #mobileMenu, #bannerDaftar, #alertError, #alertSukses, #tabDaftar > *:not(#kartuSection),
+  .preview-label, .info-text, .btn-download, .btn-cetak { display: none !important; }
   #kartuSection { display: block !important; }
   .kartu {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    font-size: 11px !important;
-    page-break-inside: avoid;
+    width: 100% !important; max-width: 100% !important;
+    box-shadow: none !important; border-radius: 0 !important;
+    font-size: 9.5px !important; page-break-inside: avoid;
   }
-  .kartu-header { padding: 12px 16px !important; }
-  /* Semua elemen lain di @media print tetap */
+  .kartu-header { padding: 8px 12px !important; }
+  .kartu-header img { width: 44px !important; height: 44px !important; }
+  .kartu-header-text h1 { font-size: 13px !important; }
+  .kartu-header-text p { font-size: 9px !important; }
+  .kartu-header-badge .badge-judul { font-size: 10px !important; padding: 4px 10px !important; }
+  .kartu-nomor { padding: 8px 12px !important; }
+  .kartu-nomor .nomor { font-size: 18px !important; }
+  .kartu-nomor .status-badge { padding: 4px 12px !important; font-size: 9px !important; }
+  .kartu-body { padding: 8px 12px !important; }
+  .data-grid { margin-bottom: 8px !important; }
+  .data-item { padding: 5px 10px !important; }
+  .data-item .di-label { font-size: 8px !important; }
+  .data-item .di-val { font-size: 10px !important; }
+  .sec-label { font-size: 8px !important; margin: 8px 0 4px !important; }
+  .ortu-grid { gap: 6px !important; margin-bottom: 8px !important; }
+  .ortu-card { padding: 6px 8px !important; }
+  .ortu-card .ok-title { font-size: 8px !important; margin-bottom: 4px !important; }
+  .kartu-footer { padding: 6px 12px !important; font-size: 8px !important; }
+}
 
 
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -343,12 +356,6 @@
         text-align: center;
         max-width: 500px;
         line-height: 1.7;
-    }
-
-    @media print {
-        body { background: #fff; padding: 0; }
-        .preview-label, .aksi-bar, .info-text { display: none !important; }
-        .kartu { box-shadow: none; border-radius: 0; width: 100%; }
     }
 
 }
@@ -745,7 +752,7 @@ select.f-input{appearance:auto;}
         <div><div class="fg"><label class="f-label">Tempat Lahir <span class="req">*</span></label><input type="text" id="fTmptLahir" class="f-input" placeholder="Kota/Kabupaten" required></div></div>
         <div><div class="fg"><label class="f-label">Tanggal Lahir <span class="req">*</span></label>
 <input type="date" id="fTglLahirPicker" class="f-input" max="2015-12-31" min="2005-01-01"
-  oninput="(function(v){const BULAN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];if(v){const p=v.split('-');document.getElementById('fTglLahir').value=parseInt(p[2])+' '+BULAN[parseInt(p[1])-1]+' '+p[0];}else{document.getElementById('fTglLahir').value='';}})(this.value);resetFieldError(document.getElementById('fTglLahir'))" required>
+  oninput="tglLahirPilih(this.value)" onchange="tglLahirPilih(this.value)" required>
 <input type="hidden" id="fTglLahir">
 <span id="hint_fTglLahir" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
         <div><div class="fg"><label class="f-label">Agama <span class="req">*</span></label><select id="fAgama" class="f-input" required onchange="cekLain('fAgama')">
@@ -2038,6 +2045,18 @@ function cekPanjang(el, panjang, label){
 }
 
 // ── TOGGLE NOMOR PIP ──
+function tglLahirPilih(v) {
+  const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const hidden = document.getElementById('fTglLahir');
+  if(v) {
+    const p = v.split('-');
+    hidden.value = parseInt(p[2]) + ' ' + BULAN[parseInt(p[1])-1] + ' ' + p[0];
+  } else {
+    hidden.value = '';
+  }
+  resetFieldError(document.getElementById('fTglLahirPicker'));
+}
+
 function togglePIPNomor(val){
   const wrap = document.getElementById('pipNomorWrap');
   const inp  = document.getElementById('fPIPNomor');
