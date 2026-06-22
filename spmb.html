@@ -1133,7 +1133,7 @@ select.f-input{appearance:auto;}
       <div class="form-grid">
         <div><div class="fg">
       <label class="f-label">HP Orang Tua/Wali (Wajib) <span class="req">*</span></label>
-      <input type="text" id="fHP" class="f-input" placeholder="Nomor WA aktif" inputmode="numeric" maxlength="13" oninput="this.value=this.value.replace(/[^0-9]/g,'');resetFieldError(this)" onblur="cekPanjang(this,11,'HP')" required>
+      <input type="text" id="fHP" class="f-input" placeholder="Nomor WA aktif" inputmode="numeric" maxlength="13" oninput="this.value=this.value.replace(/[^0-9]/g,'');resetFieldError(this)" onblur="cekHP(this,11)" required>
       <span id="hint_fHP" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span>
     </div></div>
         <div><div class="fg">
@@ -2081,6 +2081,21 @@ function cekPanjang(el, panjang, label){
   }
 }
 
+// ── VALIDASI HP (tanpa sebut jumlah digit, panjang HP bisa beda-beda) ──
+function cekHP(el, panjang){
+  if(!el.value) return;
+  const hint = document.getElementById('hint_' + el.id);
+  if(el.value.length < panjang){
+    el.style.borderColor = '#e53935';
+    el.style.background  = '#fff5f5';
+    if(hint){ hint.textContent = '⚠ Nomor HP masih kurang'; hint.style.color='#e53935'; }
+  } else {
+    el.style.borderColor = '#2e7d32';
+    el.style.background  = '#f1f8e9';
+    if(hint){ hint.textContent = '✓ Nomor HP valid'; hint.style.color='#2e7d32'; }
+  }
+}
+
 // ── TOGGLE NOMOR PIP ──
 // ── PROPER CASE OTOMATIS (saat pindah field) ──
 function terapkanProperCase(el) {
@@ -2208,6 +2223,10 @@ function muatDraft(){
       if(el.type === 'checkbox') el.checked = draft[id];
       else {
         el.value = draft[id];
+        // Pastikan teks draft lama juga ikut dirapikan ke Proper Case
+        if(el.classList.contains('pc') && typeof terapkanProperCase === 'function'){
+          terapkanProperCase(el);
+        }
         // Trigger cekLain jika select
         if(el.tagName === 'SELECT' && typeof cekLain === 'function'){
           cekLain(id);
