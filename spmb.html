@@ -990,7 +990,7 @@ select.f-input{appearance:auto;}
     </select>
     <div id="pipNomorWrap" style="display:none;margin-top:8px;">
       <input type="text" id="fPIPNomor" class="f-input" placeholder="Nomor PIP (angka/huruf)" autocomplete="off">
-      <span style="font-size:12px;color:#888;margin-top:4px;display:block;">Isi nomor PIP jika ada</span>
+      <span id="hintPIPNomor" style="font-size:12px;color:#888;margin-top:4px;display:block;">Isi nomor PIP jika ada</span>
     </div>
     </div></div>
       </div>
@@ -1303,7 +1303,10 @@ select.f-input{appearance:auto;}
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
       <input type="text" id="cariPeserta" placeholder="🔍 Cari nama..." oninput="filterPeserta()" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid #c8d8ee;border-radius:8px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;">
       <select id="filterJKPeserta" onchange="filterPeserta()" style="padding:9px 12px;border:1.5px solid #c8d8ee;border-radius:8px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1e2a3a;outline:none;">
-        <option value="">Semua</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
+        <option value="">Semua JK</option><option value="Laki-Laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
+      </select>
+      <select id="filterSekolahPeserta" onchange="filterPeserta()" style="padding:9px 12px;border:1.5px solid #c8d8ee;border-radius:8px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1e2a3a;outline:none;max-width:180px;">
+        <option value="">Semua Sekolah</option>
       </select>
     </div>
     <div style="overflow-x:auto;border-radius:10px;border:1.5px solid #dde5f0;max-width:100%;-webkit-overflow-scrolling:touch;">
@@ -1457,6 +1460,7 @@ function muatDaftarPeserta() {
     .then(r => r.json())
     .then(d => {
       _pesertaData = d.data || [];
+      populateFilterSekolah();
       renderPeserta();
     })
     .catch(() => {
@@ -1467,12 +1471,23 @@ function muatDaftarPeserta() {
 
 function filterPeserta() { renderPeserta(); }
 
+function populateFilterSekolah() {
+  const sel = document.getElementById('filterSekolahPeserta');
+  if(!sel) return;
+  const sekolahSet = [...new Set(_pesertaData.map(p => p.sekolahAsal).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Semua Sekolah</option>' +
+    sekolahSet.map(s => `<option value="${s}"${s===current?' selected':''}>${s}</option>`).join('');
+}
+
 function renderPeserta() {
-  const q   = (document.getElementById('cariPeserta')?.value || '').toLowerCase();
-  const jk  = document.getElementById('filterJKPeserta')?.value || '';
+  const q       = (document.getElementById('cariPeserta')?.value || '').toLowerCase();
+  const jk      = document.getElementById('filterJKPeserta')?.value || '';
+  const sekolah = document.getElementById('filterSekolahPeserta')?.value || '';
   const filtered = _pesertaData.filter(p =>
-    (!q  || p.nama.toLowerCase().includes(q)) &&
-    (!jk || p.jk === jk)
+    (!q       || p.nama.toLowerCase().includes(q)) &&
+    (!jk      || (p.jk||'').toLowerCase() === jk.toLowerCase()) &&
+    (!sekolah || p.sekolahAsal === sekolah)
   );
 
   // Update statistik
@@ -2026,13 +2041,16 @@ function cekPanjang(el, panjang, label){
 function togglePIPNomor(val){
   const wrap = document.getElementById('pipNomorWrap');
   const inp  = document.getElementById('fPIPNomor');
+  const hint = document.getElementById('hintPIPNomor');
   if(!wrap) return;
   if(val === 'Ada'){
     wrap.style.display = 'block';
     if(inp){ inp.required = true; inp.placeholder = 'Nomor PIP (wajib diisi)'; }
+    if(hint){ hint.textContent = 'Wajib diisi jika memiliki Kartu PIP.'; hint.style.color = '#e53935'; }
   } else {
     wrap.style.display = 'none';
     if(inp){ inp.value = ''; inp.required = false; inp.placeholder = 'Nomor PIP (angka/huruf)'; }
+    if(hint){ hint.textContent = 'Isi nomor PIP jika ada'; hint.style.color = '#888'; }
   }
 }
 
