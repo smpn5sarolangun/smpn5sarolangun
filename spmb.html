@@ -1302,8 +1302,11 @@ select.f-input{appearance:auto;}
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
       <input type="text" id="cariPeserta" placeholder="🔍 Cari nama..." oninput="filterPeserta()" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid #c8d8ee;border-radius:8px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;">
+      <select id="filterSekolahPeserta" onchange="filterPeserta()" style="padding:9px 12px;border:1.5px solid #c8d8ee;border-radius:8px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1e2a3a;outline:none;max-width:200px;">
+        <option value="">Semua Sekolah</option>
+      </select>
       <select id="filterJKPeserta" onchange="filterPeserta()" style="padding:9px 12px;border:1.5px solid #c8d8ee;border-radius:8px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1e2a3a;outline:none;">
-        <option value="">Semua</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
+        <option value="">L / P</option><option value="L">L</option><option value="P">P</option>
       </select>
     </div>
     <div style="overflow-x:auto;border-radius:10px;border:1.5px solid #dde5f0;max-width:100%;-webkit-overflow-scrolling:touch;">
@@ -1467,20 +1470,54 @@ function muatDaftarPeserta() {
 
 function filterPeserta() { renderPeserta(); }
 
+function getJKSingkat(jk) {
+  const s = (jk||'').toLowerCase();
+  if (s.includes('perempuan')) return 'P';
+  if (s.includes('laki')) return 'L';
+  // Sudah dalam format L/P
+  if (s === 'p') return 'P';
+  if (s === 'l') return 'L';
+  return jk || '-';
+}
+
+function populateSekolahFilter() {
+  const sel = document.getElementById('filterSekolahPeserta');
+  if (!sel) return;
+  const sekolahSet = new Set(_pesertaData.map(p => p.sekolahAsal).filter(Boolean));
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Semua Sekolah</option>';
+  [...sekolahSet].sort().forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    sel.appendChild(opt);
+  });
+  sel.value = current;
+}
+
 function renderPeserta() {
-  const q   = (document.getElementById('cariPeserta')?.value || '').toLowerCase();
-  const jk  = document.getElementById('filterJKPeserta')?.value || '';
-  const filtered = _pesertaData.filter(p =>
-    (!q  || p.nama.toLowerCase().includes(q)) &&
-    (!jk || p.jk === jk)
-  );
+  const q       = (document.getElementById('cariPeserta')?.value || '').toLowerCase();
+  const jkFil   = document.getElementById('filterJKPeserta')?.value || '';
+  const skolFil = document.getElementById('filterSekolahPeserta')?.value || '';
+
+  const filtered = _pesertaData.filter(p => {
+    const jkSingkat = getJKSingkat(p.jk);
+    return (
+      (!q       || p.nama.toLowerCase().includes(q)) &&
+      (!jkFil   || jkSingkat === jkFil) &&
+      (!skolFil || p.sekolahAsal === skolFil)
+    );
+  });
 
   // Update statistik
-  const lk = _pesertaData.filter(p => (p.jk||'').toLowerCase().includes('laki')).length;
-  const pr = _pesertaData.filter(p => (p.jk||'').toLowerCase().includes('perempuan')).length;
+  const lk = _pesertaData.filter(p => getJKSingkat(p.jk) === 'L').length;
+  const pr = _pesertaData.filter(p => getJKSingkat(p.jk) === 'P').length;
   document.getElementById('statTotal').textContent     = _pesertaData.length;
   document.getElementById('statLaki').textContent      = lk;
   document.getElementById('statPerempuan').textContent = pr;
+
+  // Populate dropdown sekolah (hanya sekali saat data pertama kali dimuat)
+  populateSekolahFilter();
 
   const tbody = document.getElementById('tbodyPeserta');
   const msg   = document.getElementById('pesertaMsg');
@@ -1500,16 +1537,13 @@ function renderPeserta() {
 
   msg.style.display = 'none';
   tbody.innerHTML = filtered.map((p, i) => {
-    // Tanggal sudah diformat di server (Apps Script) sebagai string, langsung tampilkan
     const tgl = p.tglDaftar || '-';
-    // Singkat JK
-    const jkStr = (p.jk||'').toLowerCase();
-    const jkSingkat = jkStr.includes('perempuan') ? 'P' : jkStr.includes('laki') ? 'L' : (p.jk||'-');
+    const jkSingkat = getJKSingkat(p.jk);
     return `
     <tr style="border-bottom:1.5px solid #dde5f0;${i%2===1?'background:#f7faff;':''}">
       <td style="padding:10px 14px;color:#888;white-space:nowrap;">${i+1}</td>
       <td style="padding:10px 14px;color:#4a6285;white-space:nowrap;">${tgl}</td>
-      <td style="padding:10px 14px;font-weight:600;color:#1e2a3a;white-space:nowrap;">${p.nama}</td>
+      <td style="padding:10px 14px;font-weight:600;color:#1e2a3a;white-space:nowrap;text-transform:uppercase;">${p.nama}</td>
       <td style="padding:10px 14px;color:#4a6285;text-align:center;white-space:nowrap;">${jkSingkat}</td>
       <td style="padding:10px 14px;color:#4a6285;white-space:nowrap;">${p.sekolahAsal}</td>
     </tr>`;
@@ -1733,6 +1767,19 @@ async function submitPPDB() {
   if (adaKosong) {
     tampilError('Harap lengkapi field yang ditandai merah sebelum mengirim.');
     if (firstEl) firstEl.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
+  // Validasi Nomor PIP wajib jika pilih "Ada"
+  if (data.pip === 'Ada' && !data.nomorPIP) {
+    const pipEl = document.getElementById('fPIPNomor');
+    if (pipEl) {
+      pipEl.style.borderColor = '#e53935';
+      pipEl.style.background  = '#fff5f5';
+      pipEl.scrollIntoView({behavior:'smooth', block:'center'});
+      pipEl.focus();
+    }
+    tampilError('Nomor PIP wajib diisi jika memilih "Ada".');
     return;
   }
 
@@ -2020,9 +2067,10 @@ function togglePIPNomor(val){
   if(!wrap) return;
   if(val === 'Ada'){
     wrap.style.display = 'block';
+    if(inp){ inp.required = true; inp.placeholder = 'Nomor PIP (wajib diisi)'; }
   } else {
     wrap.style.display = 'none';
-    if(inp) inp.value = '';
+    if(inp){ inp.required = false; inp.value = ''; inp.placeholder = 'Nomor PIP (angka/huruf)'; inp.style.borderColor=''; inp.style.background=''; }
   }
 }
 
