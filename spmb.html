@@ -1133,7 +1133,8 @@ select.f-input{appearance:auto;}
       <div class="form-grid">
         <div><div class="fg">
       <label class="f-label">HP Orang Tua/Wali (Wajib) <span class="req">*</span></label>
-      <input type="text" id="fHP" class="f-input" placeholder="Nomor WA aktif" inputmode="numeric" maxlength="13" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
+      <input type="text" id="fHP" class="f-input" placeholder="Nomor WA aktif" inputmode="numeric" maxlength="13" oninput="this.value=this.value.replace(/[^0-9]/g,'');resetFieldError(this)" onblur="cekPanjang(this,11,'HP')" required>
+      <span id="hint_fHP" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span>
     </div></div>
         <div><div class="fg">
       <label class="f-label">HP Siswa <span style="font-size:11px;color:#888;font-weight:400;">(opsional)</span></label>
