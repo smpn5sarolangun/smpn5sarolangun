@@ -732,7 +732,7 @@ select.f-input{appearance:auto;}
       <!-- A. DATA SISWA -->
       <div class="sec-title">👤 A. Data Siswa</div>
       <div class="form-grid">
-        <div class="full"><div class="fg"><label class="f-label">Nama Lengkap <span class="req">*</span></label><input type="text" id="fNama" class="f-input" placeholder="Nama lengkap sesuai akta" required></div></div>
+        <div class="full"><div class="fg"><label class="f-label">Nama Lengkap <span class="req">*</span></label><input type="text" id="fNama" class="f-input pc" placeholder="Nama lengkap sesuai akta" required></div></div>
         <div><div class="fg"><label class="f-label">Jenis Kelamin <span class="req">*</span></label><select id="fJK" class="f-input" required onchange="cekLain('fJK')">
 <option value="">-- Pilih Jenis Kelamin --</option>
 <option value="Laki-Laki">Laki-Laki</option>
@@ -742,7 +742,7 @@ select.f-input{appearance:auto;}
         <div><div class="fg"><label class="f-label">NISN (10 digit) <span class="req">*</span></label><input type="text" id="fNISN" class="f-input" placeholder="10 digit angka" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,10,'NISN')" required><span id="hint_fNISN" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
         <div><div class="fg"><label class="f-label">NIK Siswa <span class="req">*</span></label><input type="text" id="fNIK" class="f-input" placeholder="16 digit angka" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,16,'NIK Siswa')" required><span id="hint_fNIK" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
         <div><div class="fg"><label class="f-label">Nomor Kartu Keluarga <span class="req">*</span></label><input type="text" id="fNoKK" class="f-input" placeholder="16 digit angka" maxlength="16" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'');resetFieldError(this)" onblur="cekPanjang(this,16,'Nomor KK')" required><span id="hint_fNoKK" style="font-size:12px;display:block;margin-top:3px;min-height:16px;"></span></div></div>
-        <div><div class="fg"><label class="f-label">Tempat Lahir <span class="req">*</span></label><input type="text" id="fTmptLahir" class="f-input" placeholder="Kota/Kabupaten" required></div></div>
+        <div><div class="fg"><label class="f-label">Tempat Lahir <span class="req">*</span></label><input type="text" id="fTmptLahir" class="f-input pc" placeholder="Kota/Kabupaten" required></div></div>
         <div><div class="fg"><label class="f-label">Tanggal Lahir <span class="req">*</span></label>
 <input type="date" id="fTglLahirPicker" class="f-input" max="2015-12-31" min="2005-01-01"
   oninput="(function(v){const BULAN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];if(v){const p=v.split('-');document.getElementById('fTglLahir').value=parseInt(p[2])+' '+BULAN[parseInt(p[1])-1]+' '+p[0];}else{document.getElementById('fTglLahir').value='';}})(this.value);resetFieldError(document.getElementById('fTglLahir'))" required>
@@ -765,7 +765,7 @@ select.f-input{appearance:auto;}
       <div class="form-grid">
         <div class="full"><div class="fg">
       <label class="f-label">Nama Jalan <span class="req">*</span></label>
-      <input type="text" id="fAlamatJalan" class="f-input" placeholder="Nama jalan/gang" >
+      <input type="text" id="fAlamatJalan" class="f-input pc" placeholder="Nama jalan/gang" >
     </div></div>
         <div><div class="fg">
       <label class="f-label">Nomor RT <span class="req">*</span></label>
@@ -816,7 +816,7 @@ select.f-input{appearance:auto;}
     </div></div>
         <div><div class="fg">
       <label class="f-label">Nama Dusun <span class="req">*</span></label>
-      <input type="text" id="fDusun" class="f-input" placeholder="Nama dusun" required>
+      <input type="text" id="fDusun" class="f-input pc" placeholder="Nama dusun" required>
     </div></div>
         <div class="full"><div class="fg">
       <label class="f-label">Desa/Kelurahan <span class="req">*</span></label>
@@ -948,19 +948,19 @@ select.f-input{appearance:auto;}
     </div></div>
         <div><div class="fg">
       <label class="f-label">Hobi <span class="req">*</span></label>
-      <input type="text" id="fHobi" class="f-input" placeholder="Hobi siswa" required>
+      <input type="text" id="fHobi" class="f-input pc" placeholder="Hobi siswa" required>
     </div></div>
         <div><div class="fg">
       <label class="f-label">Cita-Cita <span class="req">*</span></label>
-      <input type="text" id="fCitaCita" class="f-input" placeholder="Cita-cita siswa" required>
+      <input type="text" id="fCitaCita" class="f-input pc" placeholder="Cita-cita siswa" required>
     </div></div>
         <div><div class="fg">
       <label class="f-label">Berat Badan (kg) <span class="req">*</span></label>
-      <input type="text" id="fBB" class="f-input" placeholder="contoh: 45" required>
+      <input type="text" id="fBB" class="f-input" placeholder="contoh: 45" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
     </div></div>
         <div><div class="fg">
       <label class="f-label">Tinggi Badan (cm) <span class="req">*</span></label>
-      <input type="text" id="fTB" class="f-input" placeholder="contoh: 155" required>
+      <input type="text" id="fTB" class="f-input" placeholder="contoh: 155" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
     </div></div>
         <div class="full"><div class="fg">
       <label class="f-label">Sekolah Asal <span class="req">*</span></label>
@@ -989,7 +989,7 @@ select.f-input{appearance:auto;}
       <option value="Tidak Ada">Tidak Ada</option>
     </select>
     <div id="pipNomorWrap" style="display:none;margin-top:8px;">
-      <input type="text" id="fPIPNomor" class="f-input" placeholder="Nomor PIP (angka/huruf)" autocomplete="off">
+      <input type="text" id="fPIPNomor" class="f-input" placeholder="Nomor PIP (6 karakter)" autocomplete="off" maxlength="6" oninput="this.value=this.value.toUpperCase()" onblur="if(this.value&&this.value.length<6){this.style.borderColor='#e53935';this.style.background='#fff5f5';document.getElementById('hintPIPNomor').textContent='Nomor PIP harus 6 karakter.';document.getElementById('hintPIPNomor').style.color='#e53935';}else{this.style.borderColor='';this.style.background='';if(document.getElementById('hintPIPNomor')&&this.value){document.getElementById('hintPIPNomor').textContent='Wajib diisi jika memiliki Kartu PIP.';document.getElementById('hintPIPNomor').style.color='#e53935';}}" autocapitalize="characters">
       <span style="font-size:12px;color:#888;margin-top:4px;display:block;">Isi nomor PIP jika ada</span>
     </div>
     </div></div>
@@ -1000,7 +1000,7 @@ select.f-input{appearance:auto;}
       <div class="form-grid">
         <div><div class="fg">
       <label class="f-label">Nama Ayah <span class="req">*</span></label>
-      <input type="text" id="fNamaAyah" class="f-input" placeholder="Nama lengkap ayah" required>
+      <input type="text" id="fNamaAyah" class="f-input pc" placeholder="Nama lengkap ayah" required>
     </div></div>
         <div><div class="fg">
       <label class="f-label">NIK Ayah <span class="req">*</span></label>
@@ -1067,7 +1067,7 @@ select.f-input{appearance:auto;}
       <div class="form-grid">
         <div><div class="fg">
       <label class="f-label">Nama Ibu <span class="req">*</span></label>
-      <input type="text" id="fNamaIbu" class="f-input" placeholder="Nama lengkap ibu" required>
+      <input type="text" id="fNamaIbu" class="f-input pc" placeholder="Nama lengkap ibu" required>
     </div></div>
         <div><div class="fg">
       <label class="f-label">NIK Ibu <span class="req">*</span></label>
@@ -1151,7 +1151,7 @@ select.f-input{appearance:auto;}
         <div class="form-grid">
           <div><div class="fg">
       <label class="f-label">Nama Wali <span class="req">*</span></label>
-      <input type="text" id="fNamaWali" class="f-input" placeholder="Nama lengkap wali" >
+      <input type="text" id="fNamaWali" class="f-input pc" placeholder="Nama lengkap wali" >
     </div></div>
           <div><div class="fg">
       <label class="f-label">NIK Wali <span class="req">*</span></label>
@@ -1609,7 +1609,7 @@ function renderPPDBInfo(d) {
   const bannerDaftar = document.getElementById('bannerDaftar');
   if(bannerDaftar) {
     if(ppdbStatus === 'BUKA') {
-      bannerDaftar.innerHTML = `<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#1a7a4a;margin-bottom:16px;">✅ Pendaftaran Dibuka: ${p.tgl_buka||''} s/d ${p.tgl_tutup||''}</div>`;
+      bannerDaftar.innerHTML = `<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#1a7a4a;margin-bottom:16px;">✅ Pendaftaran DIBUKA: ${p.tgl_buka||''} s/d ${p.tgl_tutup||''}</div>`;
     } else {
       bannerDaftar.innerHTML = `<div style="background:#fdecea;border:1px solid #f5c6c2;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#c0392b;margin-bottom:16px;">🔒 Pendaftaran SPMB saat ini DITUTUP. Formulir tidak dapat diisi.</div>`;
       setFormDisabled(true);
@@ -1771,16 +1771,20 @@ async function submitPPDB() {
   }
 
   // Validasi Nomor PIP wajib jika pilih "Ada"
-  if (data.pip === 'Ada' && !data.nomorPIP) {
+  if (data.pip === 'Ada') {
     const pipEl = document.getElementById('fPIPNomor');
-    if (pipEl) {
-      pipEl.style.borderColor = '#e53935';
-      pipEl.style.background  = '#fff5f5';
-      pipEl.scrollIntoView({behavior:'smooth', block:'center'});
-      pipEl.focus();
+    if (!data.nomorPIP || data.nomorPIP.length < 6) {
+      if (pipEl) {
+        pipEl.style.borderColor = '#e53935';
+        pipEl.style.background  = '#fff5f5';
+        pipEl.scrollIntoView({behavior:'smooth', block:'center'});
+        pipEl.focus();
+      }
+      const hint = document.getElementById('hintPIPNomor');
+      if(hint){ hint.textContent = !data.nomorPIP ? 'Nomor PIP wajib diisi.' : 'Nomor PIP harus tepat 6 karakter.'; hint.style.color='#e53935'; }
+      tampilError(!data.nomorPIP ? 'Nomor PIP wajib diisi jika memiliki Kartu PIP.' : 'Nomor PIP harus tepat 6 karakter.');
+      return;
     }
-    tampilError('Nomor PIP wajib diisi jika memilih "Ada".');
-    return;
   }
 
   // Validasi panjang digit
@@ -2061,6 +2065,16 @@ function cekPanjang(el, panjang, label){
 }
 
 // ── TOGGLE NOMOR PIP ──
+// ── PROPER CASE OTOMATIS (saat pindah field) ──
+function terapkanProperCase(el) {
+  el.value = el.value.replace(/\b\w/g, c => c.toUpperCase());
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('input.pc').forEach(function(el) {
+    el.addEventListener('blur', function() { terapkanProperCase(this); });
+  });
+});
+
 function togglePIPNomor(val){
   const wrap = document.getElementById('pipNomorWrap');
   const inp  = document.getElementById('fPIPNomor');
