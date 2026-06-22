@@ -956,11 +956,11 @@ select.f-input{appearance:auto;}
     </div></div>
         <div><div class="fg">
       <label class="f-label">Berat Badan (kg) <span class="req">*</span></label>
-      <input type="text" id="fBB" class="f-input" placeholder="contoh: 45" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
+      <input type="text" id="fBB" class="f-input" placeholder="contoh: 45" inputmode="numeric" maxlength="2" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
     </div></div>
         <div><div class="fg">
       <label class="f-label">Tinggi Badan (cm) <span class="req">*</span></label>
-      <input type="text" id="fTB" class="f-input" placeholder="contoh: 155" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
+      <input type="text" id="fTB" class="f-input" placeholder="contoh: 155" inputmode="numeric" maxlength="3" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onblur="if(this.value&&this.value.length<3){this.style.borderColor='#e53935';this.style.background='#fff5f5';}else{this.style.borderColor='';this.style.background='';}" required>
     </div></div>
         <div class="full"><div class="fg">
       <label class="f-label">Sekolah Asal <span class="req">*</span></label>
@@ -1789,6 +1789,8 @@ async function submitPPDB() {
 
   // Validasi panjang digit
   if(!validasiDigit('fNISN', 10, 'NISN')) return;
+  if(!validasiDigit('fTB', 3, 'Tinggi Badan')) return;
+  if(!validasiDigit('fBB', 2, 'Berat Badan')) return;
   if(!validasiDigit('fNIK',     16, 'NIK Siswa')) return;
   if(!validasiDigit('fNoKK',   16, 'Nomor KK')) return;
   if(!validasiDigit('fNIKAyah',16, 'NIK Ayah')) return;
