@@ -1395,6 +1395,9 @@ async function submitPPDB() {
     ['pendidikanIbu','Pendidikan Ibu'],['pekerjaanIbu','Pekerjaan Ibu'],['penghasilanIbu','Penghasilan Ibu'],
     ['hpOrtu','HP Orang Tua'],['pip','Kartu PIP']];
 
+  // Tambahkan nomorPIP ke wajib jika pilih Ada
+  if(data.pip === 'Ada') wajib.push(['nomorPIP','Nomor PIP']);
+
   // Reset border field sebelumnya
   document.querySelectorAll('.f-input, .f-select').forEach(el => {
     el.style.borderColor = '';
@@ -1413,7 +1416,7 @@ async function submitPPDB() {
     pendidikanAyah:'fPendAyah', pekerjaanAyah:'fPekAyah', penghasilanAyah:'fPengAyah',
     namaIbu:'fNamaIbu', nikIbu:'fNIKIbu', tglLahirIbu:'fTglIbu',
     pendidikanIbu:'fPendIbu', pekerjaanIbu:'fPekIbu', penghasilanIbu:'fPengIbu',
-    hpOrtu:'fHP', pip:'fPIP'
+    hpOrtu:'fHP', pip:'fPIP', nomorPIP:'fPIPNomor'
   };
 
   let adaKosong = false;
