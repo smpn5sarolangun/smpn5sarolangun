@@ -1796,6 +1796,20 @@ async function submitPPDB() {
   if(!validasiDigit('fNIKAyah',16, 'NIK Ayah')) return;
   if(!validasiDigit('fNIKIbu', 16, 'NIK Ibu')) return;
 
+  // Validasi HP Orang Tua: wajib minimal 11 digit (cegah asal isi "0" dll)
+  const digitHPOrtu = data.hpOrtu.replace(/\D/g, '');
+  if (digitHPOrtu.length < 11) {
+    const hpEl = document.getElementById('fHP');
+    if (hpEl) {
+      hpEl.style.borderColor = '#e53935';
+      hpEl.style.background  = '#fff5f5';
+      hpEl.scrollIntoView({behavior:'smooth', block:'center'});
+      hpEl.focus();
+    }
+    tampilError('Nomor HP masih kurang');
+    return;
+  }
+
   // Cek duplikat dari cache browser
   const nisnInput = data.nisn;
   const sudahDaftar = localStorage.getItem('ppdb_terkirim_' + nisnInput);
