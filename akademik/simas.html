@@ -169,17 +169,34 @@ button,input,select{font-family:'Plus Jakarta Sans',sans-serif;}
 .info-text strong{color:var(--teks);}
 
 /* Table */
-.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;max-height:60vh;}
+.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;max-height:72vh;}
 table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:780px;}
 thead th{
   position:sticky;top:0;background:var(--biru);color:#fff;text-align:left;
   padding:11px 14px;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:0.3px;z-index:2;
   white-space:nowrap;
 }
+thead th.sortable{cursor:pointer;user-select:none;}
+thead th.sortable:hover{background:#0a4d8f;}
 tbody td{padding:10px 14px;border-bottom:1px solid #eef1f5;color:var(--teks);white-space:nowrap;}
 tbody tr:hover{background:#f8fafc;}
 tbody tr:nth-child(even){background:#fafcfe;}
 tbody tr:nth-child(even):hover{background:#f3f7fa;}
+
+/* Kolom No & Nama tetap terlihat (sticky) saat tabel di-scroll ke samping */
+thead th:nth-child(1), tbody td:nth-child(1){
+  position:sticky;left:0;z-index:1;background:#fff;
+  width:50px;min-width:50px;max-width:50px;text-align:center;
+}
+thead th:nth-child(2), tbody td:nth-child(2){
+  position:sticky;left:50px;z-index:1;background:#fff;
+  width:190px;min-width:190px;max-width:190px;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:3px 0 6px -3px rgba(0,0,0,0.18);
+}
+thead th:nth-child(1), thead th:nth-child(2){z-index:3;background:var(--biru);}
+tbody tr:nth-child(even) td:nth-child(1), tbody tr:nth-child(even) td:nth-child(2){background:#fafcfe;}
+tbody tr:hover td:nth-child(1), tbody tr:hover td:nth-child(2){background:#f8fafc;}
+tbody tr:nth-child(even):hover td:nth-child(1), tbody tr:nth-child(even):hover td:nth-child(2){background:#f3f7fa;}
 .empty-row td{text-align:center;padding:40px 14px;color:var(--teks-sub);font-size:13px;}
 .jk-pill{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:20px;}
 .jk-l{background:#e8f0fe;color:#1a5ca8;}
@@ -343,7 +360,6 @@ tbody tr:nth-child(even):hover{background:#f3f7fa;}
       </table>
     </div>
 
-    <div class="pagination" id="paginasi"></div>
   </div>
 
 </div>
@@ -420,10 +436,10 @@ let kolomDef   = [];   // [{key,label}] sesuai header baris 1 sheet "Data PPDB"
 let semuaData  = [];   // seluruh baris (objek {key:value})
 let dataTersaring = [];
 let kolomMap   = {};   // hasil deteksi konsep -> key kolom (jk, status, sekolahAsal, tglDaftar, dst)
-let halaman    = 1;
-const PER_HAL  = 25;
 let kolomTerpilih = new Set();      // kolom yang dipilih untuk DIUNDUH (Excel)
 let kolomTampilTerpilih = new Set(); // kolom yang dipilih untuk DITAMPILKAN di tabel (default: semua)
+let sortKey = null;  // key kolom yang sedang diurutkan
+let sortDir = 'asc';  // 'asc' atau 'desc'
 
 /* ───────────────────── SESI & INIT ───────────────────── */
 window.addEventListener('load', () => {
@@ -573,7 +589,7 @@ async function muatDataPpdb(){
     kolomTerpilih = new Set(defaultKolomTerpilih());       // default kolom untuk diunduh
     kolomTampilTerpilih = new Set(kolomDef.map(k => k.key)); // default: semua kolom ditampilkan
     dataTersaring = semuaData; // tidak ada filter baris lagi — selalu seluruh data
-    halaman = 1;
+    sortKey = null; sortDir = 'asc';
     renderTabel();
     perbaruiStatistik();
     tampilToast('Data PPDB berhasil dimuat (' + semuaData.length + ' pendaftar).', 'ok');
@@ -616,24 +632,39 @@ function defaultKolomTerpilih(){
 
 /* ───────────────────── RENDER TABEL ───────────────────── */
 
+function urutkanUntukTampilan(daftarKolom){
+  const namaKey = kolomMap.nama;
+  if (!namaKey) return daftarKolom;
+  const idx = daftarKolom.findIndex(k => k.key === namaKey);
+  if (idx <= 0) return daftarKolom; // sudah di posisi depan atau tidak ditampilkan
+  const hasil = daftarKolom.slice();
+  const [kolomNama] = hasil.splice(idx, 1);
+  hasil.unshift(kolomNama);
+  return hasil;
+}
+
 function renderTabel(){
-  const kolomTampil = kolomDef.filter(k => kolomTampilTerpilih.has(k.key));
+  const kolomTampil = urutkanUntukTampilan(kolomDef.filter(k => kolomTampilTerpilih.has(k.key)));
   const thead = document.getElementById('theadRow');
-  thead.innerHTML = '<th>No</th>' + kolomTampil.map(k => `<th>${escapeHtml(k.label)}</th>`).join('') + '<th>Aksi</th>';
+  thead.innerHTML = '<th>No</th>' + kolomTampil.map(k => {
+    let indikator = '';
+    if (sortKey === k.key) indikator = sortDir === 'asc' ? ' ▲' : ' ▼';
+    return `<th class="sortable" data-key="${k.key}" title="Klik untuk urutkan">${escapeHtml(k.label)}${indikator}</th>`;
+  }).join('') + '<th>Aksi</th>';
+  thead.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => toggleSort(th.dataset.key));
+  });
 
   const tbody = document.getElementById('tbodyPpdb');
-  const mulai = (halaman-1) * PER_HAL;
-  const slice = dataTersaring.slice(mulai, mulai + PER_HAL);
   const totalKolom = kolomTampil.length + 2; // No + kolom terpilih + Aksi
 
   if (!kolomTampil.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Tidak ada kolom yang dipilih untuk ditampilkan. Klik "Pilih Kolom &amp; Tampilkan".</td></tr>`;
-  } else if (!slice.length) {
+  } else if (!dataTersaring.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Belum ada data pendaftar.</td></tr>`;
   } else {
-    tbody.innerHTML = slice.map((row, i) => {
+    tbody.innerHTML = dataTersaring.map((row, i) => {
       const idxAsli = semuaData.indexOf(row);
-      const noUrut = mulai + i + 1;
       const sel = kolomTampil.map(k => {
         const val = row[k.key] || '-';
         if (k.key === kolomMap.jk) {
@@ -651,39 +682,44 @@ function renderTabel(){
         }
         return `<td>${escapeHtml(val)}</td>`;
       }).join('');
-      return `<tr><td>${noUrut}</td>${sel}<td><button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})">Detail</button></td></tr>`;
+      return `<tr><td>${i+1}</td>${sel}<td><button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})">Detail</button></td></tr>`;
     }).join('');
   }
 
   document.getElementById('infoTampil').innerHTML =
-    `Menampilkan <strong>${slice.length}</strong> dari <strong>${semuaData.length}</strong> pendaftar &middot; <strong>${kolomTampil.length}</strong> kolom ditampilkan`;
-
-  renderPaginasi();
+    `Menampilkan <strong>${dataTersaring.length}</strong> dari <strong>${semuaData.length}</strong> pendaftar &middot; <strong>${kolomTampil.length}</strong> kolom ditampilkan`;
 }
 
-function renderPaginasi(){
-  const totalHal = Math.max(1, Math.ceil(dataTersaring.length / PER_HAL));
-  const wrap = document.getElementById('paginasi');
-  let html = `<button class="page-btn" ${halaman<=1?'disabled':''} onclick="gantiHalaman(${halaman-1})">‹</button>`;
-  const tampil = [];
-  for (let i=1;i<=totalHal;i++){
-    if (i===1 || i===totalHal || Math.abs(i-halaman)<=1) tampil.push(i);
+/* ───────────────────── SORT TABEL ───────────────────── */
+function deteksiTipeKolom(key){
+  let adaIsi = false;
+  for (const r of semuaData) {
+    const v = String(r[key]||'').trim();
+    if (!v) continue;
+    adaIsi = true;
+    if (!/^-?\d+(\.\d+)?$/.test(v)) return 'teks';
   }
-  let prev = 0;
-  tampil.forEach(i => {
-    if (prev && i - prev > 1) html += `<span class="page-btn" style="border:none;cursor:default;">…</span>`;
-    html += `<button class="page-btn ${i===halaman?'active':''}" onclick="gantiHalaman(${i})">${i}</button>`;
-    prev = i;
-  });
-  html += `<button class="page-btn" ${halaman>=totalHal?'disabled':''} onclick="gantiHalaman(${halaman+1})">›</button>`;
-  wrap.innerHTML = html;
+  return adaIsi ? 'angka' : 'teks';
 }
-function gantiHalaman(h){
-  const totalHal = Math.max(1, Math.ceil(dataTersaring.length / PER_HAL));
-  if (h<1 || h>totalHal) return;
-  halaman = h;
+function toggleSort(key){
+  if (sortKey === key) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey = key;
+    sortDir = 'asc';
+  }
+  const tipe = deteksiTipeKolom(sortKey);
+  const arah = sortDir === 'asc' ? 1 : -1;
+  dataTersaring.sort((a, b) => {
+    const va = String(a[sortKey]||'').trim();
+    const vb = String(b[sortKey]||'').trim();
+    if (va === '' && vb === '') return 0;
+    if (va === '') return 1;
+    if (vb === '') return -1;
+    if (tipe === 'angka') return (parseFloat(va) - parseFloat(vb)) * arah;
+    return va.localeCompare(vb, 'id', {numeric:true, sensitivity:'base'}) * arah;
+  });
   renderTabel();
-  document.querySelector('.table-wrap').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function escapeHtml(s){
