@@ -322,28 +322,16 @@ tbody tr:nth-child(even):hover{background:#f3f7fa;}
     <div class="page-head">
       <div>
         <h1>Data PPDB</h1>
-        <div class="sub">Sumber data: Google Sheets — sheet "Data PPDB"</div>
       </div>
       <button class="btn btn-ghost btn-sm" id="btnRefreshPpdb">⟳ Muat Ulang</button>
     </div>
 
-    <div class="card-box">
-      <div class="filter-grid" id="filterGrid">
-        <div class="filter-field">
-          <label>Cari</label>
-          <input type="text" id="fCari" placeholder="Nama / NISN / No. Pendaftaran">
-        </div>
-        <!-- field filter dinamis (status/jk/sekolah/tanggal) disisipkan via JS -->
-      </div>
-      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-teal btn-sm" id="btnTerapkanFilter">Terapkan Filter</button>
-        <button class="btn btn-ghost btn-sm" id="btnResetFilter">Reset</button>
-      </div>
-    </div>
-
     <div class="toolbar">
       <div class="info-text" id="infoTampil">Memuat data…</div>
-      <button class="btn btn-emas btn-sm" id="btnBukaKolom">⬇ Pilih Kolom &amp; Unduh Excel</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-teal btn-sm" id="btnBukaKolomTampil">☰ Pilih Kolom &amp; Tampilkan</button>
+        <button class="btn btn-emas btn-sm" id="btnBukaKolom">⬇ Pilih Kolom &amp; Unduh Excel</button>
+      </div>
     </div>
 
     <div class="table-wrap">
@@ -372,6 +360,27 @@ tbody tr:nth-child(even):hover{background:#f3f7fa;}
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost btn-sm" data-close="modalDetail">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PILIH KOLOM TAMPIL DI TABEL ══ -->
+<div class="modal-overlay" id="modalKolomTampil">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Pilih Kolom untuk Ditampilkan</h3>
+      <button class="modal-close" data-close="modalKolomTampil">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="kolom-toolbar">
+        <button class="btn btn-ghost btn-sm" id="btnPilihSemuaTampil">Pilih Semua</button>
+        <button class="btn btn-ghost btn-sm" id="btnBersihkanTampil">Bersihkan</button>
+      </div>
+      <div class="kolom-grid" id="kolomTampilGrid"></div>
+    </div>
+    <div class="modal-foot">
+      <span class="info-text" id="infoKolomTampil" style="margin-right:auto;align-self:center;">—</span>
+      <button class="btn btn-teal btn-sm" data-close="modalKolomTampil">Selesai</button>
     </div>
   </div>
 </div>
@@ -413,7 +422,8 @@ let dataTersaring = [];
 let kolomMap   = {};   // hasil deteksi konsep -> key kolom (jk, status, sekolahAsal, tglDaftar, dst)
 let halaman    = 1;
 const PER_HAL  = 25;
-let kolomTerpilih = new Set();
+let kolomTerpilih = new Set();      // kolom yang dipilih untuk DIUNDUH (Excel)
+let kolomTampilTerpilih = new Set(); // kolom yang dipilih untuk DITAMPILKAN di tabel (default: semua)
 
 /* ───────────────────── SESI & INIT ───────────────────── */
 window.addEventListener('load', () => {
@@ -537,6 +547,10 @@ function setupModal(){
   document.getElementById('btnPilihSemua').addEventListener('click', () => { kolomUnduhList().forEach(k => kolomTerpilih.add(k.key)); renderKolomGrid(); });
   document.getElementById('btnBersihkan').addEventListener('click', () => { kolomTerpilih.clear(); renderKolomGrid(); });
   document.getElementById('btnUnduhSekarang').addEventListener('click', unduhExcel);
+
+  document.getElementById('btnBukaKolomTampil').addEventListener('click', bukaModalKolomTampil);
+  document.getElementById('btnPilihSemuaTampil').addEventListener('click', () => { kolomDef.forEach(k => kolomTampilTerpilih.add(k.key)); renderKolomTampilGrid(); renderTabel(); });
+  document.getElementById('btnBersihkanTampil').addEventListener('click', () => { kolomTampilTerpilih.clear(); renderKolomTampilGrid(); renderTabel(); });
 }
 function bukaModal(id){ document.getElementById(id).classList.add('active'); }
 function tutupModal(id){ document.getElementById(id).classList.remove('active'); }
@@ -556,9 +570,11 @@ async function muatDataPpdb(){
     kolomDef  = r.kolom || [];
     semuaData = r.data  || [];
     deteksiKolom();
-    bangunFilterDinamis();
-    kolomTerpilih = new Set(defaultKolomTerpilih());
-    terapkanFilter();
+    kolomTerpilih = new Set(defaultKolomTerpilih());       // default kolom untuk diunduh
+    kolomTampilTerpilih = new Set(kolomDef.map(k => k.key)); // default: semua kolom ditampilkan
+    dataTersaring = semuaData; // tidak ada filter baris lagi — selalu seluruh data
+    halaman = 1;
+    renderTabel();
     perbaruiStatistik();
     tampilToast('Data PPDB berhasil dimuat (' + semuaData.length + ' pendaftar).', 'ok');
   } catch(err) {
@@ -598,110 +614,27 @@ function defaultKolomTerpilih(){
   return ['__no__', ...dasar];
 }
 
-/* Bangun field filter dinamis sesuai kolom yang terdeteksi */
-function bangunFilterDinamis(){
-  const grid = document.getElementById('filterGrid');
-  // bersihkan field dinamis lama (selain "Cari")
-  grid.querySelectorAll('.filter-field[data-dinamis]').forEach(el => el.remove());
-
-  function nilaiUnik(key){
-    const set = new Set();
-    semuaData.forEach(r => { const v = String(r[key]||'').trim(); if (v) set.add(v); });
-    return Array.from(set).sort();
-  }
-  function tambahSelect(id, labelTxt, opsiList){
-    const wrap = document.createElement('div');
-    wrap.className = 'filter-field';
-    wrap.dataset.dinamis = '1';
-    wrap.innerHTML = `<label>${labelTxt}</label><select id="${id}"><option value="">Semua</option>${opsiList.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
-    grid.appendChild(wrap);
-  }
-  function tambahTanggal(idDari, idSampai, labelTxt){
-    const wrap1 = document.createElement('div'); wrap1.className='filter-field'; wrap1.dataset.dinamis='1';
-    wrap1.innerHTML = `<label>${labelTxt} — Dari</label><input type="date" id="${idDari}">`;
-    const wrap2 = document.createElement('div'); wrap2.className='filter-field'; wrap2.dataset.dinamis='1';
-    wrap2.innerHTML = `<label>${labelTxt} — Sampai</label><input type="date" id="${idSampai}">`;
-    grid.appendChild(wrap1); grid.appendChild(wrap2);
-  }
-
-  if (kolomMap.status)      tambahSelect('fStatus', 'Status', nilaiUnik(kolomMap.status));
-  if (kolomMap.jk)          tambahSelect('fJk', 'Jenis Kelamin', nilaiUnik(kolomMap.jk));
-  if (kolomMap.sekolahAsal) tambahSelect('fSekolah', 'Sekolah Asal', nilaiUnik(kolomMap.sekolahAsal));
-  if (kolomMap.tglDaftar)   tambahTanggal('fTglDari', 'fTglSampai', 'Tgl Daftar');
-
-  document.getElementById('btnTerapkanFilter').onclick = terapkanFilter;
-  document.getElementById('btnResetFilter').onclick = resetFilter;
-  document.getElementById('fCari').oninput = debounce(terapkanFilter, 300);
-}
-
-function debounce(fn, ms){
-  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-}
-
-/* Parse "dd/MM/yyyy" atau "dd/MM/yyyy HH:mm:ss" jadi Date; null kalau gagal */
-function parseTglID(str){
-  if (!str) return null;
-  const m = String(str).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (!m) return null;
-  return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
-}
-
-function resetFilter(){
-  document.getElementById('fCari').value = '';
-  document.querySelectorAll('#filterGrid select').forEach(s => s.value = '');
-  document.querySelectorAll('#filterGrid input[type=date]').forEach(i => i.value = '');
-  terapkanFilter();
-}
-
-function terapkanFilter(){
-  const cari     = (document.getElementById('fCari').value||'').toLowerCase().trim();
-  const fStatus  = document.getElementById('fStatus')  ? document.getElementById('fStatus').value  : '';
-  const fJk      = document.getElementById('fJk')      ? document.getElementById('fJk').value      : '';
-  const fSekolah = document.getElementById('fSekolah') ? document.getElementById('fSekolah').value : '';
-  const fTglDari   = document.getElementById('fTglDari')   ? document.getElementById('fTglDari').value   : '';
-  const fTglSampai = document.getElementById('fTglSampai') ? document.getElementById('fTglSampai').value : '';
-
-  dataTersaring = semuaData.filter(row => {
-    if (fStatus  && String(row[kolomMap.status]||'')      !== fStatus)  return false;
-    if (fJk      && String(row[kolomMap.jk]||'')          !== fJk)      return false;
-    if (fSekolah && String(row[kolomMap.sekolahAsal]||'') !== fSekolah) return false;
-
-    if ((fTglDari || fTglSampai) && kolomMap.tglDaftar) {
-      const d = parseTglID(row[kolomMap.tglDaftar]);
-      if (!d) return false;
-      if (fTglDari   && d < new Date(fTglDari))   return false;
-      if (fTglSampai && d > new Date(fTglSampai + 'T23:59:59')) return false;
-    }
-
-    if (cari) {
-      const gabung = Object.values(row).join(' ').toLowerCase();
-      if (!gabung.includes(cari)) return false;
-    }
-    return true;
-  });
-
-  halaman = 1;
-  renderTabel();
-}
-
 /* ───────────────────── RENDER TABEL ───────────────────── */
 
 function renderTabel(){
+  const kolomTampil = kolomDef.filter(k => kolomTampilTerpilih.has(k.key));
   const thead = document.getElementById('theadRow');
-  thead.innerHTML = '<th>No</th>' + kolomDef.map(k => `<th>${escapeHtml(k.label)}</th>`).join('') + '<th>Aksi</th>';
+  thead.innerHTML = '<th>No</th>' + kolomTampil.map(k => `<th>${escapeHtml(k.label)}</th>`).join('') + '<th>Aksi</th>';
 
   const tbody = document.getElementById('tbodyPpdb');
   const mulai = (halaman-1) * PER_HAL;
   const slice = dataTersaring.slice(mulai, mulai + PER_HAL);
-  const totalKolom = kolomDef.length + 2; // No + semua kolom sheet + Aksi
+  const totalKolom = kolomTampil.length + 2; // No + kolom terpilih + Aksi
 
-  if (!slice.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Tidak ada data yang cocok dengan filter.</td></tr>`;
+  if (!kolomTampil.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Tidak ada kolom yang dipilih untuk ditampilkan. Klik "Pilih Kolom &amp; Tampilkan".</td></tr>`;
+  } else if (!slice.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Belum ada data pendaftar.</td></tr>`;
   } else {
     tbody.innerHTML = slice.map((row, i) => {
       const idxAsli = semuaData.indexOf(row);
       const noUrut = mulai + i + 1;
-      const sel = kolomDef.map(k => {
+      const sel = kolomTampil.map(k => {
         const val = row[k.key] || '-';
         if (k.key === kolomMap.jk) {
           const up = val.toUpperCase();
@@ -723,7 +656,7 @@ function renderTabel(){
   }
 
   document.getElementById('infoTampil').innerHTML =
-    `Menampilkan <strong>${slice.length}</strong> dari <strong>${dataTersaring.length}</strong> pendaftar (total ${semuaData.length})`;
+    `Menampilkan <strong>${slice.length}</strong> dari <strong>${semuaData.length}</strong> pendaftar &middot; <strong>${kolomTampil.length}</strong> kolom ditampilkan`;
 
   renderPaginasi();
 }
@@ -795,7 +728,34 @@ function renderKolomGrid(){
 }
 function perbaruiInfoUnduh(){
   document.getElementById('infoUnduh').textContent =
-    kolomTerpilih.size + ' kolom dipilih · ' + dataTersaring.length + ' baris (sesuai filter aktif)';
+    kolomTerpilih.size + ' kolom dipilih · ' + semuaData.length + ' baris akan diunduh';
+}
+
+/* ───────────────────── PILIH KOLOM & TAMPILKAN DI TABEL ───────────────────── */
+function bukaModalKolomTampil(){
+  renderKolomTampilGrid();
+  bukaModal('modalKolomTampil');
+}
+function renderKolomTampilGrid(){
+  const grid = document.getElementById('kolomTampilGrid');
+  grid.innerHTML = kolomDef.map(k => `
+    <label class="kolom-item">
+      <input type="checkbox" data-key="${k.key}" ${kolomTampilTerpilih.has(k.key)?'checked':''}>
+      <span>${escapeHtml(k.label)}</span>
+    </label>
+  `).join('');
+  grid.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) kolomTampilTerpilih.add(cb.dataset.key); else kolomTampilTerpilih.delete(cb.dataset.key);
+      perbaruiInfoKolomTampil();
+      renderTabel(); // langsung terapkan, hanya berlaku di tampilan browser ini
+    });
+  });
+  perbaruiInfoKolomTampil();
+}
+function perbaruiInfoKolomTampil(){
+  document.getElementById('infoKolomTampil').textContent =
+    kolomTampilTerpilih.size + ' dari ' + kolomDef.length + ' kolom ditampilkan';
 }
 
 function unduhExcel(){
