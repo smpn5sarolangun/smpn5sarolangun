@@ -62,6 +62,7 @@ button,input,select{font-family:'Plus Jakarta Sans',sans-serif;}
   box-shadow:2px 0 12px rgba(0,0,0,0.06);
   overflow-y:auto;z-index:96;
   display:flex;flex-direction:column;transition:transform 0.25s ease;
+  padding-top:10px;
 }
 .akun-mini{
   display:flex;align-items:center;gap:10px;padding:16px 20px;
@@ -173,8 +174,9 @@ table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:780px;}
 thead th{
   position:sticky;top:0;background:var(--biru);color:#fff;text-align:left;
   padding:11px 14px;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:0.3px;z-index:2;
+  white-space:nowrap;
 }
-tbody td{padding:10px 14px;border-bottom:1px solid #eef1f5;color:var(--teks);}
+tbody td{padding:10px 14px;border-bottom:1px solid #eef1f5;color:var(--teks);white-space:nowrap;}
 tbody tr:hover{background:#f8fafc;}
 tbody tr:nth-child(even){background:#fafcfe;}
 tbody tr:nth-child(even):hover{background:#f3f7fa;}
@@ -217,8 +219,8 @@ tbody tr:nth-child(even):hover{background:#f3f7fa;}
 .detail-item .dv{font-size:13px;font-weight:600;color:var(--teks);word-break:break-word;}
 
 .kolom-toolbar{display:flex;gap:8px;margin-bottom:14px;}
-.kolom-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px;}
-.kolom-item{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;cursor:pointer;}
+.kolom-grid{column-width:190px;column-gap:6px;}
+.kolom-item{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;cursor:pointer;break-inside:avoid;}
 .kolom-item:hover{background:#f8fafc;}
 .kolom-item input{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;}
 .kolom-item span{font-size:12.5px;font-weight:600;color:var(--teks);}
@@ -284,13 +286,6 @@ tbody tr:nth-child(even):hover{background:#f3f7fa;}
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="sidebar" id="sidebar">
-  <div class="akun-mini">
-    <div class="av" id="avatarMini">A</div>
-    <div>
-      <div class="nm" id="usernameMini">Admin</div>
-      <div class="rl">Admin / Operator</div>
-    </div>
-  </div>
 
   <div class="nav-item active" data-page="dashboard">
     <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
@@ -430,9 +425,7 @@ window.addEventListener('load', () => {
   }
   const user = sessionStorage.getItem('simas_user') || 'Admin';
   document.getElementById('usernameTop').textContent  = user;
-  document.getElementById('usernameMini').textContent = user;
   document.getElementById('avatarTop').textContent  = user.charAt(0).toUpperCase();
-  document.getElementById('avatarMini').textContent = user.charAt(0).toUpperCase();
   document.getElementById('greetText').textContent = 'Selamat datang, ' + user + ' 👋';
 
   jalankanJam();
@@ -541,7 +534,7 @@ function setupModal(){
     ov.addEventListener('click', e => { if (e.target === ov) tutupModal(ov.id); });
   });
   document.getElementById('btnBukaKolom').addEventListener('click', bukaModalKolom);
-  document.getElementById('btnPilihSemua').addEventListener('click', () => { kolomDef.forEach(k => kolomTerpilih.add(k.key)); renderKolomGrid(); });
+  document.getElementById('btnPilihSemua').addEventListener('click', () => { kolomUnduhList().forEach(k => kolomTerpilih.add(k.key)); renderKolomGrid(); });
   document.getElementById('btnBersihkan').addEventListener('click', () => { kolomTerpilih.clear(); renderKolomGrid(); });
   document.getElementById('btnUnduhSekarang').addEventListener('click', unduhExcel);
 }
@@ -594,10 +587,15 @@ function deteksiKolom(){
   if (!kolomMap.nama && kolomDef.length) kolomMap.nama = kolomDef[Math.min(2, kolomDef.length-1)].key;
 }
 
+function kolomUnduhList(){
+  return [{key:'__no__', label:'No'}, ...kolomDef];
+}
+
 function defaultKolomTerpilih(){
   const prioritas = ['noPendaftaran','tglDaftar','nama','nisn','jk','sekolahAsal','hpOrtu','status'];
   const hasil = prioritas.map(p => kolomMap[p]).filter(Boolean);
-  return hasil.length ? hasil : kolomDef.slice(0, 6).map(k => k.key);
+  const dasar = hasil.length ? hasil : kolomDef.slice(0, 6).map(k => k.key);
+  return ['__no__', ...dasar];
 }
 
 /* Bangun field filter dinamis sesuai kolom yang terdeteksi */
@@ -687,50 +685,40 @@ function terapkanFilter(){
 }
 
 /* ───────────────────── RENDER TABEL ───────────────────── */
-function kolomTampilUtama(){
-  const prioritas = ['noPendaftaran','tglDaftar','nama','nisn','jk','sekolahAsal','hpOrtu','status'];
-  const hasil = prioritas.filter(p => kolomMap[p]);
-  if (hasil.length) return hasil;
-  return ['nama']; // fallback minimal
-}
-
-function labelKolom(key){
-  const def = kolomDef.find(k => k.key === key);
-  return def ? def.label : key;
-}
 
 function renderTabel(){
-  const kolomUtama = kolomTampilUtama();
   const thead = document.getElementById('theadRow');
-  thead.innerHTML = kolomUtama.map(k => `<th>${labelKolom(kolomMap[k])}</th>`).join('') + '<th>Aksi</th>';
+  thead.innerHTML = '<th>No</th>' + kolomDef.map(k => `<th>${escapeHtml(k.label)}</th>`).join('') + '<th>Aksi</th>';
 
   const tbody = document.getElementById('tbodyPpdb');
   const mulai = (halaman-1) * PER_HAL;
   const slice = dataTersaring.slice(mulai, mulai + PER_HAL);
+  const totalKolom = kolomDef.length + 2; // No + semua kolom sheet + Aksi
 
   if (!slice.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="${kolomUtama.length+1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Tidak ada data yang cocok dengan filter.</td></tr>`;
   } else {
     tbody.innerHTML = slice.map((row, i) => {
       const idxAsli = semuaData.indexOf(row);
-      const sel = kolomUtama.map(k => {
-        const val = row[kolomMap[k]] || '-';
-        if (k === 'jk') {
+      const noUrut = mulai + i + 1;
+      const sel = kolomDef.map(k => {
+        const val = row[k.key] || '-';
+        if (k.key === kolomMap.jk) {
           const up = val.toUpperCase();
           const cls = up.startsWith('L') ? 'jk-l' : (up.startsWith('P') ? 'jk-p' : '');
-          return `<td><span class="jk-pill ${cls}">${val}</span></td>`;
+          return `<td><span class="jk-pill ${cls}">${escapeHtml(val)}</span></td>`;
         }
-        if (k === 'status') {
+        if (k.key === kolomMap.status) {
           const up = val.toUpperCase();
           let cls = 'st-default';
           if (up.includes('PENDING')) cls = 'st-pending';
           else if (up.includes('TERIMA')) cls = 'st-diterima';
           else if (up.includes('TOLAK')) cls = 'st-ditolak';
-          return `<td><span class="status-pill ${cls}">${val}</span></td>`;
+          return `<td><span class="status-pill ${cls}">${escapeHtml(val)}</span></td>`;
         }
         return `<td>${escapeHtml(val)}</td>`;
       }).join('');
-      return `<tr>${sel}<td><button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})">Detail</button></td></tr>`;
+      return `<tr><td>${noUrut}</td>${sel}<td><button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})">Detail</button></td></tr>`;
     }).join('');
   }
 
@@ -791,7 +779,7 @@ function bukaModalKolom(){
 }
 function renderKolomGrid(){
   const grid = document.getElementById('kolomGrid');
-  grid.innerHTML = kolomDef.map(k => `
+  grid.innerHTML = kolomUnduhList().map(k => `
     <label class="kolom-item">
       <input type="checkbox" data-key="${k.key}" ${kolomTerpilih.has(k.key)?'checked':''}>
       <span>${escapeHtml(k.label)}</span>
@@ -814,12 +802,12 @@ function unduhExcel(){
   if (!kolomTerpilih.size) { tampilToast('Pilih minimal satu kolom dulu.', 'err'); return; }
   if (!dataTersaring.length) { tampilToast('Tidak ada data untuk diunduh (cek filter).', 'err'); return; }
 
-  const kolomUrut = kolomDef.filter(k => kolomTerpilih.has(k.key));
+  const kolomUrut = kolomUnduhList().filter(k => kolomTerpilih.has(k.key));
   const header = kolomUrut.map(k => k.label);
-  const rows = dataTersaring.map(row => kolomUrut.map(k => row[k.key] || ''));
+  const rows = dataTersaring.map((row, idx) => kolomUrut.map(k => k.key === '__no__' ? (idx + 1) : (row[k.key] || '')));
 
   const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-  ws['!cols'] = kolomUrut.map(() => ({wch: 20}));
+  ws['!cols'] = kolomUrut.map(k => k.key === '__no__' ? {wch: 6} : {wch: 20});
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Data PPDB');
 
