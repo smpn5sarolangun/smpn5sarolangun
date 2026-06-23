@@ -1008,7 +1008,7 @@ select.f-input{appearance:auto;}
     </div></div>
         <div><div class="fg">
       <label class="f-label">Tanggal Lahir Ayah <span class="req">*</span></label>
-      <input type="text" id="fTglAyah" class="f-input" placeholder="contoh: 1 Januari 1980" required>
+      <input type="text" id="fTglAyah" class="f-input" placeholder="contoh: 1 Januari 1980" required oninput="this.value=this.value.replace(/\b\w/g,c=>c.toUpperCase())">
     </div></div>
         <div><div class="fg">
       <label class="f-label">Pendidikan Terakhir Ayah <span class="req">*</span></label>
@@ -1032,7 +1032,7 @@ select.f-input{appearance:auto;}
       <select id="fPekAyah" class="f-input" required onchange="cekLain('fPekAyah')">
       <option value="">-- Pilih Pekerjaan --</option>
       <option value="Petani">Petani</option>
-<option value="PNS/TNI/Polri">PNS/TNI/Polri</option>
+<option value="PPPK/PNS/TNI/Polri">PPPK/PNS/TNI/Polri</option>
 <option value="Pegawai BUMN">Pegawai BUMN</option>
 <option value="Pegawai Honor">Pegawai Honor</option>
 <option value="Wiraswasta">Wiraswasta</option>
@@ -1075,7 +1075,7 @@ select.f-input{appearance:auto;}
     </div></div>
         <div><div class="fg">
       <label class="f-label">Tanggal Lahir Ibu <span class="req">*</span></label>
-      <input type="text" id="fTglIbu" class="f-input" placeholder="contoh: 1 Januari 1984" required>
+      <input type="text" id="fTglIbu" class="f-input" placeholder="contoh: 1 Januari 1984" required oninput="this.value=this.value.replace(/\b\w/g,c=>c.toUpperCase())">
     </div></div>
         <div><div class="fg">
       <label class="f-label">Pendidikan Terakhir Ibu <span class="req">*</span></label>
@@ -1099,7 +1099,7 @@ select.f-input{appearance:auto;}
       <select id="fPekIbu" class="f-input" required onchange="cekLain('fPekIbu')">
       <option value="">-- Pilih Pekerjaan --</option>
       <option value="Petani">Petani</option>
-<option value="PNS/TNI/Polri">PNS/TNI/Polri</option>
+<option value="PPPK/PNS/TNI/Polri">PPPK/PNS/TNI/Polri</option>
 <option value="Wiraswasta">Wiraswasta</option>
 <option value="Pegawai BUMN">Pegawai BUMN</option>
 <option value="Pegawai Honor">Pegawai Honor</option>
@@ -2211,6 +2211,7 @@ function kosongkanFormulir(){
   const form = document.getElementById('formPendaftaran') || document.querySelector('.card-form');
   if(form) form.scrollIntoView({behavior:'smooth', block:'start'});
   tampilError('');
+  sembunyiAlert();
   // Notifikasi singkat
   const btn = document.querySelector('button[onclick="kosongkanFormulir()"]');
   if(btn){ const ori=btn.textContent; btn.textContent='✅ Formulir dikosongkan'; setTimeout(()=>{ btn.textContent=ori; },2000); }
