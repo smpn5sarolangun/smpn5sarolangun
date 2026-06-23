@@ -56,8 +56,7 @@ body{
 
 /* PANEL KANAN: form login */
 .panel-kanan{flex:1;display:flex;flex-direction:column;justify-content:center;padding:56px 60px;}
-.judul{font-size:27px;font-weight:800;color:var(--teks);margin-bottom:6px;}
-.subjudul{font-size:13.5px;color:var(--teks-sub);margin-bottom:30px;}
+.judul{font-size:27px;font-weight:800;color:var(--teks);margin-bottom:28px;}
 
 label{display:block;font-size:11.5px;font-weight:800;color:var(--teks-sub);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.5px;}
 .field{margin-bottom:18px;}
@@ -101,7 +100,6 @@ input:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0
   margin-bottom:18px;line-height:1.4;
 }
 
-.footnote{text-align:center;font-size:11.5px;color:#9aabb8;margin-top:26px;line-height:1.6;}
 
 @media (max-width:760px){
   .shell{flex-direction:column;min-height:auto;border-radius:20px;}
@@ -126,7 +124,6 @@ input:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0
 
   <div class="panel-kanan">
     <div class="judul">Masuk ke SIMAS</div>
-    <div class="subjudul">Masuk dengan akun admin/operator untuk mengakses sistem</div>
 
     <div class="alert" id="alertBox"></div>
 
@@ -157,8 +154,6 @@ input:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0
         <span id="btnLabel">Masuk</span>
       </button>
     </form>
-
-    <div class="footnote">Hanya admin yang berwenang dapat mengakses sistem ini.<br>Sesi otomatis berakhir setelah 30 menit tidak aktif.</div>
   </div>
 
 </div>
