@@ -2200,6 +2200,11 @@ function kosongkanFormulir(){
     el.style.borderColor = '';
     el.style.background  = '';
   });
+  // Reset semua hint/pesan inline (hint_* dan span pesan error field)
+  document.querySelectorAll('[id^="hint_"], #hintPIPNomor').forEach(function(el){
+    el.textContent = '';
+    el.style.color = '';
+  });
   // Reset tampilan kondisional (wrap yg tersembunyi)
   ['fDesaLainWrap','fKecamatanLainWrap','fTinggalLainWrap','fTransportasiLainWrap','fSekolahLainWrap','pipNomorWrap'].forEach(function(id){
     const el = document.getElementById(id);
