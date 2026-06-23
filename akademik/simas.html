@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMAS — SMP Negeri 05 Sarolangun</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --biru:#0d3b6e;--biru-mid:#1a5ca8;--teal:#0a7e8c;--teal-light:#0fa3b1;
+  --hijau:#0f9d58;--hijau-light:#34a853;
+  --emas:#f0a500;--merah:#e53935;--ungu:#7d3c98;--orange:#e67e22;
+  --abu:#f5f7fa;--teks:#1e2a3a;--teks-sub:#5a6a7e;
+  --sidebar:264px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f4f8;color:var(--teks);overflow-x:hidden;}
+button,input,select{font-family:'Plus Jakarta Sans',sans-serif;}
+:focus-visible{outline:3px solid rgba(10,126,140,0.45);outline-offset:2px;}
+
+/* ── TOPBAR (gradien biru→ungu = identitas SIMAS sebagai induk platform) ── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:linear-gradient(135deg,var(--biru),var(--ungu));
+  height:64px;display:flex;align-items:center;padding:0 20px;
+  box-shadow:0 2px 16px rgba(0,0,0,0.2);gap:14px;
+}
+.hamburger{
+  display:none;width:36px;height:36px;border-radius:8px;border:none;
+  background:rgba(255,255,255,0.12);color:#fff;font-size:18px;cursor:pointer;
+  align-items:center;justify-content:center;
+}
+.topbar-mark{
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:16px;color:#fff;border:1.5px solid rgba(255,255,255,0.3);
+}
+.topbar-title{flex:1;min-width:0;}
+.topbar-title strong{display:block;font-size:15px;font-weight:800;color:#fff;letter-spacing:0.3px;}
+.topbar-title span{font-size:10.5px;color:rgba(255,255,255,0.72);font-weight:600;}
+.clock{
+  font-family:monospace;font-size:22px;font-weight:700;color:#fff;
+  letter-spacing:1.5px;text-shadow:0 0 20px rgba(255,255,255,0.3);
+}
+.date-box{background:rgba(0,0,0,0.18);border-radius:8px;padding:4px 12px;text-align:center;}
+.date-box .hari{font-size:10.5px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;}
+.date-box .tgl{font-size:12.5px;font-weight:700;color:#fff;}
+.topbar-user{display:flex;align-items:center;gap:8px;}
+.topbar-user .avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,0.18);display:flex;align-items:center;
+  justify-content:center;font-size:14px;font-weight:700;border:2px solid rgba(255,255,255,0.4);color:#fff;
+}
+.topbar-user span{font-size:12.5px;font-weight:700;color:#fff;}
+
+/* ── SIDEBAR ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:95;}
+.sidebar{
+  position:fixed;top:64px;left:0;bottom:0;
+  width:var(--sidebar);background:#fff;
+  box-shadow:2px 0 12px rgba(0,0,0,0.06);
+  overflow-y:auto;z-index:96;
+  display:flex;flex-direction:column;transition:transform 0.25s ease;
+}
+.akun-mini{
+  display:flex;align-items:center;gap:10px;padding:16px 20px;
+  border-bottom:1px solid #f0f4f8;
+}
+.akun-mini .av{
+  width:38px;height:38px;border-radius:50%;background:var(--abu);
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--biru);flex-shrink:0;
+}
+.akun-mini .nm{font-size:13px;font-weight:700;color:var(--teks);text-transform:capitalize;}
+.akun-mini .rl{font-size:11px;color:var(--teks-sub);}
+
+.sidebar-section{padding:16px 20px 8px;font-size:10.5px;font-weight:800;color:#9aabb8;text-transform:uppercase;letter-spacing:1px;}
+.nav-item{
+  display:flex;align-items:center;gap:12px;padding:11px 20px;
+  cursor:pointer;transition:all 0.15s;border-left:3px solid transparent;
+  font-size:13px;font-weight:600;color:var(--teks-sub);text-decoration:none;
+}
+.nav-item:hover{background:#f0f4f8;color:var(--teks);border-left-color:var(--teal-light);}
+.nav-item.active{background:#e8f6f8;color:var(--teal);font-weight:700;border-left-color:var(--teal);}
+.nav-item .nav-icon{font-size:17px;width:22px;text-align:center;flex-shrink:0;}
+.nav-item .nav-label{flex:1;}
+.nav-item.disabled{cursor:default;color:#b9c3cd;}
+.nav-item.disabled:hover{background:none;border-left-color:transparent;color:#b9c3cd;}
+.badge-segera{
+  font-size:9.5px;font-weight:800;color:#9aabb8;background:#eef1f5;
+  border-radius:5px;padding:2px 6px;letter-spacing:0.3px;flex-shrink:0;
+}
+.nav-ext{font-size:11px;color:#b9c3cd;flex-shrink:0;}
+
+.sidebar-logout{
+  margin-top:auto;padding:16px 20px;border-top:1px solid #f0f4f8;
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  font-size:13px;font-weight:700;color:var(--merah);transition:all 0.15s;
+}
+.sidebar-logout:hover{background:#fdecea;}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar);margin-top:64px;padding:24px;min-height:calc(100vh - 64px);}
+.page{display:none;}
+.page.active{display:block;}
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.page-head h1{font-size:20px;font-weight:800;color:var(--teks);}
+.page-head .sub{font-size:12.5px;color:var(--teks-sub);margin-top:3px;}
+
+.greet{font-size:18px;font-weight:800;color:var(--teks);}
+.greet-sub{font-size:12.5px;color:var(--teks-sub);margin-top:3px;margin-bottom:20px;}
+
+/* Stat cards */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:26px;}
+.stat-card{
+  background:#fff;border-radius:14px;padding:18px 20px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06);display:flex;align-items:center;gap:14px;
+}
+.stat-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.stat-num{font-size:25px;font-weight:800;line-height:1;}
+.stat-lbl{font-size:11.5px;color:var(--teks-sub);margin-top:2px;}
+
+/* Module map — signature element */
+.section-title{font-size:14px;font-weight:800;color:var(--teks);margin-bottom:4px;}
+.section-desc{font-size:12px;color:var(--teks-sub);margin-bottom:14px;}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+.module-card{
+  background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,0.06);
+  cursor:pointer;transition:all 0.15s;border:1.5px solid transparent;position:relative;
+}
+.module-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.1);}
+.module-card.disabled{cursor:default;opacity:0.62;}
+.module-card.disabled:hover{transform:none;box-shadow:0 2px 12px rgba(0,0,0,0.06);}
+.module-eyebrow{font-size:10px;font-weight:800;color:var(--teks-sub);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;}
+.module-icon{font-size:24px;margin-bottom:8px;}
+.module-name{font-size:14px;font-weight:800;color:var(--teks);margin-bottom:4px;}
+.module-desc{font-size:11.5px;color:var(--teks-sub);line-height:1.4;margin-bottom:12px;}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;padding:4px 9px;border-radius:20px;letter-spacing:0.3px;}
+.pill-aktif{background:#e6f8ed;color:var(--hijau);}
+.pill-segera{background:#eef1f5;color:#9aabb8;}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+/* Cards / filter bar */
+.card-box{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-bottom:18px;}
+.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end;}
+.filter-field label{display:block;font-size:11px;font-weight:700;color:var(--teks-sub);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.3px;}
+.filter-field input,.filter-field select{
+  width:100%;padding:9px 11px;border:1.5px solid #e8edf5;border-radius:9px;
+  font-size:13px;font-weight:600;color:var(--teks);background:#f8fafc;
+}
+.filter-field input:focus,.filter-field select:focus{outline:none;border-color:var(--teal);background:#fff;}
+.btn{
+  border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-teal:hover{background:#086975;}
+.btn-emas{background:var(--emas);color:#fff;}
+.btn-emas:hover{filter:brightness(0.95);}
+.btn-ghost{background:#f0f4f8;color:var(--teks-sub);}
+.btn-ghost:hover{background:#e4eaf0;}
+.btn-sm{padding:6px 11px;font-size:12px;}
+.btn:disabled{opacity:0.55;cursor:not-allowed;}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+.info-text{font-size:12.5px;color:var(--teks-sub);font-weight:600;}
+.info-text strong{color:var(--teks);}
+
+/* Table */
+.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;max-height:60vh;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:780px;}
+thead th{
+  position:sticky;top:0;background:var(--biru);color:#fff;text-align:left;
+  padding:11px 14px;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:0.3px;z-index:2;
+}
+tbody td{padding:10px 14px;border-bottom:1px solid #eef1f5;color:var(--teks);}
+tbody tr:hover{background:#f8fafc;}
+tbody tr:nth-child(even){background:#fafcfe;}
+tbody tr:nth-child(even):hover{background:#f3f7fa;}
+.empty-row td{text-align:center;padding:40px 14px;color:var(--teks-sub);font-size:13px;}
+.jk-pill{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:20px;}
+.jk-l{background:#e8f0fe;color:#1a5ca8;}
+.jk-p{background:#fde8f3;color:#ad1457;}
+.status-pill{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:0.2px;}
+.st-pending{background:#fff4e0;color:var(--emas);}
+.st-diterima{background:#e6f8ed;color:var(--hijau);}
+.st-ditolak{background:#fdecea;color:var(--merah);}
+.st-default{background:#eef1f5;color:var(--teks-sub);}
+
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;flex-wrap:wrap;}
+.page-btn{
+  min-width:34px;height:34px;border-radius:8px;border:1.5px solid #e8edf5;background:#fff;
+  font-size:12.5px;font-weight:700;color:var(--teks-sub);cursor:pointer;
+}
+.page-btn.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+.page-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* Modal */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(13,30,50,0.55);z-index:200;
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.active{display:flex;}
+.modal-box{
+  background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:85vh;
+  display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.3);
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f0f4f8;}
+.modal-head h3{font-size:15px;font-weight:800;color:var(--teks);}
+.modal-close{background:none;border:none;font-size:20px;color:var(--teks-sub);cursor:pointer;line-height:1;padding:4px;}
+.modal-body{padding:20px 22px;overflow-y:auto;flex:1;}
+.modal-foot{padding:16px 22px;border-top:1px solid #f0f4f8;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;}
+.detail-item .dl{font-size:10.5px;font-weight:800;color:#9aabb8;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:3px;}
+.detail-item .dv{font-size:13px;font-weight:600;color:var(--teks);word-break:break-word;}
+
+.kolom-toolbar{display:flex;gap:8px;margin-bottom:14px;}
+.kolom-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px;}
+.kolom-item{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;cursor:pointer;}
+.kolom-item:hover{background:#f8fafc;}
+.kolom-item input{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;}
+.kolom-item span{font-size:12.5px;font-weight:600;color:var(--teks);}
+
+/* Toast */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:10px;}
+.toast{
+  background:#fff;border-radius:10px;padding:12px 16px;box-shadow:0 8px 24px rgba(0,0,0,0.18);
+  font-size:13px;font-weight:600;color:var(--teks);max-width:300px;border-left:4px solid var(--teal);
+  animation:toastIn 0.2s ease;
+}
+.toast.err{border-left-color:var(--merah);}
+.toast.ok{border-left-color:var(--hijau);}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.skeleton{padding:40px;text-align:center;color:var(--teks-sub);font-size:13px;}
+.skeleton .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin:0 2px;animation:bounce 1.2s infinite ease-in-out;}
+.skeleton .dot:nth-child(2){animation-delay:0.15s;}
+.skeleton .dot:nth-child(3){animation-delay:0.3s;}
+@keyframes bounce{0%,80%,100%{transform:scale(0.7);opacity:0.5;}40%{transform:scale(1);opacity:1;}}
+
+@media (prefers-reduced-motion: reduce){
+  .module-card,.toast,.skeleton .dot{animation:none !important;transition:none !important;}
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width:900px){
+  .hamburger{display:flex;}
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-overlay.active{display:block;}
+  .main{margin-left:0;}
+  .clock{font-size:17px;}
+  .date-box{display:none;}
+  table{min-width:680px;}
+  .detail-grid{grid-template-columns:1fr;}
+}
+@media (max-width:480px){
+  .topbar-title span{display:none;}
+  .topbar-user span{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="hamburger" id="btnHamburger" aria-label="Buka menu">☰</button>
+  <div class="topbar-mark">S</div>
+  <div class="topbar-title">
+    <strong>SIMAS</strong>
+    <span>Sistem Informasi Manajemen Administrasi Sekolah</span>
+  </div>
+  <div class="date-box">
+    <div class="hari" id="sbHari">—</div>
+    <div class="tgl" id="sbTgl">—</div>
+  </div>
+  <div class="clock" id="jamTop">00:00:00</div>
+  <div class="topbar-user">
+    <div class="avatar" id="avatarTop">A</div>
+    <span id="usernameTop">Admin</span>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="sidebar" id="sidebar">
+  <div class="akun-mini">
+    <div class="av" id="avatarMini">A</div>
+    <div>
+      <div class="nm" id="usernameMini">Admin</div>
+      <div class="rl">Admin / Operator</div>
+    </div>
+  </div>
+
+  <div class="nav-item active" data-page="dashboard">
+    <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
+  </div>
+
+  <div class="sidebar-section">Kesiswaan</div>
+  <div class="nav-item" data-page="ppdb">
+    <span class="nav-icon">📋</span><span class="nav-label">Data PPDB</span>
+  </div>
+  <a class="nav-item" href="login.html" target="_blank" rel="noopener">
+    <span class="nav-icon">🗓️</span><span class="nav-label">Absensi Siswa</span><span class="nav-ext">↗</span>
+  </a>
+  <div class="nav-item disabled" data-soon="Pelanggaran & Pembinaan">
+    <span class="nav-icon">⚖️</span><span class="nav-label">Pelanggaran &amp; Pembinaan</span>
+    <span class="badge-segera">SEGERA</span>
+  </div>
+
+  <div class="sidebar-section">Akademik</div>
+  <div class="nav-item disabled" data-soon="Agenda Mengajar Guru">
+    <span class="nav-icon">📚</span><span class="nav-label">Agenda Mengajar Guru</span>
+    <span class="badge-segera">SEGERA</span>
+  </div>
+
+  <div class="sidebar-section">Kepegawaian</div>
+  <div class="nav-item disabled" data-soon="Data Guru & Pegawai">
+    <span class="nav-icon">🧑‍🏫</span><span class="nav-label">Data Guru &amp; Pegawai</span>
+    <span class="badge-segera">SEGERA</span>
+  </div>
+
+  <div class="sidebar-section">Publikasi</div>
+  <div class="nav-item disabled" data-soon="Galeri & Berita">
+    <span class="nav-icon">🖼️</span><span class="nav-label">Galeri &amp; Berita</span>
+    <span class="badge-segera">SEGERA</span>
+  </div>
+
+  <div class="sidebar-logout" id="btnLogout">
+    <span class="nav-icon">🚪</span><span>Keluar</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="page active" id="page-dashboard">
+    <div class="greet" id="greetText">Selamat datang 👋</div>
+    <div class="greet-sub" id="greetDate">—</div>
+
+    <div class="stats-row" id="statsRow">
+      <div class="skeleton" style="grid-column:1/-1;"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+
+    <div class="section-title">Peta Modul SIMAS</div>
+    <div class="section-desc">Status modul yang sudah aktif dan yang masih dalam pengembangan.</div>
+    <div class="module-grid" id="moduleGrid"></div>
+  </div>
+
+  <!-- ══ DATA PPDB ══ -->
+  <div class="page" id="page-ppdb">
+    <div class="page-head">
+      <div>
+        <h1>Data PPDB</h1>
+        <div class="sub">Sumber data: Google Sheets — sheet "Data PPDB"</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="btnRefreshPpdb">⟳ Muat Ulang</button>
+    </div>
+
+    <div class="card-box">
+      <div class="filter-grid" id="filterGrid">
+        <div class="filter-field">
+          <label>Cari</label>
+          <input type="text" id="fCari" placeholder="Nama / NISN / No. Pendaftaran">
+        </div>
+        <!-- field filter dinamis (status/jk/sekolah/tanggal) disisipkan via JS -->
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-teal btn-sm" id="btnTerapkanFilter">Terapkan Filter</button>
+        <button class="btn btn-ghost btn-sm" id="btnResetFilter">Reset</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="info-text" id="infoTampil">Memuat data…</div>
+      <button class="btn btn-emas btn-sm" id="btnBukaKolom">⬇ Pilih Kolom &amp; Unduh Excel</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="tabelPpdb">
+        <thead><tr id="theadRow"></tr></thead>
+        <tbody id="tbodyPpdb">
+          <tr class="empty-row"><td colspan="8">Memuat data dari sheet…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination" id="paginasi"></div>
+  </div>
+
+</div>
+
+<!-- ══ MODAL DETAIL ══ -->
+<div class="modal-overlay" id="modalDetail">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="detailTitle">Detail Pendaftar</h3>
+      <button class="modal-close" data-close="modalDetail">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid" id="detailGrid"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" data-close="modalDetail">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PILIH KOLOM UNDUH ══ -->
+<div class="modal-overlay" id="modalKolom">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Pilih Kolom untuk Diunduh</h3>
+      <button class="modal-close" data-close="modalKolom">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="kolom-toolbar">
+        <button class="btn btn-ghost btn-sm" id="btnPilihSemua">Pilih Semua</button>
+        <button class="btn btn-ghost btn-sm" id="btnBersihkan">Bersihkan</button>
+      </div>
+      <div class="kolom-grid" id="kolomGrid"></div>
+    </div>
+    <div class="modal-foot">
+      <span class="info-text" id="infoUnduh" style="margin-right:auto;align-self:center;">—</span>
+      <button class="btn btn-ghost btn-sm" data-close="modalKolom">Batal</button>
+      <button class="btn btn-emas btn-sm" id="btnUnduhSekarang">⬇ Unduh Excel (.xlsx)</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// EDIT: samakan dengan URL Apps Script (gabungan) yang sudah dipakai absensi
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
+// ══════════════════════════════════════════════════════
+
+let TOKEN = '';
+let kolomDef   = [];   // [{key,label}] sesuai header baris 1 sheet "Data PPDB"
+let semuaData  = [];   // seluruh baris (objek {key:value})
+let dataTersaring = [];
+let kolomMap   = {};   // hasil deteksi konsep -> key kolom (jk, status, sekolahAsal, tglDaftar, dst)
+let halaman    = 1;
+const PER_HAL  = 25;
+let kolomTerpilih = new Set();
+
+/* ───────────────────── SESI & INIT ───────────────────── */
+window.addEventListener('load', () => {
+  TOKEN = sessionStorage.getItem('simas_token');
+  const expiry = parseInt(sessionStorage.getItem('simas_expiry')||'0');
+  if (!TOKEN || Date.now() > expiry) {
+    window.location.href = 'simas-login.html';
+    return;
+  }
+  const user = sessionStorage.getItem('simas_user') || 'Admin';
+  document.getElementById('usernameTop').textContent  = user;
+  document.getElementById('usernameMini').textContent = user;
+  document.getElementById('avatarTop').textContent  = user.charAt(0).toUpperCase();
+  document.getElementById('avatarMini').textContent = user.charAt(0).toUpperCase();
+  document.getElementById('greetText').textContent = 'Selamat datang, ' + user + ' 👋';
+
+  jalankanJam();
+  setupNavigasi();
+  setupModal();
+  setupSidebarMobile();
+  renderModuleGrid();
+  muatDataPpdb();
+
+  // Cek sesi tiap 60 detik, auto logout kalau habis
+  setInterval(() => {
+    const exp = parseInt(sessionStorage.getItem('simas_expiry')||'0');
+    if (Date.now() > exp) {
+      tampilToast('Sesi berakhir, silakan masuk kembali.', 'err');
+      setTimeout(logout, 1200);
+    }
+  }, 60000);
+});
+
+function jalankanJam(){
+  const namaHari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  function tick(){
+    const now = new Date();
+    document.getElementById('jamTop').textContent = now.toLocaleTimeString('id-ID');
+    document.getElementById('sbHari').textContent = namaHari[now.getDay()];
+    document.getElementById('sbTgl').textContent  = now.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+    document.getElementById('greetDate').textContent = now.toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+/* ───────────────────── API HELPER ───────────────────── */
+async function apiGet(action, params={}){
+  const qs = new URLSearchParams({action, token:TOKEN, ...params}).toString();
+  const res = await fetch(`${SCRIPT_URL}?${qs}`);
+  return res.json();
+}
+
+/* ───────────────────── NAVIGASI ───────────────────── */
+function setupNavigasi(){
+  document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+    el.addEventListener('click', () => bukaHalaman(el.dataset.page));
+  });
+  document.querySelectorAll('.nav-item.disabled[data-soon]').forEach(el => {
+    el.addEventListener('click', () => tampilToast('Modul "' + el.dataset.soon + '" sedang dikembangkan.', 'info'));
+  });
+  document.getElementById('btnLogout').addEventListener('click', logout);
+}
+function bukaHalaman(nama){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + nama).classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(n => n.classList.toggle('active', n.dataset.page === nama));
+  tutupSidebarMobile();
+}
+function logout(){
+  sessionStorage.clear();
+  window.location.href = 'simas-login.html';
+}
+
+function setupSidebarMobile(){
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  document.getElementById('btnHamburger').addEventListener('click', () => {
+    sb.classList.add('open'); ov.classList.add('active');
+  });
+  ov.addEventListener('click', tutupSidebarMobile);
+}
+function tutupSidebarMobile(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+}
+
+/* ───────────────────── PETA MODUL (signature dashboard) ───────────────────── */
+const DAFTAR_MODUL = [
+  {kat:'Kesiswaan', nama:'Data PPDB', desk:'Lihat, filter, dan unduh data pendaftar PPDB.', icon:'📋', aktif:true, page:'ppdb'},
+  {kat:'Kesiswaan', nama:'Absensi Siswa', desk:'Buka sistem absensi siswa (aplikasi terpisah).', icon:'🗓️', aktif:true, href:'login.html'},
+  {kat:'Kesiswaan', nama:'Pelanggaran & Pembinaan', desk:'Catatan pelanggaran dan pembinaan siswa.', icon:'⚖️', aktif:false},
+  {kat:'Akademik', nama:'Agenda Mengajar Guru', desk:'Rekap kegiatan mengajar harian guru.', icon:'📚', aktif:false},
+  {kat:'Kepegawaian', nama:'Data Guru & Pegawai', desk:'Profil dan administrasi data pegawai.', icon:'🧑‍🏫', aktif:false},
+  {kat:'Publikasi', nama:'Galeri & Berita', desk:'Kelola galeri foto dan berita sekolah.', icon:'🖼️', aktif:false},
+];
+function renderModuleGrid(){
+  const grid = document.getElementById('moduleGrid');
+  grid.innerHTML = DAFTAR_MODUL.map(m => `
+    <div class="module-card ${m.aktif ? '' : 'disabled'}" data-nama="${m.nama}" data-page="${m.page||''}" data-href="${m.href||''}">
+      <div class="module-eyebrow">${m.kat}</div>
+      <div class="module-icon">${m.icon}</div>
+      <div class="module-name">${m.nama}</div>
+      <div class="module-desc">${m.desk}</div>
+      <span class="pill ${m.aktif ? 'pill-aktif' : 'pill-segera'}"><span class="pill-dot"></span>${m.aktif ? 'AKTIF' : 'SEGERA HADIR'}</span>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.module-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const aktif = !card.classList.contains('disabled');
+      if (!aktif) { tampilToast('Modul "' + card.dataset.nama + '" sedang dikembangkan.', 'info'); return; }
+      if (card.dataset.href) { window.open(card.dataset.href, '_blank'); return; }
+      if (card.dataset.page) bukaHalaman(card.dataset.page);
+    });
+  });
+}
+
+/* ───────────────────── MODAL ───────────────────── */
+function setupModal(){
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => tutupModal(btn.dataset.close));
+  });
+  document.querySelectorAll('.modal-overlay').forEach(ov => {
+    ov.addEventListener('click', e => { if (e.target === ov) tutupModal(ov.id); });
+  });
+  document.getElementById('btnBukaKolom').addEventListener('click', bukaModalKolom);
+  document.getElementById('btnPilihSemua').addEventListener('click', () => { kolomDef.forEach(k => kolomTerpilih.add(k.key)); renderKolomGrid(); });
+  document.getElementById('btnBersihkan').addEventListener('click', () => { kolomTerpilih.clear(); renderKolomGrid(); });
+  document.getElementById('btnUnduhSekarang').addEventListener('click', unduhExcel);
+}
+function bukaModal(id){ document.getElementById(id).classList.add('active'); }
+function tutupModal(id){ document.getElementById(id).classList.remove('active'); }
+
+/* ───────────────────── MUAT DATA PPDB ───────────────────── */
+async function muatDataPpdb(){
+  document.getElementById('tbodyPpdb').innerHTML = '<tr class="empty-row"><td colspan="8"><span class="dot"></span> Memuat data dari sheet…</td></tr>';
+  document.getElementById('infoTampil').textContent = 'Memuat data…';
+  try {
+    const r = await apiGet('getPPDBLengkap');
+    if (!r.ok) {
+      if (r.error && r.error.includes('Sesi')) { logout(); return; }
+      tampilToast('Gagal memuat data PPDB: ' + (r.error||'tidak diketahui'), 'err');
+      document.getElementById('tbodyPpdb').innerHTML = '<tr class="empty-row"><td colspan="8">Gagal memuat data. Coba muat ulang.</td></tr>';
+      return;
+    }
+    kolomDef  = r.kolom || [];
+    semuaData = r.data  || [];
+    deteksiKolom();
+    bangunFilterDinamis();
+    kolomTerpilih = new Set(defaultKolomTerpilih());
+    terapkanFilter();
+    perbaruiStatistik();
+    tampilToast('Data PPDB berhasil dimuat (' + semuaData.length + ' pendaftar).', 'ok');
+  } catch(err) {
+    tampilToast('Tidak bisa terhubung ke server.', 'err');
+    document.getElementById('tbodyPpdb').innerHTML = '<tr class="empty-row"><td colspan="8">Tidak bisa terhubung ke server.</td></tr>';
+  }
+}
+document.getElementById('btnRefreshPpdb').addEventListener('click', muatDataPpdb);
+
+/* Deteksi kolom penting berdasarkan judul header (case-insensitive, fleksibel) */
+function deteksiKolom(){
+  kolomMap = {};
+  const cocok = (label, kataKunci) => kataKunci.some(k => label.toLowerCase().includes(k));
+  kolomDef.forEach(k => {
+    const lbl = String(k.label||'');
+    if (!kolomMap.noPendaftaran && cocok(lbl, ['no. pendaftaran','no pendaftaran','nomor pendaftaran'])) kolomMap.noPendaftaran = k.key;
+    if (!kolomMap.tglDaftar     && cocok(lbl, ['tgl daftar','tanggal daftar']))                           kolomMap.tglDaftar = k.key;
+    if (!kolomMap.nama          && cocok(lbl, ['nama lengkap','nama siswa']))                             kolomMap.nama = k.key;
+    if (!kolomMap.nisn          && cocok(lbl, ['nisn']))                                                   kolomMap.nisn = k.key;
+    if (!kolomMap.jk            && cocok(lbl, ['jenis kelamin','jk']))                                     kolomMap.jk = k.key;
+    if (!kolomMap.sekolahAsal   && cocok(lbl, ['sekolah asal']))                                           kolomMap.sekolahAsal = k.key;
+    if (!kolomMap.status        && cocok(lbl, ['status']))                                                 kolomMap.status = k.key;
+    if (!kolomMap.hpOrtu        && cocok(lbl, ['hp ortu','hp orang tua','no hp','whatsapp','no. wa']))     kolomMap.hpOrtu = k.key;
+  });
+  // fallback nama -> kolom pertama yang ada isinya, kalau header generik
+  if (!kolomMap.nama && kolomDef.length) kolomMap.nama = kolomDef[Math.min(2, kolomDef.length-1)].key;
+}
+
+function defaultKolomTerpilih(){
+  const prioritas = ['noPendaftaran','tglDaftar','nama','nisn','jk','sekolahAsal','hpOrtu','status'];
+  const hasil = prioritas.map(p => kolomMap[p]).filter(Boolean);
+  return hasil.length ? hasil : kolomDef.slice(0, 6).map(k => k.key);
+}
+
+/* Bangun field filter dinamis sesuai kolom yang terdeteksi */
+function bangunFilterDinamis(){
+  const grid = document.getElementById('filterGrid');
+  // bersihkan field dinamis lama (selain "Cari")
+  grid.querySelectorAll('.filter-field[data-dinamis]').forEach(el => el.remove());
+
+  function nilaiUnik(key){
+    const set = new Set();
+    semuaData.forEach(r => { const v = String(r[key]||'').trim(); if (v) set.add(v); });
+    return Array.from(set).sort();
+  }
+  function tambahSelect(id, labelTxt, opsiList){
+    const wrap = document.createElement('div');
+    wrap.className = 'filter-field';
+    wrap.dataset.dinamis = '1';
+    wrap.innerHTML = `<label>${labelTxt}</label><select id="${id}"><option value="">Semua</option>${opsiList.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
+    grid.appendChild(wrap);
+  }
+  function tambahTanggal(idDari, idSampai, labelTxt){
+    const wrap1 = document.createElement('div'); wrap1.className='filter-field'; wrap1.dataset.dinamis='1';
+    wrap1.innerHTML = `<label>${labelTxt} — Dari</label><input type="date" id="${idDari}">`;
+    const wrap2 = document.createElement('div'); wrap2.className='filter-field'; wrap2.dataset.dinamis='1';
+    wrap2.innerHTML = `<label>${labelTxt} — Sampai</label><input type="date" id="${idSampai}">`;
+    grid.appendChild(wrap1); grid.appendChild(wrap2);
+  }
+
+  if (kolomMap.status)      tambahSelect('fStatus', 'Status', nilaiUnik(kolomMap.status));
+  if (kolomMap.jk)          tambahSelect('fJk', 'Jenis Kelamin', nilaiUnik(kolomMap.jk));
+  if (kolomMap.sekolahAsal) tambahSelect('fSekolah', 'Sekolah Asal', nilaiUnik(kolomMap.sekolahAsal));
+  if (kolomMap.tglDaftar)   tambahTanggal('fTglDari', 'fTglSampai', 'Tgl Daftar');
+
+  document.getElementById('btnTerapkanFilter').onclick = terapkanFilter;
+  document.getElementById('btnResetFilter').onclick = resetFilter;
+  document.getElementById('fCari').oninput = debounce(terapkanFilter, 300);
+}
+
+function debounce(fn, ms){
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+/* Parse "dd/MM/yyyy" atau "dd/MM/yyyy HH:mm:ss" jadi Date; null kalau gagal */
+function parseTglID(str){
+  if (!str) return null;
+  const m = String(str).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (!m) return null;
+  return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+}
+
+function resetFilter(){
+  document.getElementById('fCari').value = '';
+  document.querySelectorAll('#filterGrid select').forEach(s => s.value = '');
+  document.querySelectorAll('#filterGrid input[type=date]').forEach(i => i.value = '');
+  terapkanFilter();
+}
+
+function terapkanFilter(){
+  const cari     = (document.getElementById('fCari').value||'').toLowerCase().trim();
+  const fStatus  = document.getElementById('fStatus')  ? document.getElementById('fStatus').value  : '';
+  const fJk      = document.getElementById('fJk')      ? document.getElementById('fJk').value      : '';
+  const fSekolah = document.getElementById('fSekolah') ? document.getElementById('fSekolah').value : '';
+  const fTglDari   = document.getElementById('fTglDari')   ? document.getElementById('fTglDari').value   : '';
+  const fTglSampai = document.getElementById('fTglSampai') ? document.getElementById('fTglSampai').value : '';
+
+  dataTersaring = semuaData.filter(row => {
+    if (fStatus  && String(row[kolomMap.status]||'')      !== fStatus)  return false;
+    if (fJk      && String(row[kolomMap.jk]||'')          !== fJk)      return false;
+    if (fSekolah && String(row[kolomMap.sekolahAsal]||'') !== fSekolah) return false;
+
+    if ((fTglDari || fTglSampai) && kolomMap.tglDaftar) {
+      const d = parseTglID(row[kolomMap.tglDaftar]);
+      if (!d) return false;
+      if (fTglDari   && d < new Date(fTglDari))   return false;
+      if (fTglSampai && d > new Date(fTglSampai + 'T23:59:59')) return false;
+    }
+
+    if (cari) {
+      const gabung = Object.values(row).join(' ').toLowerCase();
+      if (!gabung.includes(cari)) return false;
+    }
+    return true;
+  });
+
+  halaman = 1;
+  renderTabel();
+}
+
+/* ───────────────────── RENDER TABEL ───────────────────── */
+function kolomTampilUtama(){
+  const prioritas = ['noPendaftaran','tglDaftar','nama','nisn','jk','sekolahAsal','hpOrtu','status'];
+  const hasil = prioritas.filter(p => kolomMap[p]);
+  if (hasil.length) return hasil;
+  return ['nama']; // fallback minimal
+}
+
+function labelKolom(key){
+  const def = kolomDef.find(k => k.key === key);
+  return def ? def.label : key;
+}
+
+function renderTabel(){
+  const kolomUtama = kolomTampilUtama();
+  const thead = document.getElementById('theadRow');
+  thead.innerHTML = kolomUtama.map(k => `<th>${labelKolom(kolomMap[k])}</th>`).join('') + '<th>Aksi</th>';
+
+  const tbody = document.getElementById('tbodyPpdb');
+  const mulai = (halaman-1) * PER_HAL;
+  const slice = dataTersaring.slice(mulai, mulai + PER_HAL);
+
+  if (!slice.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="${kolomUtama.length+1}">Tidak ada data yang cocok dengan filter.</td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map((row, i) => {
+      const idxAsli = semuaData.indexOf(row);
+      const sel = kolomUtama.map(k => {
+        const val = row[kolomMap[k]] || '-';
+        if (k === 'jk') {
+          const up = val.toUpperCase();
+          const cls = up.startsWith('L') ? 'jk-l' : (up.startsWith('P') ? 'jk-p' : '');
+          return `<td><span class="jk-pill ${cls}">${val}</span></td>`;
+        }
+        if (k === 'status') {
+          const up = val.toUpperCase();
+          let cls = 'st-default';
+          if (up.includes('PENDING')) cls = 'st-pending';
+          else if (up.includes('TERIMA')) cls = 'st-diterima';
+          else if (up.includes('TOLAK')) cls = 'st-ditolak';
+          return `<td><span class="status-pill ${cls}">${val}</span></td>`;
+        }
+        return `<td>${escapeHtml(val)}</td>`;
+      }).join('');
+      return `<tr>${sel}<td><button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})">Detail</button></td></tr>`;
+    }).join('');
+  }
+
+  document.getElementById('infoTampil').innerHTML =
+    `Menampilkan <strong>${slice.length}</strong> dari <strong>${dataTersaring.length}</strong> pendaftar (total ${semuaData.length})`;
+
+  renderPaginasi();
+}
+
+function renderPaginasi(){
+  const totalHal = Math.max(1, Math.ceil(dataTersaring.length / PER_HAL));
+  const wrap = document.getElementById('paginasi');
+  let html = `<button class="page-btn" ${halaman<=1?'disabled':''} onclick="gantiHalaman(${halaman-1})">‹</button>`;
+  const tampil = [];
+  for (let i=1;i<=totalHal;i++){
+    if (i===1 || i===totalHal || Math.abs(i-halaman)<=1) tampil.push(i);
+  }
+  let prev = 0;
+  tampil.forEach(i => {
+    if (prev && i - prev > 1) html += `<span class="page-btn" style="border:none;cursor:default;">…</span>`;
+    html += `<button class="page-btn ${i===halaman?'active':''}" onclick="gantiHalaman(${i})">${i}</button>`;
+    prev = i;
+  });
+  html += `<button class="page-btn" ${halaman>=totalHal?'disabled':''} onclick="gantiHalaman(${halaman+1})">›</button>`;
+  wrap.innerHTML = html;
+}
+function gantiHalaman(h){
+  const totalHal = Math.max(1, Math.ceil(dataTersaring.length / PER_HAL));
+  if (h<1 || h>totalHal) return;
+  halaman = h;
+  renderTabel();
+  document.querySelector('.table-wrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ───────────────────── DETAIL (semua kolom lengkap) ───────────────────── */
+function bukaDetail(idx){
+  const row = semuaData[idx];
+  if (!row) return;
+  const namaKey = kolomMap.nama;
+  document.getElementById('detailTitle').textContent = 'Detail — ' + (row[namaKey] || 'Pendaftar');
+  document.getElementById('detailGrid').innerHTML = kolomDef.map(k => `
+    <div class="detail-item">
+      <div class="dl">${escapeHtml(k.label)}</div>
+      <div class="dv">${escapeHtml(row[k.key] || '-')}</div>
+    </div>
+  `).join('');
+  bukaModal('modalDetail');
+}
+
+/* ───────────────────── PILIH KOLOM & UNDUH EXCEL ───────────────────── */
+function bukaModalKolom(){
+  renderKolomGrid();
+  bukaModal('modalKolom');
+}
+function renderKolomGrid(){
+  const grid = document.getElementById('kolomGrid');
+  grid.innerHTML = kolomDef.map(k => `
+    <label class="kolom-item">
+      <input type="checkbox" data-key="${k.key}" ${kolomTerpilih.has(k.key)?'checked':''}>
+      <span>${escapeHtml(k.label)}</span>
+    </label>
+  `).join('');
+  grid.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) kolomTerpilih.add(cb.dataset.key); else kolomTerpilih.delete(cb.dataset.key);
+      perbaruiInfoUnduh();
+    });
+  });
+  perbaruiInfoUnduh();
+}
+function perbaruiInfoUnduh(){
+  document.getElementById('infoUnduh').textContent =
+    kolomTerpilih.size + ' kolom dipilih · ' + dataTersaring.length + ' baris (sesuai filter aktif)';
+}
+
+function unduhExcel(){
+  if (!kolomTerpilih.size) { tampilToast('Pilih minimal satu kolom dulu.', 'err'); return; }
+  if (!dataTersaring.length) { tampilToast('Tidak ada data untuk diunduh (cek filter).', 'err'); return; }
+
+  const kolomUrut = kolomDef.filter(k => kolomTerpilih.has(k.key));
+  const header = kolomUrut.map(k => k.label);
+  const rows = dataTersaring.map(row => kolomUrut.map(k => row[k.key] || ''));
+
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+  ws['!cols'] = kolomUrut.map(() => ({wch: 20}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Data PPDB');
+
+  const now = new Date();
+  const stamp = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0')
+    + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
+  XLSX.writeFile(wb, `Data-PPDB-SIMAS-${stamp}.xlsx`);
+
+  tampilToast('File Excel berhasil diunduh.', 'ok');
+  tutupModal('modalKolom');
+}
+
+/* ───────────────────── STATISTIK DASHBOARD ───────────────────── */
+function perbaruiStatistik(){
+  const total = semuaData.length;
+  let lk = 0, pr = 0;
+  if (kolomMap.jk) {
+    semuaData.forEach(r => {
+      const v = String(r[kolomMap.jk]||'').toUpperCase();
+      if (v.startsWith('L')) lk++;
+      else if (v.startsWith('P')) pr++;
+    });
+  }
+  let sekolahTerbanyak = '-';
+  if (kolomMap.sekolahAsal) {
+    const cnt = {};
+    semuaData.forEach(r => { const v = String(r[kolomMap.sekolahAsal]||'').trim(); if (v) cnt[v] = (cnt[v]||0)+1; });
+    const top = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+    if (top) sekolahTerbanyak = top[0] + ' (' + top[1] + ')';
+  }
+
+  const kartu = [
+    {icon:'👥', warna:'#0d3b6e', bg:'#e8f0fe', label:'Total Pendaftar PPDB', val: total},
+  ];
+  if (kolomMap.jk) {
+    kartu.push({icon:'👦', warna:'#1a5ca8', bg:'#e8f0fe', label:'Laki-laki', val: lk});
+    kartu.push({icon:'👧', warna:'#ad1457', bg:'#fde8f3', label:'Perempuan', val: pr});
+  }
+  if (kolomMap.sekolahAsal) {
+    kartu.push({icon:'🏫', warna:'#0a7e8c', bg:'#e8f6f8', label:'Sekolah Asal Terbanyak', val: sekolahTerbanyak, kecil:true});
+  }
+
+  document.getElementById('statsRow').innerHTML = kartu.map(k => `
+    <div class="stat-card">
+      <div class="stat-icon" style="background:${k.bg};color:${k.warna};">${k.icon}</div>
+      <div>
+        <div class="${k.kecil ? '' : 'stat-num'}" style="${k.kecil ? 'font-size:14px;font-weight:800;color:'+k.warna+';' : 'color:'+k.warna+';'}">${k.val}</div>
+        <div class="stat-lbl">${k.label}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ───────────────────── TOAST ───────────────────── */
+function tampilToast(msg, tipe){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast' + (tipe==='err' ? ' err' : (tipe==='ok' ? ' ok' : ''));
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+</script>
+</body>
+</html>

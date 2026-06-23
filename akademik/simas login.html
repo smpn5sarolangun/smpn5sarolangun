@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masuk — SIMAS SMP Negeri 05 Sarolangun</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --biru:#0d3b6e;--biru-mid:#1a5ca8;--teal:#0a7e8c;--teal-light:#0fa3b1;
+  --ungu:#7d3c98;--emas:#f0a500;--merah:#e53935;
+  --abu:#f5f7fa;--teks:#1e2a3a;--teks-sub:#5a6a7e;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Plus Jakarta Sans',sans-serif;color:var(--teks);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--biru) 0%, var(--teal) 55%, var(--ungu) 100%);
+  padding:24px;
+}
+
+.shell{
+  width:100%;max-width:960px;min-height:560px;border-radius:26px;overflow:hidden;
+  display:flex;box-shadow:0 30px 70px rgba(13,59,110,0.4);background:#fff;
+}
+
+/* PANEL KIRI: identitas sekolah */
+.panel-kiri{
+  flex:0 0 42%;position:relative;overflow:hidden;
+  background:linear-gradient(150deg,var(--biru) 10%,var(--teal) 60%,var(--ungu) 130%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:48px 32px;color:#fff;
+}
+.panel-kiri::before{
+  content:'';position:absolute;top:-70px;left:-70px;width:220px;height:220px;border-radius:50%;
+  background:rgba(255,255,255,0.07);
+}
+.panel-kiri::after{
+  content:'';position:absolute;bottom:-90px;right:-60px;width:260px;height:260px;border-radius:50%;
+  background:rgba(255,255,255,0.06);
+}
+.logo-circle{
+  width:118px;height:118px;border-radius:50%;background:rgba(255,255,255,0.14);
+  border:2px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;
+  margin-bottom:24px;position:relative;z-index:1;
+}
+.logo-circle span{font-size:46px;font-weight:800;color:#fff;}
+.sekolah-nama{font-size:21px;font-weight:800;position:relative;z-index:1;margin-bottom:8px;}
+.sekolah-sub{font-size:13px;font-weight:500;color:rgba(255,255,255,0.82);line-height:1.5;position:relative;z-index:1;max-width:240px;}
+.npsn-pill{
+  margin-top:22px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.18);
+  border-radius:20px;padding:7px 16px;font-size:11.5px;font-weight:700;color:rgba(255,255,255,0.9);
+  letter-spacing:0.2px;position:relative;z-index:1;
+}
+
+/* PANEL KANAN: form login */
+.panel-kanan{flex:1;display:flex;flex-direction:column;justify-content:center;padding:56px 60px;}
+.judul{font-size:27px;font-weight:800;color:var(--teks);margin-bottom:6px;}
+.subjudul{font-size:13.5px;color:var(--teks-sub);margin-bottom:30px;}
+
+label{display:block;font-size:11.5px;font-weight:800;color:var(--teks-sub);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.5px;}
+.field{margin-bottom:18px;}
+.input-wrap{position:relative;display:flex;align-items:center;}
+.input-icon{
+  position:absolute;left:14px;display:flex;align-items:center;justify-content:center;
+  width:18px;height:18px;pointer-events:none;
+}
+input{
+  width:100%;padding:13px 14px 13px 42px;border:1.5px solid #e8edf5;border-radius:11px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;
+  color:var(--teks);background:#f8fafc;transition:all 0.15s;
+}
+input:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(10,126,140,0.12);}
+.toggle-pw{
+  position:absolute;right:12px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;background:none;border:none;padding:6px;color:var(--teks-sub);border-radius:6px;
+}
+.toggle-pw:hover{color:var(--teal);background:#f0f4f8;}
+
+.btn-masuk{
+  width:100%;padding:14px;border:none;border-radius:11px;margin-top:8px;
+  background:linear-gradient(135deg,var(--biru),var(--ungu));color:#fff;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;transition:all 0.15s;letter-spacing:0.2px;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+}
+.btn-masuk:hover{filter:brightness(1.08);}
+.btn-masuk:disabled{opacity:0.65;cursor:not-allowed;}
+
+.spinner{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;
+  animation:spin 0.7s linear infinite;display:none;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.alert{
+  display:none;background:#fdecea;border:1px solid #f6c4c0;color:var(--merah);
+  font-size:12.5px;font-weight:600;border-radius:9px;padding:11px 13px;
+  margin-bottom:18px;line-height:1.4;
+}
+
+.footnote{text-align:center;font-size:11.5px;color:#9aabb8;margin-top:26px;line-height:1.6;}
+
+@media (max-width:760px){
+  .shell{flex-direction:column;min-height:auto;border-radius:20px;}
+  .panel-kiri{padding:34px 24px;}
+  .logo-circle{width:84px;height:84px;margin-bottom:16px;}
+  .logo-circle span{font-size:32px;}
+  .sekolah-nama{font-size:18px;}
+  .panel-kanan{padding:38px 28px;}
+  .judul{font-size:23px;}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <div class="panel-kiri">
+    <div class="logo-circle"><span>S</span></div>
+    <div class="sekolah-nama">SMP Negeri 05 Sarolangun</div>
+    <div class="sekolah-sub">SIMAS — Sistem Informasi Manajemen Administrasi Sekolah</div>
+    <div class="npsn-pill">NPSN: 10503760 &nbsp;|&nbsp; Akreditasi: B</div>
+  </div>
+
+  <div class="panel-kanan">
+    <div class="judul">Masuk ke SIMAS</div>
+    <div class="subjudul">Masuk dengan akun admin/operator untuk mengakses sistem</div>
+
+    <div class="alert" id="alertBox"></div>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="username">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon" style="color:var(--ungu);">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path></svg>
+          </span>
+          <input type="text" id="username" name="username" placeholder="Masukkan username" autocomplete="username" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon" style="color:var(--emas);">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg>
+          </span>
+          <input type="password" id="password" name="password" placeholder="Masukkan password" autocomplete="current-password" required style="padding-right:42px;">
+          <button type="button" class="toggle-pw" id="togglePw" aria-label="Tampilkan password">
+            <svg id="iconMata" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn-masuk" id="btnMasuk">
+        <span class="spinner" id="spinner"></span>
+        <span id="btnLabel">Masuk</span>
+      </button>
+    </form>
+
+    <div class="footnote">Hanya admin yang berwenang dapat mengakses sistem ini.<br>Sesi otomatis berakhir setelah 30 menit tidak aktif.</div>
+  </div>
+
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
+
+const form     = document.getElementById('loginForm');
+const alertBox = document.getElementById('alertBox');
+const btnMasuk = document.getElementById('btnMasuk');
+const spinner  = document.getElementById('spinner');
+const btnLabel = document.getElementById('btnLabel');
+
+const ICON_MATA_BUKA  = '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle>';
+const ICON_MATA_TUTUP = '<path d="M17.94 17.94A10.94 10.94 0 0112 19c-7 0-11-7-11-7a18.6 18.6 0 015.06-5.94"></path><path d="M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 7 11 7a18.6 18.6 0 01-2.16 3.19"></path><path d="M14.12 14.12a3 3 0 11-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+
+(function cekSesiAktif(){
+  const token  = sessionStorage.getItem('simas_token');
+  const expiry = parseInt(sessionStorage.getItem('simas_expiry')||'0');
+  if (token && Date.now() < expiry) {
+    window.location.href = 'simas.html';
+  }
+})();
+
+document.getElementById('togglePw').addEventListener('click', function(){
+  const pw = document.getElementById('password');
+  const icon = document.getElementById('iconMata');
+  const show = pw.type === 'password';
+  pw.type = show ? 'text' : 'password';
+  icon.innerHTML = show ? ICON_MATA_TUTUP : ICON_MATA_BUKA;
+  this.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+});
+
+function tampilError(msg){
+  alertBox.textContent = msg;
+  alertBox.style.display = 'block';
+}
+function sembunyikanError(){
+  alertBox.style.display = 'none';
+}
+function setLoading(loading){
+  btnMasuk.disabled = loading;
+  spinner.style.display = loading ? 'inline-block' : 'none';
+  btnLabel.textContent = loading ? 'Memeriksa…' : 'Masuk';
+}
+
+form.addEventListener('submit', async function(e){
+  e.preventDefault();
+  sembunyikanError();
+
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+  if (!username || !password) { tampilError('Username dan password wajib diisi'); return; }
+
+  setLoading(true);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 35000);
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'login', username, password }),
+      signal: controller.signal
+    });
+    const r = await res.json();
+
+    if (r && r.ok && r.token) {
+      sessionStorage.setItem('simas_token', r.token);
+      sessionStorage.setItem('simas_user', r.username || username);
+      sessionStorage.setItem('simas_expiry', String(Date.now() + (r.expiry || 30) * 60 * 1000));
+      window.location.href = 'simas.html';
+    } else {
+      tampilError((r && r.error) || 'Username atau password salah');
+      setLoading(false);
+    }
+  } catch (err) {
+    tampilError('Tidak bisa terhubung ke server. Periksa koneksi internet dan coba lagi.');
+    setLoading(false);
+  } finally {
+    clearTimeout(timer);
+  }
+});
+</script>
+</body>
+</html>
