@@ -407,7 +407,7 @@ td.editing { background: #f0f7ff !important; }
   tbody td{padding:8px 10px;}
 
   /* Kolom sticky nama: lebih sempit */
-  th.col-sticky-nama,td.col-sticky-nama{left:40px;}
+  th.col-sticky-nama,td.col-sticky-nama{left:40px !important;}
   td.col-sticky-no{min-width:40px !important;}
   .nama-cell{display:inline-block;max-width:108px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;}
 
@@ -993,11 +993,6 @@ function renderTabel(){
   const totalKolom = kolomTampil.length + 4; // No + kolom data + Berkas + DaftarUlang + Aksi
 
   const currentUser = sessionStorage.getItem('simas_user') || '';
-  const isPanitia = ROLE === 'panitia_ppdb';
-  const verifikatoOpts = [...new Map([
-    { nama: currentUser, username: currentUser },
-    ...daftarPanitia
-  ].filter(p => p.nama).map(p => [p.nama, p])).values()];
 
   const BERKAS_OPTS = ['Belum Mengumpulkan','Belum Lengkap','Lengkap'];
   const BERKAS_CLS  = {'Belum Mengumpulkan':'st-ditolak','Belum Lengkap':'st-verifikasi','Lengkap':'st-diterima'};
@@ -1020,7 +1015,7 @@ function renderTabel(){
       const noPendaftaran = keyNoPendaftaran ? (row[keyNoPendaftaran] || '') : '';
 
       const statusSkrg      = keyStatusVrf   ? (row[keyStatusVrf] || '') : '';
-      const verifikatoSkrg  = isPanitia ? currentUser : (keyVerifikator ? (row[keyVerifikator] || '') : '');
+      const verifikatoSkrg  = keyVerifikator ? (row[keyVerifikator] || '') : '';
       const tglAksiSkrg     = keyTglAksi     ? (row[keyTglAksi] || '') : '';
       const berkasSkrg      = keyBerkasRow !== '__berkas__' ? (row[keyBerkasRow] || 'Belum Mengumpulkan') : (berkasLokal[idxAsli] || 'Belum Mengumpulkan');
       const daftarUlangSkrg = keyDaftarUlangRow !== '__daftarulang__' ? (row[keyDaftarUlangRow] || 'Belum Daftar Ulang') : (daftarUlangLokal[idxAsli] || 'Belum Daftar Ulang');
@@ -1036,13 +1031,8 @@ function renderTabel(){
         `<option value="${d}" ${daftarUlangSkrg === d ? 'selected' : ''}>${d}</option>`
       ).join('');
 
-      const vrfField = isPanitia
-        ? `<input type="hidden" id="vrf-${idxAsli}" value="${escapeHtml(currentUser)}">
-           <span style="font-size:11px;font-weight:600;color:var(--teks-sub);background:#eef1f5;padding:5px 8px;border-radius:7px;white-space:nowrap;">${escapeHtml(currentUser)}</span>`
-        : `<select class="aksi-select vrf-select" id="vrf-${idxAsli}">
-             <option value="">— Verifikator —</option>
-             ${verifikatoOpts.map(p => `<option value="${escapeHtml(p.nama)}" ${verifikatoSkrg === p.nama ? 'selected' : ''}>${escapeHtml(p.nama)}</option>`).join('')}
-           </select>`;
+      const vrfField = `<input type="hidden" id="vrf-${idxAsli}" value="${escapeHtml(currentUser)}">
+           <span style="font-size:11px;font-weight:600;color:var(--teks-sub);background:#eef1f5;padding:5px 8px;border-radius:7px;white-space:nowrap;">${escapeHtml(currentUser)}</span>`;
 
       const stampHtml = tglAksiSkrg
         ? `<span class="aksi-stamp" title="${escapeHtml(verifikatoSkrg)} · ${escapeHtml(tglAksiSkrg)}">✓ ${escapeHtml(tglAksiSkrg)}</span>`
