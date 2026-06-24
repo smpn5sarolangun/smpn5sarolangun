@@ -247,7 +247,7 @@ td.col-sticky-nama { box-shadow:3px 0 6px rgba(0,0,0,0.06); }
 thead th.col-sticky-no { z-index:4; }
 thead th.col-sticky-nama { z-index:4; }
 
-tbody td{padding:10px 14px;border-bottom:1px solid #eef1f5;color:var(--teks);white-space:nowrap;}
+tbody td{padding:7px 12px;border-bottom:1px solid #eef1f5;color:var(--teks);white-space:nowrap;}
 tbody tr:hover{background:#f0f7ff;}
 tbody tr:nth-child(even){background:#fafcfe;}
 tbody tr:nth-child(even):hover{background:#eaf4ff;}
@@ -559,11 +559,12 @@ td.editing { background: #f0f7ff !important; }
             <th><div class="th-inner" data-status-sort="sekolah" style="cursor:pointer;">Sekolah Asal <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="status" style="cursor:pointer;">Status Verifikasi <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="berkas" style="cursor:pointer;">Berkas <span class="sort-icon">⇅</span></div></th>
+            <th><div class="th-inner" data-status-sort="verifikator" style="cursor:pointer;">Verifikator <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="daftarUlang" style="cursor:pointer;">Daftar Ulang <span class="sort-icon">⇅</span></div></th>
           </tr>
         </thead>
         <tbody id="tbodyStatus">
-          <tr class="empty-row"><td colspan="7">Memuat data…</td></tr>
+          <tr class="empty-row"><td colspan="8">Memuat data…</td></tr>
         </tbody>
       </table>
     </div>
@@ -1239,6 +1240,7 @@ function renderStatusPpdb() {
   const keyBerkas        = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '__berkas__';
   const keyDaftarUlang   = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '__daftarulang__';
   const keySekolah       = kolomMap.sekolahAsal || '';
+  kolomMap.verifikatorCol = kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
 
   // Hitung rangkuman
   let belumVerifikasi = 0, sudahVerifikasi = 0;
@@ -1290,6 +1292,7 @@ function renderStatusPpdb() {
     sekolah:    keySekolah ? (row[keySekolah] || '-') : '-',
     status:     (v => (!v || v === 'Terdaftar') ? 'Belum Verifikasi' : v)(String(keyStatusVrf ? (row[keyStatusVrf] || '') : '').trim()),
     berkas:     keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan'),
+    verifikator: kolomMap.verifikatorCol ? (row[kolomMap.verifikatorCol] || '') : '',
     daftarUlang: keyDaftarUlang !== '__daftarulang__' ? (row[keyDaftarUlang] || 'Belum Daftar Ulang') : (daftarUlangLokal[idx] || 'Belum Daftar Ulang'),
   }));
 
@@ -1348,6 +1351,7 @@ function renderStatusPpdb() {
       <td>${escapeHtml(d.noPend)}</td>
       <td>${escapeHtml(d.sekolah)}</td>
       <td><span class="status-pill ${stCls}">${escapeHtml(d.status)}</span></td>
+      <td>${escapeHtml(d.verifikator) || '<span style="color:#b9c3cd;">—</span>'}</td>
       <td><span class="status-pill ${bkCls}">${escapeHtml(d.berkas)}</span></td>
       <td><span class="status-pill ${duCls}">${escapeHtml(d.daftarUlang)}</span></td>
     </tr>`;
