@@ -773,7 +773,9 @@ function setupSidebarMobile(){
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('sidebarOverlay');
   document.getElementById('btnHamburger').addEventListener('click', () => {
-    sb.classList.add('open'); ov.classList.add('active');
+    const sedangTerbuka = sb.classList.contains('open');
+    sb.classList.toggle('open', !sedangTerbuka);
+    ov.classList.toggle('active', !sedangTerbuka);
   });
   ov.addEventListener('click', tutupSidebarMobile);
 }
