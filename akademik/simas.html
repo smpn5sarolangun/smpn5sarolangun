@@ -977,7 +977,8 @@ function renderTabel(){
     '<th><div class="th-inner" style="cursor:default;">Daftar Ulang</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Verifikator Daftar Ulang</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Tgl Daftar Ulang</div></th>' +
-    '<th><div class="th-inner" style="cursor:default;">Edit/Simpan</div></th>';
+    '<th><div class="th-inner" style="cursor:default;">Edit</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Simpan</div></th>';
 
   // Attach sort listeners
   thead.querySelectorAll('th[data-sort-key]').forEach(th => {
@@ -1005,7 +1006,7 @@ function renderTabel(){
   }
 
   const tbody = document.getElementById('tbodyPpdb');
-  const totalKolom = kolomTampil.length + 8; // No + kolom data + Berkas + DaftarUlang + Verifikator + TglVerif + Aksi + VerifikatorDU + TglDU + EditSimpan
+  const totalKolom = kolomTampil.length + 9; // No + kolom data + Berkas + DaftarUlang + Verifikator + TglVerif + Aksi + VerifikatorDU + TglDU + Edit + Simpan
 
   const currentUser = sessionStorage.getItem('simas_user') || '';
 
@@ -1105,20 +1106,21 @@ function renderTabel(){
       const vrfDuField = `<input type="hidden" id="vrf-du-${idxAsli}" value="${escapeHtml(vrfDuTampil)}">
            <span style="font-size:11px;font-weight:600;color:var(--teks-sub);background:#eef1f5;padding:5px 8px;border-radius:7px;white-space:nowrap;">${escapeHtml(vrfDuTampil)}</span>`;
 
+      const berkasBg = berkasSkrg==='Lengkap' ? '#c3e6cb' : berkasSkrg==='Belum Lengkap' ? '#ffeeba' : '#f5c6cb';
+      const duBg = daftarUlangSkrg==='Sudah Daftar Ulang' ? '#c3e6cb' : '#f5c6cb';
+
       return `<tr id="row-${idxAsli}">
         <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${noUrut}</td>${selHtml}
-        <td style="background:${berkasSkrg==='Lengkap'?'#d4edda':berkasSkrg==='Belum Lengkap'?'#fff3cd':'#fdecea'};">
+        <td style="background:${berkasBg};">
           <select class="aksi-select berkas-select" id="brk-${idxAsli}" onchange="simpanBerkas(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
             ${berkasOptions}
           </select>
         </td>
-        <td style="min-width:200px;">
+        <td style="min-width:160px;">
           <div class="aksi-panel">
             <select class="aksi-select st-select" id="st-${idxAsli}">
               <option value="">— Status —</option>${stOptions}
             </select>
-            <button class="btn-ghost btn btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
-            <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
           </div>
         </td>
         <td style="min-width:140px;">
@@ -1127,11 +1129,10 @@ function renderTabel(){
         <td style="min-width:110px;">
           ${stampHtml}
         </td>
-        <td style="background:${daftarUlangSkrg==='Sudah Daftar Ulang'?'#d4edda':'#fdecea'};">
+        <td style="background:${duBg};">
           <select class="aksi-select berkas-select" id="du-${idxAsli}" onchange="simpanDaftarUlang(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
             ${daftarUlangOptions}
           </select>
-          ${duStampHtml}
         </td>
         <td style="min-width:140px;">
           ${vrfDuField}
@@ -1139,8 +1140,12 @@ function renderTabel(){
         <td style="min-width:110px;">
           <span class="aksi-stamp" id="tgl-du-stamp-${idxAsli}" style="font-size:10px;">${tglDuSkrg ? '✓ ' + escapeHtml(tglDuSkrg) : ''}</span>
         </td>
-        <td style="min-width:110px;white-space:nowrap;">
+        <td style="min-width:130px;white-space:nowrap;">
           ${editBtnHtml}
+          <button class="btn-ghost btn btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;margin-left:4px;">Detail</button>
+        </td>
+        <td style="min-width:90px;white-space:nowrap;">
+          <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
         </td>
       </tr>`;
     }).join('');
