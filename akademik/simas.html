@@ -105,7 +105,10 @@ body.role-panitia .admin-only { display: none !important; }
 
 /* ── AKSI PPDB INLINE ── */
 .aksi-panel {
-  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 320px;
+  display: flex; flex-direction: column; gap: 5px; min-width: 270px;
+}
+.aksi-panel-row {
+  display: flex; gap: 5px; align-items: center; flex-wrap: wrap;
 }
 .aksi-select {
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -176,6 +179,8 @@ body.role-panitia .admin-only { display: none !important; }
 .pill-segera{background:#eef1f5;color:#9aabb8;}
 .pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
 
+.main{margin-left:var(--sidebar);padding:84px 28px 32px;min-height:100vh;}
+
 /* Cards / filter bar */
 .card-box{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-bottom:18px;}
 .filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end;}
@@ -203,17 +208,27 @@ body.role-panitia .admin-only { display: none !important; }
 .info-text strong{color:var(--teks);}
 
 /* Table */
-.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;max-height:60vh;}
+.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;}
 table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:780px;}
 thead th{
   position:sticky;top:0;background:var(--biru);color:#fff;text-align:left;
-  padding:11px 14px;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:0.3px;z-index:2;
+  padding:0;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:0.3px;z-index:2;
   white-space:nowrap;
 }
+thead th .th-inner{
+  display:flex;align-items:center;gap:6px;padding:11px 14px;cursor:pointer;
+  user-select:none;transition:background 0.12s;
+}
+thead th .th-inner:hover{background:rgba(255,255,255,0.12);}
+thead th .sort-icon{font-size:10px;opacity:0.55;flex-shrink:0;transition:opacity 0.12s;}
+thead th.sorted-asc .sort-icon,
+thead th.sorted-desc .sort-icon{opacity:1;}
+thead th.th-no .th-inner{cursor:default;}
+thead th.th-no .th-inner:hover{background:none;}
 tbody td{padding:10px 14px;border-bottom:1px solid #eef1f5;color:var(--teks);white-space:nowrap;}
-tbody tr:hover{background:#f8fafc;}
+tbody tr:hover{background:#f0f7ff;}
 tbody tr:nth-child(even){background:#fafcfe;}
-tbody tr:nth-child(even):hover{background:#f3f7fa;}
+tbody tr:nth-child(even):hover{background:#eaf4ff;}
 .empty-row td{text-align:center;padding:40px 14px;color:var(--teks-sub);font-size:13px;}
 .jk-pill{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:20px;}
 .jk-l{background:#e8f0fe;color:#1a5ca8;}
@@ -223,14 +238,6 @@ tbody tr:nth-child(even):hover{background:#f3f7fa;}
 .st-diterima{background:#e6f8ed;color:var(--hijau);}
 .st-ditolak{background:#fdecea;color:var(--merah);}
 .st-default{background:#eef1f5;color:var(--teks-sub);}
-
-.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;flex-wrap:wrap;}
-.page-btn{
-  min-width:34px;height:34px;border-radius:8px;border:1.5px solid #e8edf5;background:#fff;
-  font-size:12.5px;font-weight:700;color:var(--teks-sub);cursor:pointer;
-}
-.page-btn.active{background:var(--teal);color:#fff;border-color:var(--teal);}
-.page-btn:disabled{opacity:0.4;cursor:not-allowed;}
 
 /* Modal */
 .modal-overlay{
@@ -377,7 +384,7 @@ tbody tr:nth-child(even):hover{background:#f3f7fa;}
       </table>
     </div>
 
-    <div class="pagination" id="paginasi"></div>
+    <div class="info-summary" id="infoSummary" style="margin-top:12px;font-size:12px;color:var(--teks-sub);font-weight:600;text-align:right;padding:0 4px;"></div>
   </div>
 
 </div>
@@ -457,6 +464,8 @@ let dataTersaring = [];
 let kolomMap   = {};   // hasil deteksi konsep -> key kolom (jk, status, sekolahAsal, tglDaftar, dst)
 let halaman    = 1;
 const PER_HAL  = 25;
+let sortKey    = null;   // key kolom yang sedang diurutkan
+let sortAsc    = true;   // arah urutan
 let kolomTerpilih = new Set();      // kolom yang dipilih untuk DIUNDUH (Excel)
 let kolomTampilTerpilih = new Set(); // kolom yang dipilih untuk DITAMPILKAN di tabel (default: semua)
 let daftarPanitia = []; // [{nama, username}] untuk dropdown verifikator
@@ -636,6 +645,7 @@ async function muatDataPpdb(){
     kolomTerpilih = new Set(defaultKolomTerpilih());       // default kolom untuk diunduh
     kolomTampilTerpilih = new Set(kolomDef.map(k => k.key)); // default: semua kolom ditampilkan
     dataTersaring = semuaData; // tidak ada filter baris lagi — selalu seluruh data
+    sortKey = null; sortAsc = true;
     halaman = 1;
     renderTabel();
     perbaruiStatistik();
@@ -700,11 +710,48 @@ function getStatusCls(val) {
 function renderTabel(){
   const kolomTampil = kolomDef.filter(k => kolomTampilTerpilih.has(k.key));
   const thead = document.getElementById('theadRow');
-  thead.innerHTML = '<th>No</th>' + kolomTampil.map(k => `<th>${escapeHtml(k.label)}</th>`).join('') + '<th style="min-width:340px;">Aksi Verifikasi</th>';
+
+  // Build sortable header
+  thead.innerHTML = '<th class="th-no"><div class="th-inner">No</div></th>' +
+    kolomTampil.map(k => {
+      const isSorted = sortKey === k.key;
+      const cls = isSorted ? (sortAsc ? 'sorted-asc' : 'sorted-desc') : '';
+      const icon = isSorted ? (sortAsc ? '▲' : '▼') : '⇅';
+      return `<th class="${cls}" data-sort-key="${k.key}">
+        <div class="th-inner">
+          <span>${escapeHtml(k.label)}</span>
+          <span class="sort-icon">${icon}</span>
+        </div>
+      </th>`;
+    }).join('') +
+    '<th><div class="th-inner" style="cursor:default;">Aksi Verifikasi</div></th>';
+
+  // Attach sort listeners
+  thead.querySelectorAll('th[data-sort-key]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sortKey;
+      if (sortKey === key) sortAsc = !sortAsc;
+      else { sortKey = key; sortAsc = true; }
+      renderTabel();
+    });
+  });
+
+  // Sort data
+  let tampil = [...dataTersaring];
+  if (sortKey) {
+    tampil.sort((a, b) => {
+      const va = String(a[sortKey] || '').toLowerCase();
+      const vb = String(b[sortKey] || '').toLowerCase();
+      const na = parseFloat(va.replace(/[^0-9.\-]/g,''));
+      const nb = parseFloat(vb.replace(/[^0-9.\-]/g,''));
+      let cmp;
+      if (!isNaN(na) && !isNaN(nb)) cmp = na - nb;
+      else cmp = va.localeCompare(vb, 'id');
+      return sortAsc ? cmp : -cmp;
+    });
+  }
 
   const tbody = document.getElementById('tbodyPpdb');
-  const mulai = (halaman-1) * PER_HAL;
-  const slice = dataTersaring.slice(mulai, mulai + PER_HAL);
   const totalKolom = kolomTampil.length + 2;
 
   // Opsi verifikator dari daftarPanitia + user saat ini (admin)
@@ -716,18 +763,17 @@ function renderTabel(){
 
   if (!kolomTampil.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Tidak ada kolom yang dipilih untuk ditampilkan. Klik "Pilih Kolom &amp; Tampilkan".</td></tr>`;
-  } else if (!slice.length) {
+  } else if (!tampil.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Belum ada data pendaftar.</td></tr>`;
   } else {
-    // Tentukan key kolom untuk No Pendaftaran, Status Verifikasi, Verifikator, Tgl Aksi
     const keyNoPendaftaran = kolomMap.noPendaftaran || (kolomDef[0] ? kolomDef[0].key : '');
     const keyStatusVrf  = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || '';
     const keyVerifikator= kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
     const keyTglAksi    = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key || '';
 
-    tbody.innerHTML = slice.map((row, i) => {
+    tbody.innerHTML = tampil.map((row, i) => {
       const idxAsli = semuaData.indexOf(row);
-      const noUrut  = mulai + i + 1;
+      const noUrut  = i + 1;
       const noPendaftaran = keyNoPendaftaran ? (row[keyNoPendaftaran] || '') : '';
 
       const sel = kolomTampil.map(k => {
@@ -737,7 +783,6 @@ function renderTabel(){
           const cls = up.startsWith('L') ? 'jk-l' : (up.startsWith('P') ? 'jk-p' : '');
           return `<td><span class="jk-pill ${cls}">${escapeHtml(val)}</span></td>`;
         }
-        // Kolom status (lama) dan status verifikasi (baru) — pakai pill
         if (k.key === kolomMap.status || k.label.toLowerCase().includes('status')) {
           const cls = getStatusCls(val);
           return `<td><span class="status-pill ${cls}">${escapeHtml(val)}</span></td>`;
@@ -745,7 +790,6 @@ function renderTabel(){
         return `<td>${escapeHtml(val)}</td>`;
       }).join('');
 
-      // Nilai saat ini dari sheet (kolom verifikasi)
       const statusSkrg    = keyStatusVrf   ? (row[keyStatusVrf] || '') : '';
       const verifikatoSkrg= keyVerifikator ? (row[keyVerifikator] || '') : '';
       const tglAksiSkrg   = keyTglAksi     ? (row[keyTglAksi] || '') : '';
@@ -758,21 +802,25 @@ function renderTabel(){
       ).join('');
 
       const stampHtml = tglAksiSkrg
-        ? `<div class="aksi-stamp">✓ Terakhir: ${escapeHtml(verifikatoSkrg)} · ${escapeHtml(tglAksiSkrg)}</div>`
+        ? `<div class="aksi-stamp">✓ ${escapeHtml(verifikatoSkrg)} · ${escapeHtml(tglAksiSkrg)}</div>`
         : `<div class="aksi-stamp" id="stamp-${idxAsli}"></div>`;
 
       return `<tr id="row-${idxAsli}">
-        <td>${noUrut}</td>${sel}
+        <td style="color:var(--teks-sub);font-size:11px;font-weight:700;">${noUrut}</td>${sel}
         <td>
           <div class="aksi-panel">
-            <select class="aksi-select st-select" id="st-${idxAsli}">
-              <option value="">— Status —</option>${stOptions}
-            </select>
-            <select class="aksi-select vrf-select" id="vrf-${idxAsli}">
-              <option value="">— Verifikator —</option>${vrfOptions}
-            </select>
-            <button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
-            <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
+            <div class="aksi-panel-row">
+              <select class="aksi-select st-select" id="st-${idxAsli}">
+                <option value="">— Status —</option>${stOptions}
+              </select>
+              <select class="aksi-select vrf-select" id="vrf-${idxAsli}">
+                <option value="">— Verifikator —</option>${vrfOptions}
+              </select>
+            </div>
+            <div class="aksi-panel-row">
+              <button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
+              <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
+            </div>
             ${stampHtml}
           </div>
         </td>
@@ -781,34 +829,9 @@ function renderTabel(){
   }
 
   document.getElementById('infoTampil').innerHTML =
-    `Menampilkan <strong>${slice.length}</strong> dari <strong>${semuaData.length}</strong> pendaftar &middot; <strong>${kolomTampil.length}</strong> kolom ditampilkan`;
-
-  renderPaginasi();
-}
-
-function renderPaginasi(){
-  const totalHal = Math.max(1, Math.ceil(dataTersaring.length / PER_HAL));
-  const wrap = document.getElementById('paginasi');
-  let html = `<button class="page-btn" ${halaman<=1?'disabled':''} onclick="gantiHalaman(${halaman-1})">‹</button>`;
-  const tampil = [];
-  for (let i=1;i<=totalHal;i++){
-    if (i===1 || i===totalHal || Math.abs(i-halaman)<=1) tampil.push(i);
-  }
-  let prev = 0;
-  tampil.forEach(i => {
-    if (prev && i - prev > 1) html += `<span class="page-btn" style="border:none;cursor:default;">…</span>`;
-    html += `<button class="page-btn ${i===halaman?'active':''}" onclick="gantiHalaman(${i})">${i}</button>`;
-    prev = i;
-  });
-  html += `<button class="page-btn" ${halaman>=totalHal?'disabled':''} onclick="gantiHalaman(${halaman+1})">›</button>`;
-  wrap.innerHTML = html;
-}
-function gantiHalaman(h){
-  const totalHal = Math.max(1, Math.ceil(dataTersaring.length / PER_HAL));
-  if (h<1 || h>totalHal) return;
-  halaman = h;
-  renderTabel();
-  document.querySelector('.table-wrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+    `Menampilkan <strong>${tampil.length}</strong> dari <strong>${semuaData.length}</strong> pendaftar &middot; <strong>${kolomTampil.length}</strong> kolom`;
+  const sum = document.getElementById('infoSummary');
+  if (sum) sum.textContent = sortKey ? `Diurutkan: ${kolomDef.find(k=>k.key===sortKey)?.label||sortKey} (${sortAsc?'A→Z':'Z→A'})` : '';
 }
 
 function escapeHtml(s){
