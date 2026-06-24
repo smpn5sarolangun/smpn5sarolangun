@@ -455,17 +455,18 @@ td.editing { background: #f0f7ff !important; }
     <div class="table-wrap">
       <table id="tabelStatus">
         <thead>
-          <tr>
+          <tr id="theadStatusRow">
             <th class="col-sticky-no"><div class="th-inner" style="cursor:default;">No</div></th>
-            <th class="col-sticky-nama" style="left:48px;"><div class="th-inner" style="cursor:default;">Nama</div></th>
-            <th><div class="th-inner" style="cursor:default;">No. Pendaftaran</div></th>
-            <th><div class="th-inner" style="cursor:default;">Status Verifikasi</div></th>
-            <th><div class="th-inner" style="cursor:default;">Berkas</div></th>
-            <th><div class="th-inner" style="cursor:default;">Daftar Ulang</div></th>
+            <th class="col-sticky-nama" style="left:48px;"><div class="th-inner" data-status-sort="nama" style="cursor:pointer;">Nama <span class="sort-icon">⇅</span></div></th>
+            <th><div class="th-inner" data-status-sort="noPend" style="cursor:pointer;">No. Pendaftaran <span class="sort-icon">⇅</span></div></th>
+            <th><div class="th-inner" data-status-sort="sekolah" style="cursor:pointer;">Sekolah Asal <span class="sort-icon">⇅</span></div></th>
+            <th><div class="th-inner" data-status-sort="status" style="cursor:pointer;">Status Verifikasi <span class="sort-icon">⇅</span></div></th>
+            <th><div class="th-inner" data-status-sort="berkas" style="cursor:pointer;">Berkas <span class="sort-icon">⇅</span></div></th>
+            <th><div class="th-inner" data-status-sort="daftarUlang" style="cursor:pointer;">Daftar Ulang <span class="sort-icon">⇅</span></div></th>
           </tr>
         </thead>
         <tbody id="tbodyStatus">
-          <tr class="empty-row"><td colspan="6">Memuat data…</td></tr>
+          <tr class="empty-row"><td colspan="7">Memuat data…</td></tr>
         </tbody>
       </table>
     </div>
@@ -557,6 +558,8 @@ let kolomTampilTerpilih = new Set(); // kolom yang dipilih untuk DITAMPILKAN di 
 let daftarPanitia = []; // [{nama, username}] untuk dropdown verifikator
 
 let editMode = {}; // {idxAsli: true} — baris yang sedang dalam mode edit
+let statusSortKey = null; // kolom sort tabel Status PPDB
+let statusSortAsc = true; // arah sort tabel Status PPDB
 
 
 window.addEventListener('load', () => {
@@ -802,14 +805,20 @@ function getStatusCls(val) {
 
 function renderTabel(){
   // Susun ulang: Nama selalu jadi kolom pertama setelah No
-  // Kolom Berkas & Daftar Ulang dirender terpisah — exclude dari kolomTampil agar tidak dobel
+  // Kolom Berkas, Daftar Ulang, Status Verifikasi, Verifikator, Tgl Aksi dirender terpisah — exclude dari kolomTampil agar tidak dobel
   const keyNama = kolomMap.nama || '';
-  const keyBerkas     = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '';
-  const keyDaftarUlang= kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '';
+  const keyBerkas       = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '';
+  const keyDaftarUlang  = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '';
+  const keyStatusVrfCol = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || '';
+  const keyVerifikatorCol = kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
+  const keyTglAksiCol   = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key || '';
   const kolomTampilRaw = kolomDef.filter(k =>
     kolomTampilTerpilih.has(k.key) &&
     k.key !== keyBerkas &&
-    k.key !== keyDaftarUlang
+    k.key !== keyDaftarUlang &&
+    k.key !== keyStatusVrfCol &&
+    k.key !== keyVerifikatorCol &&
+    k.key !== keyTglAksiCol
   );
   const kolomNama = kolomTampilRaw.find(k => k.key === keyNama);
   const kolomLainnya = kolomTampilRaw.filter(k => k.key !== keyNama);
@@ -1131,6 +1140,7 @@ function renderStatusPpdb() {
   const keyStatusVrf     = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || kolomMap.status || '';
   const keyBerkas        = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '__berkas__';
   const keyDaftarUlang   = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '__daftarulang__';
+  const keySekolah       = kolomMap.sekolahAsal || '';
 
   // Hitung rangkuman
   let belumVerifikasi = 0, sudahVerifikasi = 0;
@@ -1174,26 +1184,74 @@ function renderStatusPpdb() {
       <div><div class="stat-num" style="color:#155724;">${sudahDaftarUlang}</div><div class="stat-lbl">Sudah Daftar Ulang</div></div></div>
   `;
 
+  // Build data array dengan field sort yang sudah diekstrak
+  const dataStatus = semuaData.map((row, idx) => ({
+    idx,
+    nama:       row[keyNama] || '-',
+    noPend:     row[keyNoPendaftaran] || '-',
+    sekolah:    keySekolah ? (row[keySekolah] || '-') : '-',
+    status:     row[keyStatusVrf] || row[kolomMap.status] || 'Belum Verifikasi',
+    berkas:     keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan'),
+    daftarUlang: keyDaftarUlang !== '__daftarulang__' ? (row[keyDaftarUlang] || 'Belum Daftar Ulang') : (daftarUlangLokal[idx] || 'Belum Daftar Ulang'),
+  }));
+
+  // Sort
+  if (statusSortKey) {
+    dataStatus.sort((a, b) => {
+      const va = String(a[statusSortKey] || '').toLowerCase();
+      const vb = String(b[statusSortKey] || '').toLowerCase();
+      const cmp = va.localeCompare(vb, 'id');
+      return statusSortAsc ? cmp : -cmp;
+    });
+  }
+
+  // Update header sort icons
+  document.querySelectorAll('#theadStatusRow [data-status-sort]').forEach(el => {
+    const key = el.dataset.statusSort;
+    const icon = el.querySelector('.sort-icon');
+    if (!icon) return;
+    if (key === statusSortKey) {
+      icon.textContent = statusSortAsc ? '▲' : '▼';
+      icon.style.opacity = '1';
+      el.closest('th').classList.add(statusSortAsc ? 'sorted-asc' : 'sorted-desc');
+      el.closest('th').classList.remove(statusSortAsc ? 'sorted-desc' : 'sorted-asc');
+    } else {
+      icon.textContent = '⇅';
+      icon.style.opacity = '0.55';
+      el.closest('th').classList.remove('sorted-asc', 'sorted-desc');
+    }
+  });
+
+  // Attach sort listeners (hanya sekali — cek flag)
+  if (!document.getElementById('theadStatusRow').dataset.sortBound) {
+    document.getElementById('theadStatusRow').dataset.sortBound = '1';
+    document.querySelectorAll('#theadStatusRow [data-status-sort]').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => {
+        const key = el.dataset.statusSort;
+        if (statusSortKey === key) statusSortAsc = !statusSortAsc;
+        else { statusSortKey = key; statusSortAsc = true; }
+        renderStatusPpdb();
+      });
+    });
+  }
+
   // Render tabel ringkas
   const BERKAS_CLS      = {'Belum Mengumpulkan':'st-ditolak','Belum Lengkap':'st-verifikasi','Lengkap':'st-diterima'};
   const DU_CLS          = {'Belum Daftar Ulang':'st-terdaftar','Sudah Daftar Ulang':'st-diterima'};
 
-  document.getElementById('tbodyStatus').innerHTML = semuaData.map((row, idx) => {
-    const nama   = row[keyNama] || '-';
-    const noPend = row[keyNoPendaftaran] || '-';
-    const st     = row[keyStatusVrf] || row[kolomMap.status] || 'Belum Verifikasi';
-    const stCls  = getStatusCls(st);
-    const bk     = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan');
-    const bkCls  = BERKAS_CLS[bk] || 'st-default';
-    const du     = keyDaftarUlang !== '__daftarulang__' ? (row[keyDaftarUlang] || 'Belum Daftar Ulang') : (daftarUlangLokal[idx] || 'Belum Daftar Ulang');
-    const duCls  = DU_CLS[du] || 'st-default';
+  document.getElementById('tbodyStatus').innerHTML = dataStatus.map((d, i) => {
+    const stCls  = getStatusCls(d.status);
+    const bkCls  = BERKAS_CLS[d.berkas] || 'st-default';
+    const duCls  = DU_CLS[d.daftarUlang] || 'st-default';
     return `<tr>
-      <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${idx+1}</td>
-      <td class="col-sticky-nama" style="left:48px;font-weight:600;">${escapeHtml(nama)}</td>
-      <td>${escapeHtml(noPend)}</td>
-      <td><span class="status-pill ${stCls}">${escapeHtml(st)}</span></td>
-      <td><span class="status-pill ${bkCls}">${escapeHtml(bk)}</span></td>
-      <td><span class="status-pill ${duCls}">${escapeHtml(du)}</span></td>
+      <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${i+1}</td>
+      <td class="col-sticky-nama" style="left:48px;font-weight:600;">${escapeHtml(d.nama)}</td>
+      <td>${escapeHtml(d.noPend)}</td>
+      <td>${escapeHtml(d.sekolah)}</td>
+      <td><span class="status-pill ${stCls}">${escapeHtml(d.status)}</span></td>
+      <td><span class="status-pill ${bkCls}">${escapeHtml(d.berkas)}</span></td>
+      <td><span class="status-pill ${duCls}">${escapeHtml(d.daftarUlang)}</span></td>
     </tr>`;
   }).join('');
 }
