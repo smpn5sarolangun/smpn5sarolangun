@@ -313,6 +313,10 @@ tbody tr:nth-child(even):hover{background:#eaf4ff;}
 .skeleton .dot:nth-child(3){animation-delay:0.3s;}
 @keyframes bounce{0%,80%,100%{transform:scale(0.7);opacity:0.5;}40%{transform:scale(1);opacity:1;}}
 
+/* Warna sel Status Verifikasi */
+td.status-vrf-verifikasi { background: #d4edda !important; }
+td.status-vrf-belum      { background: #fdecea !important; }
+
 /* Edit mode */
 .btn-edit-row {
   font-size: 11px; font-weight: 700; padding: 5px 9px;
@@ -920,18 +924,24 @@ function renderTabel(){
   // Susun ulang: Nama selalu jadi kolom pertama setelah No
   // Kolom Berkas, Daftar Ulang, Status Verifikasi, Verifikator, Tgl Aksi dirender terpisah — exclude dari kolomTampil agar tidak dobel
   const keyNama = kolomMap.nama || '';
-  const keyBerkas       = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '';
-  const keyDaftarUlang  = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '';
-  const keyStatusVrfCol = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || '';
-  const keyVerifikatorCol = kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
-  const keyTglAksiCol   = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key || '';
+  const keyBerkas           = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '';
+  const keyDaftarUlang      = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '';
+  const keyStatusVrfCol     = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || '';
+  const keyVerifikatorCol   = kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
+  const keyTglAksiCol       = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key || '';
+  const keyVerifikatorDUCol = kolomDef.find(k => k.label.toLowerCase() === 'verifikator daftar ulang')?.key || '';
+  const keyTglDaftarUlangCol= kolomDef.find(k => k.label.toLowerCase().includes('tgl daftar ulang'))?.key || '';
+  const keyKeteranganCol    = kolomDef.find(k => k.label.toLowerCase() === 'keterangan')?.key || '';
   const kolomTampilRaw = kolomDef.filter(k =>
     kolomTampilTerpilih.has(k.key) &&
     k.key !== keyBerkas &&
     k.key !== keyDaftarUlang &&
     k.key !== keyStatusVrfCol &&
     k.key !== keyVerifikatorCol &&
-    k.key !== keyTglAksiCol
+    k.key !== keyTglAksiCol &&
+    k.key !== keyVerifikatorDUCol &&
+    k.key !== keyTglDaftarUlangCol &&
+    !(keyKeteranganCol && k.key === keyKeteranganCol)
   );
   const kolomNama = kolomTampilRaw.find(k => k.key === keyNama);
   const kolomLainnya = kolomTampilRaw.filter(k => k.key !== keyNama);
@@ -961,10 +971,13 @@ function renderTabel(){
       </th>`;
     }).join('') +
     '<th><div class="th-inner" style="cursor:default;">Berkas</div></th>' +
-    '<th><div class="th-inner" style="cursor:default;">Daftar Ulang</div></th>' +
-    '<th><div class="th-inner" style="cursor:default;">Verifikator</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Aksi Verifikasi</div></th>' +
-    '<th><div class="th-inner" style="cursor:default;">Verifikator Daftar Ulang</div></th>';
+    '<th><div class="th-inner" style="cursor:default;">Verifikator</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Tgl Verif</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Daftar Ulang</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Verifikator Daftar Ulang</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Tgl Daftar Ulang</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Edit/Simpan</div></th>';
 
   // Attach sort listeners
   thead.querySelectorAll('th[data-sort-key]').forEach(th => {
@@ -992,7 +1005,7 @@ function renderTabel(){
   }
 
   const tbody = document.getElementById('tbodyPpdb');
-  const totalKolom = kolomTampil.length + 5; // No + kolom data + Berkas + DaftarUlang + Verifikator + Aksi + VerifikatorDU
+  const totalKolom = kolomTampil.length + 8; // No + kolom data + Berkas + DaftarUlang + Verifikator + TglVerif + Aksi + VerifikatorDU + TglDU + EditSimpan
 
   const currentUser = sessionStorage.getItem('simas_user') || '';
 
@@ -1067,7 +1080,14 @@ function renderTabel(){
         }
         if (k.key === kolomMap.status || k.label.toLowerCase().includes('status')) {
           const cls = getStatusCls(displayVal);
-          return `<td class="${stickyClass}"><span class="status-pill ${cls}">${escapeHtml(displayVal)}</span></td>`;
+          // Warna khusus sel untuk Status Verifikasi
+          let tdCls = stickyClass;
+          if (k.label.toLowerCase().includes('status verifikasi') || k.key === kolomMap.statusVerifikasi) {
+            const up = String(displayVal).toUpperCase();
+            if (up === 'VERIFIKASI')       tdCls += ' status-vrf-verifikasi';
+            else if (up.includes('BELUM')) tdCls += ' status-vrf-belum';
+          }
+          return `<td class="${tdCls}"><span class="status-pill ${cls}">${escapeHtml(displayVal)}</span></td>`;
         }
         if (isNamaCol) {
           return `<td class="${stickyClass}" title="${escapeHtml(displayVal)}"><span class="nama-cell">${escapeHtml(displayVal)}</span></td>`;
@@ -1087,33 +1107,40 @@ function renderTabel(){
 
       return `<tr id="row-${idxAsli}">
         <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${noUrut}</td>${selHtml}
-        <td>
+        <td style="background:${berkasSkrg==='Lengkap'?'#d4edda':berkasSkrg==='Belum Lengkap'?'#fff3cd':'#fdecea'};">
           <select class="aksi-select berkas-select" id="brk-${idxAsli}" onchange="simpanBerkas(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
             ${berkasOptions}
           </select>
         </td>
-        <td>
+        <td style="min-width:200px;">
+          <div class="aksi-panel">
+            <select class="aksi-select st-select" id="st-${idxAsli}">
+              <option value="">— Status —</option>${stOptions}
+            </select>
+            <button class="btn-ghost btn btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
+            <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
+          </div>
+        </td>
+        <td style="min-width:140px;">
+          ${vrfField}
+        </td>
+        <td style="min-width:110px;">
+          ${stampHtml}
+        </td>
+        <td style="background:${daftarUlangSkrg==='Sudah Daftar Ulang'?'#d4edda':'#fdecea'};">
           <select class="aksi-select berkas-select" id="du-${idxAsli}" onchange="simpanDaftarUlang(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
             ${daftarUlangOptions}
           </select>
           ${duStampHtml}
         </td>
         <td style="min-width:140px;">
-          ${vrfField}
-        </td>
-        <td style="min-width:260px;">
-          <div class="aksi-panel">
-            <select class="aksi-select st-select" id="st-${idxAsli}">
-              <option value="">— Status —</option>${stOptions}
-            </select>
-            <button class="btn-ghost btn btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
-            ${editBtnHtml}
-            <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
-            ${stampHtml}
-          </div>
-        </td>
-        <td style="min-width:140px;">
           ${vrfDuField}
+        </td>
+        <td style="min-width:110px;">
+          <span class="aksi-stamp" id="tgl-du-stamp-${idxAsli}" style="font-size:10px;">${tglDuSkrg ? '✓ ' + escapeHtml(tglDuSkrg) : ''}</span>
+        </td>
+        <td style="min-width:110px;white-space:nowrap;">
+          ${editBtnHtml}
         </td>
       </tr>`;
     }).join('');
