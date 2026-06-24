@@ -1120,6 +1120,7 @@ function renderTabel(){
 
       const berkasBg = berkasSkrg==='Lengkap' ? '#c3e6cb' : berkasSkrg==='Belum Lengkap' ? '#ffeeba' : '#f5c6cb';
       const duBg = daftarUlangSkrg==='Sudah Daftar Ulang' ? '#c3e6cb' : '#f5c6cb';
+      const statusVrfBg = statusNow==='Verifikasi' ? '#c3e6cb' : '#f5c6cb';
 
       return `<tr id="row-${idxAsli}">
         <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${noUrut}</td>${selHtml}
@@ -1130,7 +1131,7 @@ function renderTabel(){
         </td>
         <td style="min-width:160px;">
           <div class="aksi-panel">
-            <select class="aksi-select st-select" id="st-${idxAsli}">
+            <select class="aksi-select st-select" id="st-${idxAsli}" style="background:${statusVrfBg};border-color:${statusVrfBg};color:#1e2a3a;" onchange="updateStatusVrfWarna(this)">
               <option value="">— Status —</option>${stOptions}
             </select>
           </div>
@@ -1630,6 +1631,14 @@ async function simpanAksi(idxAsli, noPendaftaran) {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan'; }
   }
+}
+
+/* ───────────────────── UPDATE WARNA DROPDOWN STATUS VERIFIKASI ───────────────────── */
+function updateStatusVrfWarna(sel) {
+  const val = sel.value;
+  const bg = val === 'Verifikasi' ? '#c3e6cb' : '#f5c6cb';
+  sel.style.background = bg;
+  sel.style.borderColor = bg;
 }
 
 /* ───────────────────── TOAST ───────────────────── */
