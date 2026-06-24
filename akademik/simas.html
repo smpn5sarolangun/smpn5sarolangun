@@ -216,7 +216,7 @@ thead th{
   white-space:nowrap;
 }
 thead th .th-inner{
-  display:flex;align-items:center;gap:6px;padding:11px 14px;cursor:pointer;
+  display:flex;align-items:center;gap:6px;padding:9px 12px;cursor:pointer;
   user-select:none;transition:background 0.12s;
 }
 thead th .th-inner:hover{background:rgba(255,255,255,0.12);}
@@ -338,8 +338,8 @@ td.editing { background: #f0f7ff !important; }
 /* Tablet: ≤900px */
 @media (max-width:900px){
   .hamburger{display:flex;}
-  .sidebar{transform:translateX(-100%);}
-  .sidebar.open{transform:translateX(0);}
+  .sidebar{transform:translateX(-100%) !important;}
+  .sidebar.open{transform:translateX(0) !important;}
   .sidebar-overlay.active{display:block;}
   .main{margin-left:0;padding:80px 16px 24px;}
   .clock{font-size:17px;}
@@ -558,8 +558,8 @@ td.editing { background: #f0f7ff !important; }
             <th><div class="th-inner" data-status-sort="noPend" style="cursor:pointer;">No. Pendaftaran <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="sekolah" style="cursor:pointer;">Sekolah Asal <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="status" style="cursor:pointer;">Status Verifikasi <span class="sort-icon">⇅</span></div></th>
-            <th><div class="th-inner" data-status-sort="berkas" style="cursor:pointer;">Berkas <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="verifikator" style="cursor:pointer;">Verifikator <span class="sort-icon">⇅</span></div></th>
+            <th><div class="th-inner" data-status-sort="berkas" style="cursor:pointer;">Berkas <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="daftarUlang" style="cursor:pointer;">Daftar Ulang <span class="sort-icon">⇅</span></div></th>
           </tr>
         </thead>
