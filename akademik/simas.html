@@ -111,6 +111,10 @@ button,input,select{font-family:'Plus Jakarta Sans',sans-serif;}
 /* ── ROLE-BASED VISIBILITY ── */
 body.role-panitia .admin-only { display: none !important; }
 
+/* ── TABLE ROW COMPACT ── */
+#tbodyPpdb td { padding: 5px 8px !important; }
+#theadPpdb th { padding: 6px 8px !important; }
+
 /* ── AKSI PPDB INLINE ── */
 .aksi-panel {
   display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-width: 0;
@@ -712,6 +716,14 @@ window.addEventListener('load', () => {
   muatDataPpdb();
   muatPanitia();
 
+  // Perpanjang sesi saat ada aktivitas (reset ke 8 jam dari sekarang)
+  const DURASI_SESI = 8 * 60 * 60 * 1000; // 8 jam
+  function perpanjangSesi() {
+    sessionStorage.setItem('simas_expiry', String(Date.now() + DURASI_SESI));
+  }
+  document.addEventListener('click', perpanjangSesi);
+  document.addEventListener('keydown', perpanjangSesi);
+
   // Cek sesi tiap 60 detik, auto logout kalau habis
   setInterval(() => {
     const exp = parseInt(sessionStorage.getItem('simas_expiry')||'0');
@@ -975,8 +987,8 @@ function renderTabel(){
     '<th><div class="th-inner" style="cursor:default;">Verifikator</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Tgl Verif</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Daftar Ulang</div></th>' +
-    '<th><div class="th-inner" style="cursor:default;">Verifikator Daftar Ulang</div></th>' +
-    '<th><div class="th-inner" style="cursor:default;">Tgl Daftar Ulang</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Verifikator DU</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Tanggal DU</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Edit</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Simpan</div></th>';
 
@@ -1111,8 +1123,8 @@ function renderTabel(){
 
       return `<tr id="row-${idxAsli}">
         <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${noUrut}</td>${selHtml}
-        <td style="background:${berkasBg};">
-          <select class="aksi-select berkas-select" id="brk-${idxAsli}" onchange="simpanBerkas(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
+        <td>
+          <select class="aksi-select berkas-select" id="brk-${idxAsli}" onchange="simpanBerkas(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)" style="background:${berkasBg};border-color:${berkasBg};">
             ${berkasOptions}
           </select>
         </td>
@@ -1129,8 +1141,8 @@ function renderTabel(){
         <td style="min-width:110px;">
           ${stampHtml}
         </td>
-        <td style="background:${duBg};">
-          <select class="aksi-select berkas-select" id="du-${idxAsli}" onchange="simpanDaftarUlang(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
+        <td>
+          <select class="aksi-select berkas-select" id="du-${idxAsli}" onchange="simpanDaftarUlang(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)" style="background:${duBg};border-color:${duBg};">
             ${daftarUlangOptions}
           </select>
         </td>
