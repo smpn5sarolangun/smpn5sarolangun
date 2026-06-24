@@ -105,30 +105,29 @@ body.role-panitia .admin-only { display: none !important; }
 
 /* ── AKSI PPDB INLINE ── */
 .aksi-panel {
-  display: flex; flex-direction: column; gap: 5px; min-width: 270px;
+  display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-width: 0;
 }
-.aksi-panel-row {
-  display: flex; gap: 5px; align-items: center; flex-wrap: wrap;
-}
+.aksi-panel-row { display: contents; }
 .aksi-select {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 11.5px; font-weight: 600; border: 1.5px solid #e0e8f0;
-  border-radius: 7px; padding: 5px 8px; background: #f8fafc; color: var(--teks);
-  cursor: pointer; transition: border-color 0.15s;
+  font-size: 11px; font-weight: 600; border: 1.5px solid #e0e8f0;
+  border-radius: 7px; padding: 5px 6px; background: #f8fafc; color: var(--teks);
+  cursor: pointer; transition: border-color 0.15s; max-width: 120px;
 }
 .aksi-select:focus { outline: none; border-color: var(--teal); }
-.aksi-select.st-select { min-width: 130px; }
-.aksi-select.vrf-select { min-width: 120px; }
+.aksi-select.st-select { min-width: 110px; }
+.aksi-select.vrf-select { min-width: 100px; }
 .btn-simpan-aksi {
   font-family: 'Plus Jakarta Plus', sans-serif;
-  font-size: 11.5px; font-weight: 700; padding: 5px 12px;
+  font-size: 11px; font-weight: 700; padding: 5px 10px;
   background: var(--teal); color: #fff; border: none; border-radius: 7px;
-  cursor: pointer; transition: filter 0.15s; white-space: nowrap;
+  cursor: pointer; transition: filter 0.15s; white-space: nowrap; flex-shrink:0;
 }
 .btn-simpan-aksi:hover { filter: brightness(1.1); }
 .btn-simpan-aksi:disabled { opacity: 0.55; cursor: not-allowed; }
 .aksi-stamp {
-  font-size: 10px; color: var(--teks-sub); white-space: nowrap; margin-top: 2px; width: 100%;
+  font-size: 9.5px; color: var(--teks-sub); white-space: nowrap; flex-shrink:0;
+  max-width: 140px; overflow: hidden; text-overflow: ellipsis;
 }
 /* Status pills diperluas */
 .status-pill { font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap; }
@@ -209,7 +208,7 @@ body.role-panitia .admin-only { display: none !important; }
 
 /* Table */
 .table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;}
-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:780px;}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:780px;}
 thead th{
   position:sticky;top:0;background:var(--biru);color:#fff;text-align:left;
   padding:0;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:0.3px;z-index:2;
@@ -225,6 +224,28 @@ thead th.sorted-asc .sort-icon,
 thead th.sorted-desc .sort-icon{opacity:1;}
 thead th.th-no .th-inner{cursor:default;}
 thead th.th-no .th-inner:hover{background:none;}
+
+/* Sticky columns: No & Nama */
+th.col-sticky-no, td.col-sticky-no {
+  position:sticky;left:0;z-index:3;background:var(--biru);
+}
+th.col-sticky-nama, td.col-sticky-nama {
+  position:sticky;left:48px;z-index:3;background:var(--biru);
+}
+td.col-sticky-no, td.col-sticky-nama {
+  background:#fff;z-index:1;
+}
+tbody tr:nth-child(even) td.col-sticky-no,
+tbody tr:nth-child(even) td.col-sticky-nama { background:#fafcfe; }
+tbody tr:hover td.col-sticky-no,
+tbody tr:hover td.col-sticky-nama { background:#f0f7ff; }
+/* Separator shadow on sticky cols */
+th.col-sticky-nama { box-shadow:3px 0 6px rgba(0,0,0,0.12); }
+td.col-sticky-nama { box-shadow:3px 0 6px rgba(0,0,0,0.06); }
+
+thead th.col-sticky-no { z-index:4; }
+thead th.col-sticky-nama { z-index:4; }
+
 tbody td{padding:10px 14px;border-bottom:1px solid #eef1f5;color:var(--teks);white-space:nowrap;}
 tbody tr:hover{background:#f0f7ff;}
 tbody tr:nth-child(even){background:#fafcfe;}
@@ -711,13 +732,25 @@ function renderTabel(){
   const kolomTampil = kolomDef.filter(k => kolomTampilTerpilih.has(k.key));
   const thead = document.getElementById('theadRow');
 
+  // Deteksi key kolom Nama untuk sticky
+  const keyNama = kolomMap.nama || '';
+  const isNamaFirst = kolomTampil.length > 0 && kolomTampil[0].key === keyNama;
+  // Cari posisi kolom nama di kolomTampil
+  const namaIdx = kolomTampil.findIndex(k => k.key === keyNama);
+  // Hitung left offset kolom nama (setelah kolom No = 48px)
+  const namaLeft = 48;
+
   // Build sortable header
-  thead.innerHTML = '<th class="th-no"><div class="th-inner">No</div></th>' +
-    kolomTampil.map(k => {
+  thead.innerHTML = '<th class="th-no col-sticky-no"><div class="th-inner">No</div></th>' +
+    kolomTampil.map((k, i) => {
       const isSorted = sortKey === k.key;
-      const cls = isSorted ? (sortAsc ? 'sorted-asc' : 'sorted-desc') : '';
+      const cls = [
+        isSorted ? (sortAsc ? 'sorted-asc' : 'sorted-desc') : '',
+        i === namaIdx ? 'col-sticky-nama' : ''
+      ].filter(Boolean).join(' ');
       const icon = isSorted ? (sortAsc ? '▲' : '▼') : '⇅';
-      return `<th class="${cls}" data-sort-key="${k.key}">
+      const leftStyle = i === namaIdx ? `style="left:${namaLeft}px;"` : '';
+      return `<th class="${cls}" data-sort-key="${k.key}" ${leftStyle}>
         <div class="th-inner">
           <span>${escapeHtml(k.label)}</span>
           <span class="sort-icon">${icon}</span>
@@ -754,8 +787,10 @@ function renderTabel(){
   const tbody = document.getElementById('tbodyPpdb');
   const totalKolom = kolomTampil.length + 2;
 
-  // Opsi verifikator dari daftarPanitia + user saat ini (admin)
   const currentUser = sessionStorage.getItem('simas_user') || '';
+  const isPanitia = ROLE === 'panitia_ppdb';
+
+  // Opsi verifikator — untuk admin: dropdown, untuk panitia: tetap dirinya
   const verifikatoOpts = [...new Map([
     { nama: currentUser, username: currentUser },
     ...daftarPanitia
@@ -776,51 +811,55 @@ function renderTabel(){
       const noUrut  = i + 1;
       const noPendaftaran = keyNoPendaftaran ? (row[keyNoPendaftaran] || '') : '';
 
-      const sel = kolomTampil.map(k => {
+      const sel = kolomTampil.map((k, ki) => {
         const val = row[k.key] || '-';
+        const isNamaCol = ki === namaIdx;
+        const stickyClass = isNamaCol ? `col-sticky-nama" style="left:${namaLeft}px;` : '';
         if (k.key === kolomMap.jk) {
           const up = val.toUpperCase();
           const cls = up.startsWith('L') ? 'jk-l' : (up.startsWith('P') ? 'jk-p' : '');
-          return `<td><span class="jk-pill ${cls}">${escapeHtml(val)}</span></td>`;
+          return `<td class="${stickyClass}"><span class="jk-pill ${cls}">${escapeHtml(val)}</span></td>`;
         }
         if (k.key === kolomMap.status || k.label.toLowerCase().includes('status')) {
           const cls = getStatusCls(val);
-          return `<td><span class="status-pill ${cls}">${escapeHtml(val)}</span></td>`;
+          return `<td class="${stickyClass}"><span class="status-pill ${cls}">${escapeHtml(val)}</span></td>`;
         }
-        return `<td>${escapeHtml(val)}</td>`;
+        return `<td class="${stickyClass}">${escapeHtml(val)}</td>`;
       }).join('');
 
       const statusSkrg    = keyStatusVrf   ? (row[keyStatusVrf] || '') : '';
-      const verifikatoSkrg= keyVerifikator ? (row[keyVerifikator] || '') : '';
+      // verifikator: kalau panitia pakai nama login, kalau admin pakai data sheet atau currentUser
+      const verifikatoSkrg= isPanitia ? currentUser : (keyVerifikator ? (row[keyVerifikator] || '') : '');
       const tglAksiSkrg   = keyTglAksi     ? (row[keyTglAksi] || '') : '';
 
       const stOptions = STATUS_AKSI.map(s =>
         `<option value="${s.val}" ${statusSkrg === s.val ? 'selected' : ''}>${s.val}</option>`
       ).join('');
-      const vrfOptions = verifikatoOpts.map(p =>
-        `<option value="${escapeHtml(p.nama)}" ${verifikatoSkrg === p.nama ? 'selected' : ''}>${escapeHtml(p.nama)}</option>`
-      ).join('');
+
+      // Untuk panitia: verifikator otomatis = nama login, disembunyikan (hidden input)
+      // Untuk admin: dropdown seperti biasa
+      const vrfField = isPanitia
+        ? `<input type="hidden" id="vrf-${idxAsli}" value="${escapeHtml(currentUser)}">
+           <span style="font-size:11px;font-weight:600;color:var(--teks-sub);background:#eef1f5;padding:5px 8px;border-radius:7px;white-space:nowrap;">${escapeHtml(currentUser)}</span>`
+        : `<select class="aksi-select vrf-select" id="vrf-${idxAsli}">
+             <option value="">— Verifikator —</option>
+             ${verifikatoOpts.map(p => `<option value="${escapeHtml(p.nama)}" ${verifikatoSkrg === p.nama ? 'selected' : ''}>${escapeHtml(p.nama)}</option>`).join('')}
+           </select>`;
 
       const stampHtml = tglAksiSkrg
-        ? `<div class="aksi-stamp">✓ ${escapeHtml(verifikatoSkrg)} · ${escapeHtml(tglAksiSkrg)}</div>`
-        : `<div class="aksi-stamp" id="stamp-${idxAsli}"></div>`;
+        ? `<span class="aksi-stamp" title="${escapeHtml(verifikatoSkrg)} · ${escapeHtml(tglAksiSkrg)}">✓ ${escapeHtml(tglAksiSkrg)}</span>`
+        : `<span class="aksi-stamp" id="stamp-${idxAsli}"></span>`;
 
       return `<tr id="row-${idxAsli}">
-        <td style="color:var(--teks-sub);font-size:11px;font-weight:700;">${noUrut}</td>${sel}
-        <td>
+        <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${noUrut}</td>${sel}
+        <td style="min-width:380px;">
           <div class="aksi-panel">
-            <div class="aksi-panel-row">
-              <select class="aksi-select st-select" id="st-${idxAsli}">
-                <option value="">— Status —</option>${stOptions}
-              </select>
-              <select class="aksi-select vrf-select" id="vrf-${idxAsli}">
-                <option value="">— Verifikator —</option>${vrfOptions}
-              </select>
-            </div>
-            <div class="aksi-panel-row">
-              <button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
-              <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
-            </div>
+            <select class="aksi-select st-select" id="st-${idxAsli}">
+              <option value="">— Status —</option>${stOptions}
+            </select>
+            ${vrfField}
+            <button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
+            <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
             ${stampHtml}
           </div>
         </td>
@@ -1006,7 +1045,7 @@ async function simpanAksi(idxAsli, noPendaftaran) {
       }
       // Update stamp di baris tanpa render ulang seluruh tabel
       const stampEl = document.getElementById('stamp-' + idxAsli);
-      if (stampEl) stampEl.innerHTML = `✓ Terakhir: ${escapeHtml(verifikator)} · ${escapeHtml(r.timestamp || '')}`;
+      if (stampEl) stampEl.innerHTML = `✓ ${escapeHtml(r.timestamp || '')}`;
       tampilToast('Aksi berhasil disimpan: ' + status, 'ok');
     } else {
       tampilToast('Gagal simpan: ' + (r.error || 'tidak diketahui'), 'err');
