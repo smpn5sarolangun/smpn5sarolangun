@@ -565,12 +565,12 @@ td.editing { background: #f0f7ff !important; }
           <tr id="theadStatusRow">
             <th class="col-sticky-no"><div class="th-inner" style="cursor:default;">No</div></th>
             <th class="col-sticky-nama" style="left:48px;"><div class="th-inner" data-status-sort="nama" style="cursor:pointer;">Nama <span class="sort-icon">⇅</span></div></th>
-            <th><div class="th-inner" data-status-sort="noPend" style="cursor:pointer;">No. Pendaftaran <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="sekolah" style="cursor:pointer;">Sekolah Asal <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="status" style="cursor:pointer;">Status Verifikasi <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="verifikator" style="cursor:pointer;">Verifikator <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="berkas" style="cursor:pointer;">Berkas <span class="sort-icon">⇅</span></div></th>
             <th><div class="th-inner" data-status-sort="daftarUlang" style="cursor:pointer;">Daftar Ulang <span class="sort-icon">⇅</span></div></th>
+            <th><div class="th-inner" data-status-sort="verifikatorDu" style="cursor:pointer;">Verifikator Daftar Ulang <span class="sort-icon">⇅</span></div></th>
           </tr>
         </thead>
         <tbody id="tbodyStatus">
@@ -1008,6 +1008,8 @@ function renderTabel(){
     const keyTglAksi     = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key || '';
     const keyBerkasRow   = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '__berkas__';
     const keyDaftarUlangRow = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '__daftarulang__';
+    const keyVerifikatorDU  = kolomDef.find(k => k.label.toLowerCase() === 'verifikator daftar ulang')?.key || '';
+    const keyTglDaftarUlangAksi = kolomDef.find(k => k.label.toLowerCase().includes('tgl daftar ulang'))?.key || '';
 
     tbody.innerHTML = tampil.map((row, i) => {
       const idxAsli = semuaData.indexOf(row);
@@ -1019,6 +1021,11 @@ function renderTabel(){
       const tglAksiSkrg     = keyTglAksi     ? (row[keyTglAksi] || '') : '';
       const berkasSkrg      = keyBerkasRow !== '__berkas__' ? (row[keyBerkasRow] || 'Belum Mengumpulkan') : (berkasLokal[idxAsli] || 'Belum Mengumpulkan');
       const daftarUlangSkrg = keyDaftarUlangRow !== '__daftarulang__' ? (row[keyDaftarUlangRow] || 'Belum Daftar Ulang') : (daftarUlangLokal[idxAsli] || 'Belum Daftar Ulang');
+      const verifikatorDuSkrg = keyVerifikatorDU ? (row[keyVerifikatorDU] || '') : '';
+      const tglDuSkrg = keyTglDaftarUlangAksi ? (row[keyTglDaftarUlangAksi] || '') : '';
+      const duStampHtml = verifikatorDuSkrg
+        ? `<span class="aksi-stamp" id="du-stamp-${idxAsli}" title="${escapeHtml(verifikatorDuSkrg)}${tglDuSkrg ? ' · ' + escapeHtml(tglDuSkrg) : ''}" style="display:block;margin-top:4px;font-size:10px;">✓ ${escapeHtml(verifikatorDuSkrg)}</span>`
+        : `<span class="aksi-stamp" id="du-stamp-${idxAsli}" style="display:block;margin-top:4px;"></span>`;
 
       const statusNow = statusSkrg || 'Belum Verifikasi';
       const stOptions = STATUS_AKSI.map(s =>
@@ -1081,6 +1088,7 @@ function renderTabel(){
           <select class="aksi-select berkas-select" id="du-${idxAsli}" onchange="simpanDaftarUlang(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
             ${daftarUlangOptions}
           </select>
+          ${duStampHtml}
         </td>
         <td style="min-width:420px;">
           <div class="aksi-panel">
@@ -1135,18 +1143,34 @@ async function simpanDaftarUlang(idxAsli, noPendaftaran, nilai) {
   daftarUlangLokal[idxAsli] = nilai;
   if (semuaData[idxAsli]) semuaData[idxAsli]['__daftarulang__'] = nilai;
 
+  const verifikatorDU = sessionStorage.getItem('simas_user') || '';
+
   if (!noPendaftaran) return;
   try {
-    await fetch(SCRIPT_URL, {
+    const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'updateDaftarUlangPpdb',
         token: TOKEN,
         noPendaftaran,
-        daftarUlang: nilai
+        daftarUlang: nilai,
+        verifikatorDaftarUlang: verifikatorDU
       })
     });
+    const r = await res.json().catch(() => null);
+
+    // Update data lokal supaya refresh tabel tidak kehilangan nilai
+    const keyVerifikatorDU      = kolomDef.find(k => k.label.toLowerCase() === 'verifikator daftar ulang')?.key;
+    const keyTglDaftarUlangAksi = kolomDef.find(k => k.label.toLowerCase().includes('tgl daftar ulang'))?.key;
+    if (semuaData[idxAsli]) {
+      if (keyVerifikatorDU)      semuaData[idxAsli][keyVerifikatorDU]      = verifikatorDU;
+      if (keyTglDaftarUlangAksi) semuaData[idxAsli][keyTglDaftarUlangAksi] = (r && r.timestamp) || '';
+    }
+
+    // Update stempel di baris tanpa render ulang seluruh tabel
+    const stampEl = document.getElementById('du-stamp-' + idxAsli);
+    if (stampEl) stampEl.innerHTML = `✓ ${escapeHtml(verifikatorDU)}`;
   } catch(e) { /* simpan lokal saja kalau gagal */ }
 
   if (document.getElementById('page-status').classList.contains('active')) {
@@ -1248,6 +1272,7 @@ function renderStatusPpdb() {
   const keyDaftarUlang   = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '__daftarulang__';
   const keySekolah       = kolomMap.sekolahAsal || '';
   kolomMap.verifikatorCol = kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
+  kolomMap.verifikatorDuCol = kolomDef.find(k => k.label.toLowerCase() === 'verifikator daftar ulang')?.key || '';
 
   // Hitung rangkuman
   let belumVerifikasi = 0, sudahVerifikasi = 0;
@@ -1301,6 +1326,7 @@ function renderStatusPpdb() {
     berkas:     keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan'),
     verifikator: kolomMap.verifikatorCol ? (row[kolomMap.verifikatorCol] || '') : '',
     daftarUlang: keyDaftarUlang !== '__daftarulang__' ? (row[keyDaftarUlang] || 'Belum Daftar Ulang') : (daftarUlangLokal[idx] || 'Belum Daftar Ulang'),
+    verifikatorDu: kolomMap.verifikatorDuCol ? (row[kolomMap.verifikatorDuCol] || '') : '',
   }));
 
   // Sort
@@ -1355,12 +1381,12 @@ function renderStatusPpdb() {
     return `<tr>
       <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${i+1}</td>
       <td class="col-sticky-nama" style="left:48px;font-weight:600;" title="${escapeHtml(d.nama)}"><span class="nama-cell">${escapeHtml(d.nama)}</span></td>
-      <td>${escapeHtml(d.noPend)}</td>
       <td>${escapeHtml(d.sekolah)}</td>
       <td><span class="status-pill ${stCls}">${escapeHtml(d.status)}</span></td>
       <td>${escapeHtml(d.verifikator) || '<span style="color:#b9c3cd;">—</span>'}</td>
       <td><span class="status-pill ${bkCls}">${escapeHtml(d.berkas)}</span></td>
       <td><span class="status-pill ${duCls}">${escapeHtml(d.daftarUlang)}</span></td>
+      <td>${escapeHtml(d.verifikatorDu) || '<span style="color:#b9c3cd;">—</span>'}</td>
     </tr>`;
   }).join('');
 }
