@@ -305,8 +305,32 @@ tbody tr:nth-child(even):hover{background:#eaf4ff;}
 .skeleton .dot:nth-child(3){animation-delay:0.3s;}
 @keyframes bounce{0%,80%,100%{transform:scale(0.7);opacity:0.5;}40%{transform:scale(1);opacity:1;}}
 
-@media (prefers-reduced-motion: reduce){
-  .module-card,.toast,.skeleton .dot{animation:none !important;transition:none !important;}
+/* Edit mode */
+.btn-edit-row {
+  font-size: 11px; font-weight: 700; padding: 5px 9px;
+  background: #e8f0fe; color: var(--biru-mid); border: none; border-radius: 7px;
+  cursor: pointer; transition: filter 0.15s; white-space: nowrap; flex-shrink:0;
+}
+.btn-edit-row:hover { filter: brightness(0.93); }
+.edit-input {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px; font-weight: 600; border: 1.5px solid var(--teal);
+  border-radius: 6px; padding: 4px 7px; background: #fff; color: var(--teks);
+  width: 100%; min-width: 80px; box-sizing: border-box;
+}
+.edit-input:focus { outline: none; border-color: var(--biru-mid); }
+td.editing { background: #f0f7ff !important; }
+.btn-save-edit {
+  font-size: 11px; font-weight: 700; padding: 5px 10px;
+  background: var(--hijau); color: #fff; border: none; border-radius: 7px;
+  cursor: pointer; white-space: nowrap; flex-shrink:0;
+}
+.btn-cancel-edit {
+  font-size: 11px; font-weight: 700; padding: 5px 10px;
+  background: #f0f4f8; color: var(--teks-sub); border: none; border-radius: 7px;
+  cursor: pointer; white-space: nowrap; flex-shrink:0;
+}
+
 }
 
 /* ── RESPONSIVE ── */
@@ -530,7 +554,9 @@ let kolomTerpilih = new Set();      // kolom yang dipilih untuk DIUNDUH (Excel)
 let kolomTampilTerpilih = new Set(); // kolom yang dipilih untuk DITAMPILKAN di tabel (default: semua)
 let daftarPanitia = []; // [{nama, username}] untuk dropdown verifikator
 
-/* ───────────────────── SESI & INIT ───────────────────── */
+let editMode = {}; // {idxAsli: true} — baris yang sedang dalam mode edit
+
+
 window.addEventListener('load', () => {
   TOKEN = sessionStorage.getItem('simas_token');
   ROLE  = sessionStorage.getItem('simas_role') || 'admin';
@@ -752,16 +778,16 @@ function defaultKolomTerpilih(){
 
 /* ───────────────────── RENDER TABEL ───────────────────── */
 const STATUS_AKSI = [
-  { val: 'Terdaftar',       cls: 'st-terdaftar' },
-  { val: 'Verifikasi',      cls: 'st-verifikasi' },
-  { val: 'Diterima',        cls: 'st-diterima' },
-  { val: 'Tidak Diterima',  cls: 'st-ditolak' },
+  { val: 'Belum Verifikasi',   cls: 'st-terdaftar' },
+  { val: 'Verifikasi',         cls: 'st-verifikasi' },
+  { val: 'Diterima',           cls: 'st-diterima' },
+  { val: 'Tidak Diterima',     cls: 'st-ditolak' },
   { val: 'Sudah Daftar Ulang', cls: 'st-daftar-ulang' },
 ];
 
 function getStatusCls(val) {
   const up = String(val||'').toUpperCase();
-  if (up.includes('TERDAFTAR'))     return 'st-terdaftar';
+  if (up.includes('BELUM VERIFIKASI') || up.includes('TERDAFTAR')) return 'st-terdaftar';
   if (up.includes('VERIFIKASI'))    return 'st-verifikasi';
   if (up.includes('DITERIMA'))      return 'st-diterima';
   if (up.includes('TIDAK DITERIMA') || up.includes('TOLAK') || up.includes('DITOLAK')) return 'st-ditolak';
@@ -858,29 +884,14 @@ function renderTabel(){
       const noUrut  = i + 1;
       const noPendaftaran = keyNoPendaftaran ? (row[keyNoPendaftaran] || '') : '';
 
-      const sel = kolomTampil.map((k, ki) => {
-        const val = row[k.key] || '-';
-        const isNamaCol = ki === namaIdx && keyNama;
-        const stickyClass = isNamaCol ? `col-sticky-nama" style="left:${namaLeft}px;font-weight:600;` : '';
-        if (k.key === kolomMap.jk) {
-          const up = val.toUpperCase();
-          const cls = up.startsWith('L') ? 'jk-l' : (up.startsWith('P') ? 'jk-p' : '');
-          return `<td class="${stickyClass}"><span class="jk-pill ${cls}">${escapeHtml(val)}</span></td>`;
-        }
-        if (k.key === kolomMap.status || k.label.toLowerCase().includes('status')) {
-          const cls = getStatusCls(val);
-          return `<td class="${stickyClass}"><span class="status-pill ${cls}">${escapeHtml(val)}</span></td>`;
-        }
-        return `<td class="${stickyClass}">${escapeHtml(val)}</td>`;
-      }).join('');
-
       const statusSkrg    = keyStatusVrf   ? (row[keyStatusVrf] || '') : '';
       const verifikatoSkrg= isPanitia ? currentUser : (keyVerifikator ? (row[keyVerifikator] || '') : '');
       const tglAksiSkrg   = keyTglAksi     ? (row[keyTglAksi] || '') : '';
       const berkasSkrg    = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idxAsli] || 'Belum Mengumpulkan');
 
+      const statusNow = statusSkrg || 'Belum Verifikasi';
       const stOptions = STATUS_AKSI.map(s =>
-        `<option value="${s.val}" ${statusSkrg === s.val ? 'selected' : ''}>${s.val}</option>`
+        `<option value="${s.val}" ${statusNow === s.val ? 'selected' : ''}>${s.val}</option>`
       ).join('');
       const berkasOptions = BERKAS_OPTS.map(b =>
         `<option value="${b}" ${berkasSkrg === b ? 'selected' : ''}>${b}</option>`
@@ -898,22 +909,50 @@ function renderTabel(){
         ? `<span class="aksi-stamp" title="${escapeHtml(verifikatoSkrg)} · ${escapeHtml(tglAksiSkrg)}">✓ ${escapeHtml(tglAksiSkrg)}</span>`
         : `<span class="aksi-stamp" id="stamp-${idxAsli}"></span>`;
 
-      const berkasCls = BERKAS_CLS[berkasSkrg] || 'st-default';
+      const isEditing = editMode[idxAsli];
+
+      // Render sel data: jika editMode, tampilkan input
+      const selHtml = kolomTampil.map((k, ki) => {
+        const val = row[k.key] || '';
+        const displayVal = val || '-';
+        const isNamaCol = ki === namaIdx && keyNama;
+        const stickyClass = isNamaCol ? `col-sticky-nama" style="left:${namaLeft}px;font-weight:600;` : '';
+
+        if (isEditing) {
+          return `<td class="${stickyClass} editing"><input class="edit-input" data-key="${k.key}" data-idx="${idxAsli}" value="${escapeHtml(val)}"></td>`;
+        }
+        if (k.key === kolomMap.jk) {
+          const up = displayVal.toUpperCase();
+          const cls = up.startsWith('L') ? 'jk-l' : (up.startsWith('P') ? 'jk-p' : '');
+          return `<td class="${stickyClass}"><span class="jk-pill ${cls}">${escapeHtml(displayVal)}</span></td>`;
+        }
+        if (k.key === kolomMap.status || k.label.toLowerCase().includes('status')) {
+          const cls = getStatusCls(displayVal);
+          return `<td class="${stickyClass}"><span class="status-pill ${cls}">${escapeHtml(displayVal)}</span></td>`;
+        }
+        return `<td class="${stickyClass}">${escapeHtml(displayVal)}</td>`;
+      }).join('');
+
+      const editBtnHtml = isEditing
+        ? `<button class="btn-save-edit" onclick="simpanEditData(${idxAsli},'${escapeHtml(noPendaftaran)}')">💾 Simpan Edit</button>
+           <button class="btn-cancel-edit" onclick="batalEdit(${idxAsli})">✕ Batal</button>`
+        : `<button class="btn-edit-row" onclick="mulaiEdit(${idxAsli})">✏️ Edit</button>`;
 
       return `<tr id="row-${idxAsli}">
-        <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${noUrut}</td>${sel}
+        <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${noUrut}</td>${selHtml}
         <td>
           <select class="aksi-select berkas-select" id="brk-${idxAsli}" onchange="simpanBerkas(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
             ${berkasOptions}
           </select>
         </td>
-        <td style="min-width:360px;">
+        <td style="min-width:420px;">
           <div class="aksi-panel">
             <select class="aksi-select st-select" id="st-${idxAsli}">
               <option value="">— Status —</option>${stOptions}
             </select>
             ${vrfField}
-            <button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
+            <button class="btn-ghost btn btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
+            ${editBtnHtml}
             <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
             ${stampHtml}
           </div>
@@ -954,7 +993,90 @@ async function simpanBerkas(idxAsli, noPendaftaran, nilaiBerkas) {
   }
 }
 
-/* ───────────────────── RENDER STATUS PPDB ───────────────────── */
+/* ───────────────────── EDIT DATA BARIS ───────────────────── */
+function mulaiEdit(idxAsli) {
+  editMode[idxAsli] = true;
+  renderTabel();
+  // Fokus ke input pertama di baris
+  const firstInput = document.querySelector(`#row-${idxAsli} .edit-input`);
+  if (firstInput) firstInput.focus();
+}
+
+function batalEdit(idxAsli) {
+  delete editMode[idxAsli];
+  renderTabel();
+}
+
+async function simpanEditData(idxAsli, noPendaftaran) {
+  const tr = document.getElementById('row-' + idxAsli);
+  if (!tr) return;
+
+  // Kumpulkan semua input di baris ini
+  const inputs = tr.querySelectorAll('.edit-input');
+  const perubahan = {};
+  inputs.forEach(inp => {
+    const key = inp.dataset.key;
+    const valBaru = inp.value.trim();
+    const valLama = semuaData[idxAsli] ? (semuaData[idxAsli][key] || '') : '';
+    if (valBaru !== valLama) {
+      perubahan[key] = valBaru;
+    }
+  });
+
+  if (!Object.keys(perubahan).length) {
+    delete editMode[idxAsli];
+    renderTabel();
+    tampilToast('Tidak ada perubahan.', 'info');
+    return;
+  }
+
+  if (!noPendaftaran) {
+    tampilToast('No pendaftaran tidak ditemukan, tidak bisa menyimpan ke sheet.', 'err');
+    return;
+  }
+
+  // Buat mapping key → label untuk dikirim ke server
+  const perubahanLabel = {};
+  Object.keys(perubahan).forEach(key => {
+    const kolom = kolomDef.find(k => k.key === key);
+    if (kolom) perubahanLabel[kolom.label] = perubahan[key];
+  });
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'updateDataPpdb',
+        token: TOKEN,
+        noPendaftaran,
+        perubahan: perubahanLabel
+      })
+    });
+    const r = await res.json();
+    if (r.ok) {
+      // Update data lokal
+      Object.keys(perubahan).forEach(key => {
+        if (semuaData[idxAsli]) semuaData[idxAsli][key] = perubahan[key];
+      });
+      delete editMode[idxAsli];
+      renderTabel();
+      tampilToast('Data berhasil diperbarui di sheet.', 'ok');
+    } else {
+      tampilToast('Gagal simpan: ' + (r.error || 'tidak diketahui'), 'err');
+    }
+  } catch(e) {
+    // Tetap update lokal meski server gagal
+    Object.keys(perubahan).forEach(key => {
+      if (semuaData[idxAsli]) semuaData[idxAsli][key] = perubahan[key];
+    });
+    delete editMode[idxAsli];
+    renderTabel();
+    tampilToast('Data diperbarui secara lokal (server tidak terjangkau).', 'err');
+  }
+}
+
+
 function renderStatusPpdb() {
   if (!semuaData.length) return;
 
@@ -972,7 +1094,7 @@ function renderStatusPpdb() {
     const stTampil = String(row[kolomMap.status] || '').toUpperCase();
     // Sudah verifikasi = bukan kosong dan bukan "Terdaftar"
     const stVal = row[keyStatusVrf] || row[kolomMap.status] || '';
-    if (!stVal || stVal === 'Terdaftar') belumVerifikasi++;
+    if (!stVal || stVal === 'Terdaftar' || stVal === 'Belum Verifikasi') belumVerifikasi++;
     else sudahVerifikasi++;
 
     const bk = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan');
@@ -1005,7 +1127,7 @@ function renderStatusPpdb() {
   document.getElementById('tbodyStatus').innerHTML = semuaData.map((row, idx) => {
     const nama = row[keyNama] || '-';
     const noPend = row[keyNoPendaftaran] || '-';
-    const st = row[keyStatusVrf] || row[kolomMap.status] || 'Terdaftar';
+    const st = row[keyStatusVrf] || row[kolomMap.status] || 'Belum Verifikasi';
     const stCls = getStatusCls(st);
     const bk = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan');
     const bkCls = BERKAS_CLS[bk] || 'st-default';
