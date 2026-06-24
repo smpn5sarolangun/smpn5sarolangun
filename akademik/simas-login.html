@@ -224,6 +224,7 @@ form.addEventListener('submit', async function(e){
     if (r && r.ok && r.token) {
       sessionStorage.setItem('simas_token', r.token);
       sessionStorage.setItem('simas_user', r.username || username);
+      sessionStorage.setItem('simas_role', r.role || 'admin');
       sessionStorage.setItem('simas_expiry', String(Date.now() + (r.expiry || 30) * 60 * 1000));
       window.location.href = 'simas.html';
     } else {
