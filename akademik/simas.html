@@ -962,7 +962,9 @@ function renderTabel(){
     }).join('') +
     '<th><div class="th-inner" style="cursor:default;">Berkas</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Daftar Ulang</div></th>' +
-    '<th><div class="th-inner" style="cursor:default;">Aksi Verifikasi</div></th>';
+    '<th><div class="th-inner" style="cursor:default;">Verifikator</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Aksi Verifikasi</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Verifikator Daftar Ulang</div></th>';
 
   // Attach sort listeners
   thead.querySelectorAll('th[data-sort-key]').forEach(th => {
@@ -990,7 +992,7 @@ function renderTabel(){
   }
 
   const tbody = document.getElementById('tbodyPpdb');
-  const totalKolom = kolomTampil.length + 4; // No + kolom data + Berkas + DaftarUlang + Aksi
+  const totalKolom = kolomTampil.length + 5; // No + kolom data + Berkas + DaftarUlang + Verifikator + Aksi + VerifikatorDU
 
   const currentUser = sessionStorage.getItem('simas_user') || '';
 
@@ -1038,8 +1040,9 @@ function renderTabel(){
         `<option value="${d}" ${daftarUlangSkrg === d ? 'selected' : ''}>${d}</option>`
       ).join('');
 
-      const vrfField = `<input type="hidden" id="vrf-${idxAsli}" value="${escapeHtml(currentUser)}">
-           <span style="font-size:11px;font-weight:600;color:var(--teks-sub);background:#eef1f5;padding:5px 8px;border-radius:7px;white-space:nowrap;">${escapeHtml(currentUser)}</span>`;
+      const vrfTampil = verifikatoSkrg || currentUser;
+      const vrfField = `<input type="hidden" id="vrf-${idxAsli}" value="${escapeHtml(vrfTampil)}">
+           <span style="font-size:11px;font-weight:600;color:var(--teks-sub);background:#eef1f5;padding:5px 8px;border-radius:7px;white-space:nowrap;">${escapeHtml(vrfTampil)}</span>`;
 
       const stampHtml = tglAksiSkrg
         ? `<span class="aksi-stamp" title="${escapeHtml(verifikatoSkrg)} · ${escapeHtml(tglAksiSkrg)}">✓ ${escapeHtml(tglAksiSkrg)}</span>`
@@ -1077,6 +1080,11 @@ function renderTabel(){
            <button class="btn-cancel-edit" onclick="batalEdit(${idxAsli})">✕ Batal</button>`
         : `<button class="btn-edit-row" onclick="mulaiEdit(${idxAsli})">✏️ Edit</button>`;
 
+      // Verifikator Daftar Ulang: dari sheet jika ada, kalau kosong pakai nama login
+      const vrfDuTampil = verifikatorDuSkrg || currentUser;
+      const vrfDuField = `<input type="hidden" id="vrf-du-${idxAsli}" value="${escapeHtml(vrfDuTampil)}">
+           <span style="font-size:11px;font-weight:600;color:var(--teks-sub);background:#eef1f5;padding:5px 8px;border-radius:7px;white-space:nowrap;">${escapeHtml(vrfDuTampil)}</span>`;
+
       return `<tr id="row-${idxAsli}">
         <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${noUrut}</td>${selHtml}
         <td>
@@ -1090,17 +1098,22 @@ function renderTabel(){
           </select>
           ${duStampHtml}
         </td>
-        <td style="min-width:420px;">
+        <td style="min-width:140px;">
+          ${vrfField}
+        </td>
+        <td style="min-width:260px;">
           <div class="aksi-panel">
             <select class="aksi-select st-select" id="st-${idxAsli}">
               <option value="">— Status —</option>${stOptions}
             </select>
-            ${vrfField}
             <button class="btn-ghost btn btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
             ${editBtnHtml}
             <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
             ${stampHtml}
           </div>
+        </td>
+        <td style="min-width:140px;">
+          ${vrfDuField}
         </td>
       </tr>`;
     }).join('');
