@@ -764,6 +764,7 @@ function deteksiKolom(){
     if (!kolomMap.nisn          && cocok(lbl, ['nisn']))                                                   kolomMap.nisn = k.key;
     if (!kolomMap.jk            && cocok(lbl, ['jenis kelamin','jk']))                                     kolomMap.jk = k.key;
     if (!kolomMap.sekolahAsal   && cocok(lbl, ['sekolah asal']))                                           kolomMap.sekolahAsal = k.key;
+    if (!kolomMap.statusVerifikasi && cocok(lbl, ['status verifikasi']))                                   kolomMap.statusVerifikasi = k.key;
     if (!kolomMap.status        && cocok(lbl, ['status']))                                                 kolomMap.status = k.key;
     if (!kolomMap.hpOrtu        && cocok(lbl, ['hp ortu','hp orang tua','no hp','whatsapp','no. wa']))     kolomMap.hpOrtu = k.key;
     if (!kolomMap.daftarUlang   && cocok(lbl, ['daftar ulang']))                                           kolomMap.daftarUlang = k.key;
@@ -1137,7 +1138,7 @@ function renderStatusPpdb() {
 
   const keyNama          = kolomMap.nama || '';
   const keyNoPendaftaran = kolomMap.noPendaftaran || (kolomDef[0]?.key || '');
-  const keyStatusVrf     = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || kolomMap.status || '';
+  const keyStatusVrf     = kolomMap.statusVerifikasi || kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || '';
   const keyBerkas        = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '__berkas__';
   const keyDaftarUlang   = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '__daftarulang__';
   const keySekolah       = kolomMap.sekolahAsal || '';
@@ -1148,7 +1149,7 @@ function renderStatusPpdb() {
   let belumDaftarUlang = 0, sudahDaftarUlang = 0;
 
   semuaData.forEach((row, idx) => {
-    const stVal = row[keyStatusVrf] || row[kolomMap.status] || '';
+    const stVal = keyStatusVrf ? (row[keyStatusVrf] || '') : '';
     if (!stVal || stVal === 'Terdaftar' || stVal === 'Belum Verifikasi') belumVerifikasi++;
     else sudahVerifikasi++;
 
@@ -1190,7 +1191,7 @@ function renderStatusPpdb() {
     nama:       row[keyNama] || '-',
     noPend:     row[keyNoPendaftaran] || '-',
     sekolah:    keySekolah ? (row[keySekolah] || '-') : '-',
-    status:     row[keyStatusVrf] || row[kolomMap.status] || 'Belum Verifikasi',
+    status:     (v => (!v || v === 'Terdaftar') ? 'Belum Verifikasi' : v)(String(keyStatusVrf ? (row[keyStatusVrf] || '') : '').trim()),
     berkas:     keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan'),
     daftarUlang: keyDaftarUlang !== '__daftarulang__' ? (row[keyDaftarUlang] || 'Belum Daftar Ulang') : (daftarUlangLokal[idx] || 'Belum Daftar Ulang'),
   }));
