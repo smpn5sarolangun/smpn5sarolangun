@@ -100,8 +100,42 @@ button,input,select{font-family:'Plus Jakarta Sans',sans-serif;}
 }
 .sidebar-logout:hover{background:#fdecea;}
 
-/* ── MAIN ── */
-.main{margin-left:var(--sidebar);margin-top:64px;padding:24px;min-height:calc(100vh - 64px);}
+/* ── ROLE-BASED VISIBILITY ── */
+body.role-panitia .admin-only { display: none !important; }
+
+/* ── AKSI PPDB INLINE ── */
+.aksi-panel {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 320px;
+}
+.aksi-select {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11.5px; font-weight: 600; border: 1.5px solid #e0e8f0;
+  border-radius: 7px; padding: 5px 8px; background: #f8fafc; color: var(--teks);
+  cursor: pointer; transition: border-color 0.15s;
+}
+.aksi-select:focus { outline: none; border-color: var(--teal); }
+.aksi-select.st-select { min-width: 130px; }
+.aksi-select.vrf-select { min-width: 120px; }
+.btn-simpan-aksi {
+  font-family: 'Plus Jakarta Plus', sans-serif;
+  font-size: 11.5px; font-weight: 700; padding: 5px 12px;
+  background: var(--teal); color: #fff; border: none; border-radius: 7px;
+  cursor: pointer; transition: filter 0.15s; white-space: nowrap;
+}
+.btn-simpan-aksi:hover { filter: brightness(1.1); }
+.btn-simpan-aksi:disabled { opacity: 0.55; cursor: not-allowed; }
+.aksi-stamp {
+  font-size: 10px; color: var(--teks-sub); white-space: nowrap; margin-top: 2px; width: 100%;
+}
+/* Status pills diperluas */
+.status-pill { font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap; }
+.st-terdaftar  { background:#e8f0fe;color:#1a5ca8; }
+.st-verifikasi { background:#fff3cd;color:#856404; }
+.st-diterima   { background:#d4edda;color:#155724; }
+.st-ditolak    { background:#fdecea;color:#c62828; }
+.st-daftar-ulang { background:#e8f6f8;color:#0a7e8c; }
+.st-default    { background:#f0f4f8;color:#5a6a7e; }
+
 .page{display:none;}
 .page.active{display:block;}
 
@@ -169,34 +203,17 @@ button,input,select{font-family:'Plus Jakarta Sans',sans-serif;}
 .info-text strong{color:var(--teks);}
 
 /* Table */
-.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;max-height:72vh;}
+.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;max-height:60vh;}
 table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:780px;}
 thead th{
   position:sticky;top:0;background:var(--biru);color:#fff;text-align:left;
   padding:11px 14px;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:0.3px;z-index:2;
   white-space:nowrap;
 }
-thead th.sortable{cursor:pointer;user-select:none;}
-thead th.sortable:hover{background:#0a4d8f;}
 tbody td{padding:10px 14px;border-bottom:1px solid #eef1f5;color:var(--teks);white-space:nowrap;}
 tbody tr:hover{background:#f8fafc;}
 tbody tr:nth-child(even){background:#fafcfe;}
 tbody tr:nth-child(even):hover{background:#f3f7fa;}
-
-/* Kolom No & Nama tetap terlihat (sticky) saat tabel di-scroll ke samping */
-thead th:nth-child(1), tbody td:nth-child(1){
-  position:sticky;left:0;z-index:1;background:#fff;
-  width:50px;min-width:50px;max-width:50px;text-align:center;
-}
-thead th:nth-child(2), tbody td:nth-child(2){
-  position:sticky;left:50px;z-index:1;background:#fff;
-  width:190px;min-width:190px;max-width:190px;overflow:hidden;text-overflow:ellipsis;
-  box-shadow:3px 0 6px -3px rgba(0,0,0,0.18);
-}
-thead th:nth-child(1), thead th:nth-child(2){z-index:3;background:var(--biru);}
-tbody tr:nth-child(even) td:nth-child(1), tbody tr:nth-child(even) td:nth-child(2){background:#fafcfe;}
-tbody tr:hover td:nth-child(1), tbody tr:hover td:nth-child(2){background:#f8fafc;}
-tbody tr:nth-child(even):hover td:nth-child(1), tbody tr:nth-child(even):hover td:nth-child(2){background:#f3f7fa;}
 .empty-row td{text-align:center;padding:40px 14px;color:var(--teks-sub);font-size:13px;}
 .jk-pill{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:20px;}
 .jk-l{background:#e8f0fe;color:#1a5ca8;}
@@ -304,7 +321,7 @@ tbody tr:nth-child(even):hover td:nth-child(1), tbody tr:nth-child(even):hover t
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="sidebar" id="sidebar">
 
-  <div class="nav-item active" data-page="dashboard">
+  <div class="nav-item active" data-page="dashboard" class="admin-only">
     <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
   </div>
 
@@ -360,6 +377,7 @@ tbody tr:nth-child(even):hover td:nth-child(1), tbody tr:nth-child(even):hover t
       </table>
     </div>
 
+    <div class="pagination" id="paginasi"></div>
   </div>
 
 </div>
@@ -432,18 +450,21 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMb
 // ══════════════════════════════════════════════════════
 
 let TOKEN = '';
+let ROLE  = 'admin';   // 'admin' | 'panitia_ppdb'
 let kolomDef   = [];   // [{key,label}] sesuai header baris 1 sheet "Data PPDB"
 let semuaData  = [];   // seluruh baris (objek {key:value})
 let dataTersaring = [];
 let kolomMap   = {};   // hasil deteksi konsep -> key kolom (jk, status, sekolahAsal, tglDaftar, dst)
+let halaman    = 1;
+const PER_HAL  = 25;
 let kolomTerpilih = new Set();      // kolom yang dipilih untuk DIUNDUH (Excel)
 let kolomTampilTerpilih = new Set(); // kolom yang dipilih untuk DITAMPILKAN di tabel (default: semua)
-let sortKey = null;  // key kolom yang sedang diurutkan
-let sortDir = 'asc';  // 'asc' atau 'desc'
+let daftarPanitia = []; // [{nama, username}] untuk dropdown verifikator
 
 /* ───────────────────── SESI & INIT ───────────────────── */
 window.addEventListener('load', () => {
   TOKEN = sessionStorage.getItem('simas_token');
+  ROLE  = sessionStorage.getItem('simas_role') || 'admin';
   const expiry = parseInt(sessionStorage.getItem('simas_expiry')||'0');
   if (!TOKEN || Date.now() > expiry) {
     window.location.href = 'simas-login.html';
@@ -454,12 +475,28 @@ window.addEventListener('load', () => {
   document.getElementById('avatarTop').textContent  = user.charAt(0).toUpperCase();
   document.getElementById('greetText').textContent = 'Selamat datang, ' + user + ' 👋';
 
+  // Terapkan role ke body
+  if (ROLE === 'panitia_ppdb') {
+    document.body.classList.add('role-panitia');
+  }
+
   jalankanJam();
   setupNavigasi();
   setupModal();
   setupSidebarMobile();
-  renderModuleGrid();
+
+  if (ROLE === 'panitia_ppdb') {
+    // Panitia langsung ke halaman PPDB
+    bukaHalaman('ppdb');
+    // Sembunyikan nav dashboard
+    const dashNav = document.querySelector('.nav-item[data-page="dashboard"]');
+    if (dashNav) dashNav.style.display = 'none';
+  } else {
+    renderModuleGrid();
+  }
+
   muatDataPpdb();
+  muatPanitia();
 
   // Cek sesi tiap 60 detik, auto logout kalau habis
   setInterval(() => {
@@ -489,6 +526,16 @@ async function apiGet(action, params={}){
   const qs = new URLSearchParams({action, token:TOKEN, ...params}).toString();
   const res = await fetch(`${SCRIPT_URL}?${qs}`);
   return res.json();
+}
+
+/* ───────────────────── MUAT DAFTAR PANITIA ───────────────────── */
+async function muatPanitia(){
+  try {
+    const r = await apiGet('getPanitiaPpdb');
+    if (r.ok && Array.isArray(r.data)) {
+      daftarPanitia = r.data; // [{nama, username}]
+    }
+  } catch(e) { /* diam-diam gagal, dropdown tetap kosong */ }
 }
 
 /* ───────────────────── NAVIGASI ───────────────────── */
@@ -589,7 +636,7 @@ async function muatDataPpdb(){
     kolomTerpilih = new Set(defaultKolomTerpilih());       // default kolom untuk diunduh
     kolomTampilTerpilih = new Set(kolomDef.map(k => k.key)); // default: semua kolom ditampilkan
     dataTersaring = semuaData; // tidak ada filter baris lagi — selalu seluruh data
-    sortKey = null; sortDir = 'asc';
+    halaman = 1;
     renderTabel();
     perbaruiStatistik();
     tampilToast('Data PPDB berhasil dimuat (' + semuaData.length + ' pendaftar).', 'ok');
@@ -631,40 +678,58 @@ function defaultKolomTerpilih(){
 }
 
 /* ───────────────────── RENDER TABEL ───────────────────── */
+const STATUS_AKSI = [
+  { val: 'Terdaftar',       cls: 'st-terdaftar' },
+  { val: 'Verifikasi',      cls: 'st-verifikasi' },
+  { val: 'Diterima',        cls: 'st-diterima' },
+  { val: 'Tidak Diterima',  cls: 'st-ditolak' },
+  { val: 'Sudah Daftar Ulang', cls: 'st-daftar-ulang' },
+];
 
-function urutkanUntukTampilan(daftarKolom){
-  const namaKey = kolomMap.nama;
-  if (!namaKey) return daftarKolom;
-  const idx = daftarKolom.findIndex(k => k.key === namaKey);
-  if (idx <= 0) return daftarKolom; // sudah di posisi depan atau tidak ditampilkan
-  const hasil = daftarKolom.slice();
-  const [kolomNama] = hasil.splice(idx, 1);
-  hasil.unshift(kolomNama);
-  return hasil;
+function getStatusCls(val) {
+  const up = String(val||'').toUpperCase();
+  if (up.includes('TERDAFTAR'))     return 'st-terdaftar';
+  if (up.includes('VERIFIKASI'))    return 'st-verifikasi';
+  if (up.includes('DITERIMA'))      return 'st-diterima';
+  if (up.includes('TIDAK DITERIMA') || up.includes('TOLAK') || up.includes('DITOLAK')) return 'st-ditolak';
+  if (up.includes('DAFTAR ULANG'))  return 'st-daftar-ulang';
+  if (up.includes('PENDING'))       return 'st-verifikasi';
+  return 'st-default';
 }
 
 function renderTabel(){
-  const kolomTampil = urutkanUntukTampilan(kolomDef.filter(k => kolomTampilTerpilih.has(k.key)));
+  const kolomTampil = kolomDef.filter(k => kolomTampilTerpilih.has(k.key));
   const thead = document.getElementById('theadRow');
-  thead.innerHTML = '<th>No</th>' + kolomTampil.map(k => {
-    let indikator = '';
-    if (sortKey === k.key) indikator = sortDir === 'asc' ? ' ▲' : ' ▼';
-    return `<th class="sortable" data-key="${k.key}" title="Klik untuk urutkan">${escapeHtml(k.label)}${indikator}</th>`;
-  }).join('') + '<th>Aksi</th>';
-  thead.querySelectorAll('th.sortable').forEach(th => {
-    th.addEventListener('click', () => toggleSort(th.dataset.key));
-  });
+  thead.innerHTML = '<th>No</th>' + kolomTampil.map(k => `<th>${escapeHtml(k.label)}</th>`).join('') + '<th style="min-width:340px;">Aksi Verifikasi</th>';
 
   const tbody = document.getElementById('tbodyPpdb');
-  const totalKolom = kolomTampil.length + 2; // No + kolom terpilih + Aksi
+  const mulai = (halaman-1) * PER_HAL;
+  const slice = dataTersaring.slice(mulai, mulai + PER_HAL);
+  const totalKolom = kolomTampil.length + 2;
+
+  // Opsi verifikator dari daftarPanitia + user saat ini (admin)
+  const currentUser = sessionStorage.getItem('simas_user') || '';
+  const verifikatoOpts = [...new Map([
+    { nama: currentUser, username: currentUser },
+    ...daftarPanitia
+  ].filter(p => p.nama).map(p => [p.nama, p])).values()];
 
   if (!kolomTampil.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Tidak ada kolom yang dipilih untuk ditampilkan. Klik "Pilih Kolom &amp; Tampilkan".</td></tr>`;
-  } else if (!dataTersaring.length) {
+  } else if (!slice.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Belum ada data pendaftar.</td></tr>`;
   } else {
-    tbody.innerHTML = dataTersaring.map((row, i) => {
+    // Tentukan key kolom untuk No Pendaftaran, Status Verifikasi, Verifikator, Tgl Aksi
+    const keyNoPendaftaran = kolomMap.noPendaftaran || (kolomDef[0] ? kolomDef[0].key : '');
+    const keyStatusVrf  = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || '';
+    const keyVerifikator= kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
+    const keyTglAksi    = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key || '';
+
+    tbody.innerHTML = slice.map((row, i) => {
       const idxAsli = semuaData.indexOf(row);
+      const noUrut  = mulai + i + 1;
+      const noPendaftaran = keyNoPendaftaran ? (row[keyNoPendaftaran] || '') : '';
+
       const sel = kolomTampil.map(k => {
         const val = row[k.key] || '-';
         if (k.key === kolomMap.jk) {
@@ -672,54 +737,78 @@ function renderTabel(){
           const cls = up.startsWith('L') ? 'jk-l' : (up.startsWith('P') ? 'jk-p' : '');
           return `<td><span class="jk-pill ${cls}">${escapeHtml(val)}</span></td>`;
         }
-        if (k.key === kolomMap.status) {
-          const up = val.toUpperCase();
-          let cls = 'st-default';
-          if (up.includes('PENDING')) cls = 'st-pending';
-          else if (up.includes('TERIMA')) cls = 'st-diterima';
-          else if (up.includes('TOLAK')) cls = 'st-ditolak';
+        // Kolom status (lama) dan status verifikasi (baru) — pakai pill
+        if (k.key === kolomMap.status || k.label.toLowerCase().includes('status')) {
+          const cls = getStatusCls(val);
           return `<td><span class="status-pill ${cls}">${escapeHtml(val)}</span></td>`;
         }
         return `<td>${escapeHtml(val)}</td>`;
       }).join('');
-      return `<tr><td>${i+1}</td>${sel}<td><button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})">Detail</button></td></tr>`;
+
+      // Nilai saat ini dari sheet (kolom verifikasi)
+      const statusSkrg    = keyStatusVrf   ? (row[keyStatusVrf] || '') : '';
+      const verifikatoSkrg= keyVerifikator ? (row[keyVerifikator] || '') : '';
+      const tglAksiSkrg   = keyTglAksi     ? (row[keyTglAksi] || '') : '';
+
+      const stOptions = STATUS_AKSI.map(s =>
+        `<option value="${s.val}" ${statusSkrg === s.val ? 'selected' : ''}>${s.val}</option>`
+      ).join('');
+      const vrfOptions = verifikatoOpts.map(p =>
+        `<option value="${escapeHtml(p.nama)}" ${verifikatoSkrg === p.nama ? 'selected' : ''}>${escapeHtml(p.nama)}</option>`
+      ).join('');
+
+      const stampHtml = tglAksiSkrg
+        ? `<div class="aksi-stamp">✓ Terakhir: ${escapeHtml(verifikatoSkrg)} · ${escapeHtml(tglAksiSkrg)}</div>`
+        : `<div class="aksi-stamp" id="stamp-${idxAsli}"></div>`;
+
+      return `<tr id="row-${idxAsli}">
+        <td>${noUrut}</td>${sel}
+        <td>
+          <div class="aksi-panel">
+            <select class="aksi-select st-select" id="st-${idxAsli}">
+              <option value="">— Status —</option>${stOptions}
+            </select>
+            <select class="aksi-select vrf-select" id="vrf-${idxAsli}">
+              <option value="">— Verifikator —</option>${vrfOptions}
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="bukaDetail(${idxAsli})" style="flex-shrink:0;">Detail</button>
+            <button class="btn-simpan-aksi" id="btn-aksi-${idxAsli}" onclick="simpanAksi(${idxAsli}, '${escapeHtml(noPendaftaran)}')">💾 Simpan</button>
+            ${stampHtml}
+          </div>
+        </td>
+      </tr>`;
     }).join('');
   }
 
   document.getElementById('infoTampil').innerHTML =
-    `Menampilkan <strong>${dataTersaring.length}</strong> dari <strong>${semuaData.length}</strong> pendaftar &middot; <strong>${kolomTampil.length}</strong> kolom ditampilkan`;
+    `Menampilkan <strong>${slice.length}</strong> dari <strong>${semuaData.length}</strong> pendaftar &middot; <strong>${kolomTampil.length}</strong> kolom ditampilkan`;
+
+  renderPaginasi();
 }
 
-/* ───────────────────── SORT TABEL ───────────────────── */
-function deteksiTipeKolom(key){
-  let adaIsi = false;
-  for (const r of semuaData) {
-    const v = String(r[key]||'').trim();
-    if (!v) continue;
-    adaIsi = true;
-    if (!/^-?\d+(\.\d+)?$/.test(v)) return 'teks';
+function renderPaginasi(){
+  const totalHal = Math.max(1, Math.ceil(dataTersaring.length / PER_HAL));
+  const wrap = document.getElementById('paginasi');
+  let html = `<button class="page-btn" ${halaman<=1?'disabled':''} onclick="gantiHalaman(${halaman-1})">‹</button>`;
+  const tampil = [];
+  for (let i=1;i<=totalHal;i++){
+    if (i===1 || i===totalHal || Math.abs(i-halaman)<=1) tampil.push(i);
   }
-  return adaIsi ? 'angka' : 'teks';
-}
-function toggleSort(key){
-  if (sortKey === key) {
-    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortKey = key;
-    sortDir = 'asc';
-  }
-  const tipe = deteksiTipeKolom(sortKey);
-  const arah = sortDir === 'asc' ? 1 : -1;
-  dataTersaring.sort((a, b) => {
-    const va = String(a[sortKey]||'').trim();
-    const vb = String(b[sortKey]||'').trim();
-    if (va === '' && vb === '') return 0;
-    if (va === '') return 1;
-    if (vb === '') return -1;
-    if (tipe === 'angka') return (parseFloat(va) - parseFloat(vb)) * arah;
-    return va.localeCompare(vb, 'id', {numeric:true, sensitivity:'base'}) * arah;
+  let prev = 0;
+  tampil.forEach(i => {
+    if (prev && i - prev > 1) html += `<span class="page-btn" style="border:none;cursor:default;">…</span>`;
+    html += `<button class="page-btn ${i===halaman?'active':''}" onclick="gantiHalaman(${i})">${i}</button>`;
+    prev = i;
   });
+  html += `<button class="page-btn" ${halaman>=totalHal?'disabled':''} onclick="gantiHalaman(${halaman+1})">›</button>`;
+  wrap.innerHTML = html;
+}
+function gantiHalaman(h){
+  const totalHal = Math.max(1, Math.ceil(dataTersaring.length / PER_HAL));
+  if (h<1 || h>totalHal) return;
+  halaman = h;
   renderTabel();
+  document.querySelector('.table-wrap').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function escapeHtml(s){
@@ -855,6 +944,55 @@ function perbaruiStatistik(){
       </div>
     </div>
   `).join('');
+}
+
+/* ───────────────────── SIMPAN AKSI VERIFIKASI ───────────────────── */
+async function simpanAksi(idxAsli, noPendaftaran) {
+  const status      = document.getElementById('st-' + idxAsli)?.value || '';
+  const verifikator = document.getElementById('vrf-' + idxAsli)?.value || '';
+  const btn         = document.getElementById('btn-aksi-' + idxAsli);
+
+  if (!status)      { tampilToast('Pilih status terlebih dahulu.', 'err'); return; }
+  if (!verifikator) { tampilToast('Pilih verifikator terlebih dahulu.', 'err'); return; }
+  if (!noPendaftaran) { tampilToast('No pendaftaran tidak ditemukan di baris ini.', 'err'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳…'; }
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'updateAksiPpdb',
+        token: TOKEN,
+        noPendaftaran,
+        status,
+        verifikator
+      })
+    });
+    const r = await res.json();
+    if (r.ok) {
+      // Update data lokal supaya refresh tabel tidak kehilangan nilai
+      const keyStatusVrf   = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key;
+      const keyVerifikator = kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key;
+      const keyTglAksi     = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key;
+      if (semuaData[idxAsli]) {
+        if (keyStatusVrf)   semuaData[idxAsli][keyStatusVrf]   = status;
+        if (keyVerifikator) semuaData[idxAsli][keyVerifikator] = verifikator;
+        if (keyTglAksi)     semuaData[idxAsli][keyTglAksi]     = r.timestamp || '';
+      }
+      // Update stamp di baris tanpa render ulang seluruh tabel
+      const stampEl = document.getElementById('stamp-' + idxAsli);
+      if (stampEl) stampEl.innerHTML = `✓ Terakhir: ${escapeHtml(verifikator)} · ${escapeHtml(r.timestamp || '')}`;
+      tampilToast('Aksi berhasil disimpan: ' + status, 'ok');
+    } else {
+      tampilToast('Gagal simpan: ' + (r.error || 'tidak diketahui'), 'err');
+    }
+  } catch(e) {
+    tampilToast('Tidak bisa terhubung ke server.', 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan'; }
+  }
 }
 
 /* ───────────────────── TOAST ───────────────────── */
