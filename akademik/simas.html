@@ -409,6 +409,7 @@ td.editing { background: #f0f7ff !important; }
   /* Kolom sticky nama: lebih sempit */
   th.col-sticky-nama,td.col-sticky-nama{left:40px;}
   td.col-sticky-no{min-width:40px !important;}
+  .nama-cell{display:inline-block;max-width:108px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;}
 
   /* Aksi panel: wrap ke bawah */
   .aksi-panel{flex-wrap:wrap;gap:5px;}
@@ -451,6 +452,7 @@ td.editing { background: #f0f7ff !important; }
   .stats-row{grid-template-columns:1fr;}
   .clock{font-size:12px;}
   .main{padding:72px 10px 16px;}
+  .nama-cell{max-width:80px;}
 }
 </style>
 </head>
@@ -1067,6 +1069,9 @@ function renderTabel(){
           const cls = getStatusCls(displayVal);
           return `<td class="${stickyClass}"><span class="status-pill ${cls}">${escapeHtml(displayVal)}</span></td>`;
         }
+        if (isNamaCol) {
+          return `<td class="${stickyClass}" title="${escapeHtml(displayVal)}"><span class="nama-cell">${escapeHtml(displayVal)}</span></td>`;
+        }
         return `<td class="${stickyClass}">${escapeHtml(displayVal)}</td>`;
       }).join('');
 
@@ -1359,7 +1364,7 @@ function renderStatusPpdb() {
     const duCls  = DU_CLS[d.daftarUlang] || 'st-default';
     return `<tr>
       <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${i+1}</td>
-      <td class="col-sticky-nama" style="left:48px;font-weight:600;">${escapeHtml(d.nama)}</td>
+      <td class="col-sticky-nama" style="left:48px;font-weight:600;" title="${escapeHtml(d.nama)}"><span class="nama-cell">${escapeHtml(d.nama)}</span></td>
       <td>${escapeHtml(d.noPend)}</td>
       <td>${escapeHtml(d.sekolah)}</td>
       <td><span class="status-pill ${stCls}">${escapeHtml(d.status)}</span></td>
