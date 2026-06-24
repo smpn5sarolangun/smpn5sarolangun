@@ -117,6 +117,7 @@ body.role-panitia .admin-only { display: none !important; }
 .aksi-select:focus { outline: none; border-color: var(--teal); }
 .aksi-select.st-select { min-width: 110px; }
 .aksi-select.vrf-select { min-width: 100px; }
+.aksi-select.berkas-select { min-width: 130px; font-size:11px; }
 .btn-simpan-aksi {
   font-family: 'Plus Jakarta Plus', sans-serif;
   font-size: 11px; font-weight: 700; padding: 5px 10px;
@@ -207,7 +208,7 @@ body.role-panitia .admin-only { display: none !important; }
 .info-text strong{color:var(--teks);}
 
 /* Table */
-.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;}
+.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;max-height:calc(100vh - 200px);}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:780px;}
 thead th{
   position:sticky;top:0;background:var(--biru);color:#fff;text-align:left;
@@ -357,6 +358,9 @@ tbody tr:nth-child(even):hover{background:#eaf4ff;}
   <div class="nav-item" data-page="ppdb">
     <span class="nav-icon">📋</span><span class="nav-label">Data PPDB</span>
   </div>
+  <div class="nav-item" data-page="status">
+    <span class="nav-icon">📊</span><span class="nav-label">Status PPDB</span>
+  </div>
 
   <div class="sidebar-logout" id="btnLogout">
     <span class="nav-icon">🚪</span><span>Keluar</span>
@@ -406,6 +410,40 @@ tbody tr:nth-child(even):hover{background:#eaf4ff;}
     </div>
 
     <div class="info-summary" id="infoSummary" style="margin-top:12px;font-size:12px;color:var(--teks-sub);font-weight:600;text-align:right;padding:0 4px;"></div>
+  </div>
+
+  <!-- ══ STATUS PPDB ══ -->
+  <div class="page" id="page-status">
+    <div class="page-head">
+      <div>
+        <h1>Status PPDB</h1>
+        <div class="sub">Ringkasan verifikasi dan kelengkapan berkas pendaftar</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="renderStatusPpdb()">⟳ Perbarui</button>
+    </div>
+
+    <!-- Kartu Rangkuman -->
+    <div id="statusSummaryRow" class="stats-row" style="margin-bottom:20px;">
+      <div class="skeleton" style="grid-column:1/-1;"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+
+    <!-- Tabel ringkas -->
+    <div class="table-wrap">
+      <table id="tabelStatus">
+        <thead>
+          <tr>
+            <th class="col-sticky-no"><div class="th-inner" style="cursor:default;">No</div></th>
+            <th class="col-sticky-nama" style="left:48px;"><div class="th-inner" style="cursor:default;">Nama</div></th>
+            <th><div class="th-inner" style="cursor:default;">No. Pendaftaran</div></th>
+            <th><div class="th-inner" style="cursor:default;">Status Verifikasi</div></th>
+            <th><div class="th-inner" style="cursor:default;">Berkas</div></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyStatus">
+          <tr class="empty-row"><td colspan="5">Memuat data…</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>
@@ -487,6 +525,7 @@ let halaman    = 1;
 const PER_HAL  = 25;
 let sortKey    = null;   // key kolom yang sedang diurutkan
 let sortAsc    = true;   // arah urutan
+let berkasLokal = {};    // {idxAsli: 'Belum Mengumpulkan'|'Belum Lengkap'|'Lengkap'} — fallback lokal
 let kolomTerpilih = new Set();      // kolom yang dipilih untuk DIUNDUH (Excel)
 let kolomTampilTerpilih = new Set(); // kolom yang dipilih untuk DITAMPILKAN di tabel (default: semua)
 let daftarPanitia = []; // [{nama, username}] untuk dropdown verifikator
@@ -605,6 +644,7 @@ function tutupSidebarMobile(){
 /* ───────────────────── PETA MODUL (signature dashboard) ───────────────────── */
 const DAFTAR_MODUL = [
   {kat:'Kesiswaan', nama:'Data PPDB', desk:'Lihat, filter, dan unduh data pendaftar PPDB.', icon:'📋', aktif:true, page:'ppdb'},
+  {kat:'Kesiswaan', nama:'Status PPDB', desk:'Ringkasan verifikasi dan kelengkapan berkas pendaftar.', icon:'📊', aktif:true, page:'status'},
 ];
 function renderModuleGrid(){
   const grid = document.getElementById('moduleGrid');
@@ -667,9 +707,11 @@ async function muatDataPpdb(){
     kolomTampilTerpilih = new Set(kolomDef.map(k => k.key)); // default: semua kolom ditampilkan
     dataTersaring = semuaData; // tidak ada filter baris lagi — selalu seluruh data
     sortKey = null; sortAsc = true;
+    berkasLokal = {};
     halaman = 1;
     renderTabel();
     perbaruiStatistik();
+    renderStatusPpdb();
     tampilToast('Data PPDB berhasil dimuat (' + semuaData.length + ' pendaftar).', 'ok');
   } catch(err) {
     tampilToast('Tidak bisa terhubung ke server.', 'err');
@@ -729,27 +771,29 @@ function getStatusCls(val) {
 }
 
 function renderTabel(){
-  const kolomTampil = kolomDef.filter(k => kolomTampilTerpilih.has(k.key));
-  const thead = document.getElementById('theadRow');
-
-  // Deteksi key kolom Nama untuk sticky
+  // Susun ulang: Nama selalu jadi kolom pertama setelah No
   const keyNama = kolomMap.nama || '';
-  const isNamaFirst = kolomTampil.length > 0 && kolomTampil[0].key === keyNama;
-  // Cari posisi kolom nama di kolomTampil
-  const namaIdx = kolomTampil.findIndex(k => k.key === keyNama);
-  // Hitung left offset kolom nama (setelah kolom No = 48px)
-  const namaLeft = 48;
+  const kolomTampilRaw = kolomDef.filter(k => kolomTampilTerpilih.has(k.key));
+  const kolomNama = kolomTampilRaw.find(k => k.key === keyNama);
+  const kolomLainnya = kolomTampilRaw.filter(k => k.key !== keyNama);
+  const kolomTampil = kolomNama ? [kolomNama, ...kolomLainnya] : kolomTampilRaw;
+
+  const namaIdx = 0; // Nama selalu index 0 setelah reorder
+  const namaLeft = 48; // px — lebar kolom No
+
+  const thead = document.getElementById('theadRow');
 
   // Build sortable header
   thead.innerHTML = '<th class="th-no col-sticky-no"><div class="th-inner">No</div></th>' +
     kolomTampil.map((k, i) => {
       const isSorted = sortKey === k.key;
+      const isNamaCol = i === namaIdx && keyNama;
       const cls = [
         isSorted ? (sortAsc ? 'sorted-asc' : 'sorted-desc') : '',
-        i === namaIdx ? 'col-sticky-nama' : ''
+        isNamaCol ? 'col-sticky-nama' : ''
       ].filter(Boolean).join(' ');
       const icon = isSorted ? (sortAsc ? '▲' : '▼') : '⇅';
-      const leftStyle = i === namaIdx ? `style="left:${namaLeft}px;"` : '';
+      const leftStyle = isNamaCol ? `style="left:${namaLeft}px;"` : '';
       return `<th class="${cls}" data-sort-key="${k.key}" ${leftStyle}>
         <div class="th-inner">
           <span>${escapeHtml(k.label)}</span>
@@ -757,6 +801,7 @@ function renderTabel(){
         </div>
       </th>`;
     }).join('') +
+    '<th><div class="th-inner" style="cursor:default;">Berkas</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Aksi Verifikasi</div></th>';
 
   // Attach sort listeners
@@ -785,16 +830,17 @@ function renderTabel(){
   }
 
   const tbody = document.getElementById('tbodyPpdb');
-  const totalKolom = kolomTampil.length + 2;
+  const totalKolom = kolomTampil.length + 3;
 
   const currentUser = sessionStorage.getItem('simas_user') || '';
   const isPanitia = ROLE === 'panitia_ppdb';
-
-  // Opsi verifikator — untuk admin: dropdown, untuk panitia: tetap dirinya
   const verifikatoOpts = [...new Map([
     { nama: currentUser, username: currentUser },
     ...daftarPanitia
   ].filter(p => p.nama).map(p => [p.nama, p])).values()];
+
+  const BERKAS_OPTS = ['Belum Mengumpulkan','Belum Lengkap','Lengkap'];
+  const BERKAS_CLS  = {'Belum Mengumpulkan':'st-ditolak','Belum Lengkap':'st-verifikasi','Lengkap':'st-diterima'};
 
   if (!kolomTampil.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Tidak ada kolom yang dipilih untuk ditampilkan. Klik "Pilih Kolom &amp; Tampilkan".</td></tr>`;
@@ -805,6 +851,7 @@ function renderTabel(){
     const keyStatusVrf  = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || '';
     const keyVerifikator= kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
     const keyTglAksi    = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key || '';
+    const keyBerkas     = kolomDef.find(k => k.label.toLowerCase().includes('berkas'))?.key || '__berkas__';
 
     tbody.innerHTML = tampil.map((row, i) => {
       const idxAsli = semuaData.indexOf(row);
@@ -813,8 +860,8 @@ function renderTabel(){
 
       const sel = kolomTampil.map((k, ki) => {
         const val = row[k.key] || '-';
-        const isNamaCol = ki === namaIdx;
-        const stickyClass = isNamaCol ? `col-sticky-nama" style="left:${namaLeft}px;` : '';
+        const isNamaCol = ki === namaIdx && keyNama;
+        const stickyClass = isNamaCol ? `col-sticky-nama" style="left:${namaLeft}px;font-weight:600;` : '';
         if (k.key === kolomMap.jk) {
           const up = val.toUpperCase();
           const cls = up.startsWith('L') ? 'jk-l' : (up.startsWith('P') ? 'jk-p' : '');
@@ -828,16 +875,17 @@ function renderTabel(){
       }).join('');
 
       const statusSkrg    = keyStatusVrf   ? (row[keyStatusVrf] || '') : '';
-      // verifikator: kalau panitia pakai nama login, kalau admin pakai data sheet atau currentUser
       const verifikatoSkrg= isPanitia ? currentUser : (keyVerifikator ? (row[keyVerifikator] || '') : '');
       const tglAksiSkrg   = keyTglAksi     ? (row[keyTglAksi] || '') : '';
+      const berkasSkrg    = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idxAsli] || 'Belum Mengumpulkan');
 
       const stOptions = STATUS_AKSI.map(s =>
         `<option value="${s.val}" ${statusSkrg === s.val ? 'selected' : ''}>${s.val}</option>`
       ).join('');
+      const berkasOptions = BERKAS_OPTS.map(b =>
+        `<option value="${b}" ${berkasSkrg === b ? 'selected' : ''}>${b}</option>`
+      ).join('');
 
-      // Untuk panitia: verifikator otomatis = nama login, disembunyikan (hidden input)
-      // Untuk admin: dropdown seperti biasa
       const vrfField = isPanitia
         ? `<input type="hidden" id="vrf-${idxAsli}" value="${escapeHtml(currentUser)}">
            <span style="font-size:11px;font-weight:600;color:var(--teks-sub);background:#eef1f5;padding:5px 8px;border-radius:7px;white-space:nowrap;">${escapeHtml(currentUser)}</span>`
@@ -850,9 +898,16 @@ function renderTabel(){
         ? `<span class="aksi-stamp" title="${escapeHtml(verifikatoSkrg)} · ${escapeHtml(tglAksiSkrg)}">✓ ${escapeHtml(tglAksiSkrg)}</span>`
         : `<span class="aksi-stamp" id="stamp-${idxAsli}"></span>`;
 
+      const berkasCls = BERKAS_CLS[berkasSkrg] || 'st-default';
+
       return `<tr id="row-${idxAsli}">
         <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${noUrut}</td>${sel}
-        <td style="min-width:380px;">
+        <td>
+          <select class="aksi-select berkas-select" id="brk-${idxAsli}" onchange="simpanBerkas(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
+            ${berkasOptions}
+          </select>
+        </td>
+        <td style="min-width:360px;">
           <div class="aksi-panel">
             <select class="aksi-select st-select" id="st-${idxAsli}">
               <option value="">— Status —</option>${stOptions}
@@ -871,6 +926,97 @@ function renderTabel(){
     `Menampilkan <strong>${tampil.length}</strong> dari <strong>${semuaData.length}</strong> pendaftar &middot; <strong>${kolomTampil.length}</strong> kolom`;
   const sum = document.getElementById('infoSummary');
   if (sum) sum.textContent = sortKey ? `Diurutkan: ${kolomDef.find(k=>k.key===sortKey)?.label||sortKey} (${sortAsc?'A→Z':'Z→A'})` : '';
+}
+
+/* ───────────────────── SIMPAN BERKAS ───────────────────── */
+async function simpanBerkas(idxAsli, noPendaftaran, nilaiBerkas) {
+  // Simpan lokal dulu (untuk fallback kalau sheet belum ada kolom Berkas)
+  berkasLokal[idxAsli] = nilaiBerkas;
+  if (semuaData[idxAsli]) semuaData[idxAsli]['__berkas__'] = nilaiBerkas;
+
+  if (!noPendaftaran) return;
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'updateBerkasPpdb',
+        token: TOKEN,
+        noPendaftaran,
+        berkas: nilaiBerkas
+      })
+    });
+  } catch(e) { /* simpan lokal saja kalau gagal */ }
+
+  // Perbarui halaman Status PPDB kalau sedang aktif
+  if (document.getElementById('page-status').classList.contains('active')) {
+    renderStatusPpdb();
+  }
+}
+
+/* ───────────────────── RENDER STATUS PPDB ───────────────────── */
+function renderStatusPpdb() {
+  if (!semuaData.length) return;
+
+  const keyNama         = kolomMap.nama || '';
+  const keyNoPendaftaran= kolomMap.noPendaftaran || (kolomDef[0]?.key || '');
+  const keyStatusVrf    = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || kolomMap.status || '';
+  const keyBerkas       = kolomDef.find(k => k.label.toLowerCase().includes('berkas'))?.key || '__berkas__';
+
+  // Hitung rangkuman
+  let belumVerifikasi = 0, sudahVerifikasi = 0;
+  let berkasKumpul = {belumKumpul:0, belumLengkap:0, lengkap:0};
+
+  semuaData.forEach((row, idx) => {
+    const st = String(row[keyStatusVrf] || '').toUpperCase();
+    const stTampil = String(row[kolomMap.status] || '').toUpperCase();
+    // Sudah verifikasi = bukan kosong dan bukan "Terdaftar"
+    const stVal = row[keyStatusVrf] || row[kolomMap.status] || '';
+    if (!stVal || stVal === 'Terdaftar') belumVerifikasi++;
+    else sudahVerifikasi++;
+
+    const bk = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan');
+    if (bk === 'Lengkap') berkasKumpul.lengkap++;
+    else if (bk === 'Belum Lengkap') berkasKumpul.belumLengkap++;
+    else berkasKumpul.belumKumpul++;
+  });
+
+  const total = semuaData.length;
+
+  // Render summary cards
+  document.getElementById('statusSummaryRow').innerHTML = `
+    <div class="stat-card"><div class="stat-icon" style="background:#e8f0fe;color:#0d3b6e;">📋</div>
+      <div><div class="stat-num" style="color:#0d3b6e;">${total}</div><div class="stat-lbl">Total Pendaftar</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fff3cd;color:#856404;">⏳</div>
+      <div><div class="stat-num" style="color:#856404;">${belumVerifikasi}</div><div class="stat-lbl">Belum Diverifikasi</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#d4edda;color:#155724;">✅</div>
+      <div><div class="stat-num" style="color:#155724;">${sudahVerifikasi}</div><div class="stat-lbl">Sudah Diverifikasi</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fdecea;color:#c62828;">📂</div>
+      <div><div class="stat-num" style="color:#c62828;">${berkasKumpul.belumKumpul}</div><div class="stat-lbl">Belum Mengumpulkan</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fff3cd;color:#856404;">📄</div>
+      <div><div class="stat-num" style="color:#856404;">${berkasKumpul.belumLengkap}</div><div class="stat-lbl">Berkas Belum Lengkap</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#d4edda;color:#155724;">📁</div>
+      <div><div class="stat-num" style="color:#155724;">${berkasKumpul.lengkap}</div><div class="stat-lbl">Berkas Lengkap</div></div></div>
+  `;
+
+  // Render tabel ringkas
+  const BERKAS_CLS = {'Belum Mengumpulkan':'st-ditolak','Belum Lengkap':'st-verifikasi','Lengkap':'st-diterima'};
+
+  document.getElementById('tbodyStatus').innerHTML = semuaData.map((row, idx) => {
+    const nama = row[keyNama] || '-';
+    const noPend = row[keyNoPendaftaran] || '-';
+    const st = row[keyStatusVrf] || row[kolomMap.status] || 'Terdaftar';
+    const stCls = getStatusCls(st);
+    const bk = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan');
+    const bkCls = BERKAS_CLS[bk] || 'st-default';
+    return `<tr>
+      <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${idx+1}</td>
+      <td class="col-sticky-nama" style="left:48px;font-weight:600;">${escapeHtml(nama)}</td>
+      <td>${escapeHtml(noPend)}</td>
+      <td><span class="status-pill ${stCls}">${escapeHtml(st)}</span></td>
+      <td><span class="status-pill ${bkCls}">${escapeHtml(bk)}</span></td>
+    </tr>`;
+  }).join('');
 }
 
 function escapeHtml(s){
