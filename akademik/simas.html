@@ -461,10 +461,11 @@ td.editing { background: #f0f7ff !important; }
             <th><div class="th-inner" style="cursor:default;">No. Pendaftaran</div></th>
             <th><div class="th-inner" style="cursor:default;">Status Verifikasi</div></th>
             <th><div class="th-inner" style="cursor:default;">Berkas</div></th>
+            <th><div class="th-inner" style="cursor:default;">Daftar Ulang</div></th>
           </tr>
         </thead>
         <tbody id="tbodyStatus">
-          <tr class="empty-row"><td colspan="5">Memuat data…</td></tr>
+          <tr class="empty-row"><td colspan="6">Memuat data…</td></tr>
         </tbody>
       </table>
     </div>
@@ -549,7 +550,8 @@ let halaman    = 1;
 const PER_HAL  = 25;
 let sortKey    = null;   // key kolom yang sedang diurutkan
 let sortAsc    = true;   // arah urutan
-let berkasLokal = {};    // {idxAsli: 'Belum Mengumpulkan'|'Belum Lengkap'|'Lengkap'} — fallback lokal
+let berkasLokal = {};       // fallback lokal sebelum kolom Berkas ada di sheet
+let daftarUlangLokal = {};  // fallback lokal sebelum kolom Daftar Ulang ada di sheet
 let kolomTerpilih = new Set();      // kolom yang dipilih untuk DIUNDUH (Excel)
 let kolomTampilTerpilih = new Set(); // kolom yang dipilih untuk DITAMPILKAN di tabel (default: semua)
 let daftarPanitia = []; // [{nama, username}] untuk dropdown verifikator
@@ -734,6 +736,7 @@ async function muatDataPpdb(){
     dataTersaring = semuaData; // tidak ada filter baris lagi — selalu seluruh data
     sortKey = null; sortAsc = true;
     berkasLokal = {};
+    daftarUlangLokal = {};
     halaman = 1;
     renderTabel();
     perbaruiStatistik();
@@ -760,6 +763,7 @@ function deteksiKolom(){
     if (!kolomMap.sekolahAsal   && cocok(lbl, ['sekolah asal']))                                           kolomMap.sekolahAsal = k.key;
     if (!kolomMap.status        && cocok(lbl, ['status']))                                                 kolomMap.status = k.key;
     if (!kolomMap.hpOrtu        && cocok(lbl, ['hp ortu','hp orang tua','no hp','whatsapp','no. wa']))     kolomMap.hpOrtu = k.key;
+    if (!kolomMap.daftarUlang   && cocok(lbl, ['daftar ulang']))                                           kolomMap.daftarUlang = k.key;
   });
   // fallback nama -> kolom pertama yang ada isinya, kalau header generik
   if (!kolomMap.nama && kolomDef.length) kolomMap.nama = kolomDef[Math.min(2, kolomDef.length-1)].key;
@@ -778,12 +782,12 @@ function defaultKolomTerpilih(){
 
 /* ───────────────────── RENDER TABEL ───────────────────── */
 const STATUS_AKSI = [
-  { val: 'Belum Verifikasi',   cls: 'st-terdaftar' },
-  { val: 'Verifikasi',         cls: 'st-verifikasi' },
-  { val: 'Diterima',           cls: 'st-diterima' },
-  { val: 'Tidak Diterima',     cls: 'st-ditolak' },
-  { val: 'Sudah Daftar Ulang', cls: 'st-daftar-ulang' },
+  { val: 'Belum Verifikasi', cls: 'st-terdaftar' },
+  { val: 'Verifikasi',       cls: 'st-verifikasi' },
 ];
+
+const DAFTAR_ULANG_OPTS = ['Belum Daftar Ulang', 'Sudah Daftar Ulang'];
+const DAFTAR_ULANG_CLS  = {'Belum Daftar Ulang':'st-terdaftar','Sudah Daftar Ulang':'st-diterima'};
 
 function getStatusCls(val) {
   const up = String(val||'').toUpperCase();
@@ -798,8 +802,15 @@ function getStatusCls(val) {
 
 function renderTabel(){
   // Susun ulang: Nama selalu jadi kolom pertama setelah No
+  // Kolom Berkas & Daftar Ulang dirender terpisah — exclude dari kolomTampil agar tidak dobel
   const keyNama = kolomMap.nama || '';
-  const kolomTampilRaw = kolomDef.filter(k => kolomTampilTerpilih.has(k.key));
+  const keyBerkas     = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '';
+  const keyDaftarUlang= kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '';
+  const kolomTampilRaw = kolomDef.filter(k =>
+    kolomTampilTerpilih.has(k.key) &&
+    k.key !== keyBerkas &&
+    k.key !== keyDaftarUlang
+  );
   const kolomNama = kolomTampilRaw.find(k => k.key === keyNama);
   const kolomLainnya = kolomTampilRaw.filter(k => k.key !== keyNama);
   const kolomTampil = kolomNama ? [kolomNama, ...kolomLainnya] : kolomTampilRaw;
@@ -828,6 +839,7 @@ function renderTabel(){
       </th>`;
     }).join('') +
     '<th><div class="th-inner" style="cursor:default;">Berkas</div></th>' +
+    '<th><div class="th-inner" style="cursor:default;">Daftar Ulang</div></th>' +
     '<th><div class="th-inner" style="cursor:default;">Aksi Verifikasi</div></th>';
 
   // Attach sort listeners
@@ -856,7 +868,7 @@ function renderTabel(){
   }
 
   const tbody = document.getElementById('tbodyPpdb');
-  const totalKolom = kolomTampil.length + 3;
+  const totalKolom = kolomTampil.length + 4; // No + kolom data + Berkas + DaftarUlang + Aksi
 
   const currentUser = sessionStorage.getItem('simas_user') || '';
   const isPanitia = ROLE === 'panitia_ppdb';
@@ -874,20 +886,22 @@ function renderTabel(){
     tbody.innerHTML = `<tr class="empty-row"><td colspan="${totalKolom}">Belum ada data pendaftar.</td></tr>`;
   } else {
     const keyNoPendaftaran = kolomMap.noPendaftaran || (kolomDef[0] ? kolomDef[0].key : '');
-    const keyStatusVrf  = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || '';
-    const keyVerifikator= kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
-    const keyTglAksi    = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key || '';
-    const keyBerkas     = kolomDef.find(k => k.label.toLowerCase().includes('berkas'))?.key || '__berkas__';
+    const keyStatusVrf   = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || '';
+    const keyVerifikator = kolomDef.find(k => k.label.toLowerCase() === 'verifikator')?.key || '';
+    const keyTglAksi     = kolomDef.find(k => k.label.toLowerCase().includes('tgl aksi'))?.key || '';
+    const keyBerkasRow   = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '__berkas__';
+    const keyDaftarUlangRow = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '__daftarulang__';
 
     tbody.innerHTML = tampil.map((row, i) => {
       const idxAsli = semuaData.indexOf(row);
       const noUrut  = i + 1;
       const noPendaftaran = keyNoPendaftaran ? (row[keyNoPendaftaran] || '') : '';
 
-      const statusSkrg    = keyStatusVrf   ? (row[keyStatusVrf] || '') : '';
-      const verifikatoSkrg= isPanitia ? currentUser : (keyVerifikator ? (row[keyVerifikator] || '') : '');
-      const tglAksiSkrg   = keyTglAksi     ? (row[keyTglAksi] || '') : '';
-      const berkasSkrg    = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idxAsli] || 'Belum Mengumpulkan');
+      const statusSkrg      = keyStatusVrf   ? (row[keyStatusVrf] || '') : '';
+      const verifikatoSkrg  = isPanitia ? currentUser : (keyVerifikator ? (row[keyVerifikator] || '') : '');
+      const tglAksiSkrg     = keyTglAksi     ? (row[keyTglAksi] || '') : '';
+      const berkasSkrg      = keyBerkasRow !== '__berkas__' ? (row[keyBerkasRow] || 'Belum Mengumpulkan') : (berkasLokal[idxAsli] || 'Belum Mengumpulkan');
+      const daftarUlangSkrg = keyDaftarUlangRow !== '__daftarulang__' ? (row[keyDaftarUlangRow] || 'Belum Daftar Ulang') : (daftarUlangLokal[idxAsli] || 'Belum Daftar Ulang');
 
       const statusNow = statusSkrg || 'Belum Verifikasi';
       const stOptions = STATUS_AKSI.map(s =>
@@ -895,6 +909,9 @@ function renderTabel(){
       ).join('');
       const berkasOptions = BERKAS_OPTS.map(b =>
         `<option value="${b}" ${berkasSkrg === b ? 'selected' : ''}>${b}</option>`
+      ).join('');
+      const daftarUlangOptions = DAFTAR_ULANG_OPTS.map(d =>
+        `<option value="${d}" ${daftarUlangSkrg === d ? 'selected' : ''}>${d}</option>`
       ).join('');
 
       const vrfField = isPanitia
@@ -945,6 +962,11 @@ function renderTabel(){
             ${berkasOptions}
           </select>
         </td>
+        <td>
+          <select class="aksi-select berkas-select" id="du-${idxAsli}" onchange="simpanDaftarUlang(${idxAsli},'${escapeHtml(noPendaftaran)}',this.value)">
+            ${daftarUlangOptions}
+          </select>
+        </td>
         <td style="min-width:420px;">
           <div class="aksi-panel">
             <select class="aksi-select st-select" id="st-${idxAsli}">
@@ -993,7 +1015,31 @@ async function simpanBerkas(idxAsli, noPendaftaran, nilaiBerkas) {
   }
 }
 
-/* ───────────────────── EDIT DATA BARIS ───────────────────── */
+/* ───────────────────── SIMPAN DAFTAR ULANG ───────────────────── */
+async function simpanDaftarUlang(idxAsli, noPendaftaran, nilai) {
+  daftarUlangLokal[idxAsli] = nilai;
+  if (semuaData[idxAsli]) semuaData[idxAsli]['__daftarulang__'] = nilai;
+
+  if (!noPendaftaran) return;
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'updateDaftarUlangPpdb',
+        token: TOKEN,
+        noPendaftaran,
+        daftarUlang: nilai
+      })
+    });
+  } catch(e) { /* simpan lokal saja kalau gagal */ }
+
+  if (document.getElementById('page-status').classList.contains('active')) {
+    renderStatusPpdb();
+  }
+}
+
+
 function mulaiEdit(idxAsli) {
   editMode[idxAsli] = true;
   renderTabel();
@@ -1080,19 +1126,18 @@ async function simpanEditData(idxAsli, noPendaftaran) {
 function renderStatusPpdb() {
   if (!semuaData.length) return;
 
-  const keyNama         = kolomMap.nama || '';
-  const keyNoPendaftaran= kolomMap.noPendaftaran || (kolomDef[0]?.key || '');
-  const keyStatusVrf    = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || kolomMap.status || '';
-  const keyBerkas       = kolomDef.find(k => k.label.toLowerCase().includes('berkas'))?.key || '__berkas__';
+  const keyNama          = kolomMap.nama || '';
+  const keyNoPendaftaran = kolomMap.noPendaftaran || (kolomDef[0]?.key || '');
+  const keyStatusVrf     = kolomDef.find(k => k.label.toLowerCase().includes('status verifikasi'))?.key || kolomMap.status || '';
+  const keyBerkas        = kolomDef.find(k => k.label.toLowerCase() === 'berkas')?.key || '__berkas__';
+  const keyDaftarUlang   = kolomDef.find(k => k.label.toLowerCase() === 'daftar ulang')?.key || '__daftarulang__';
 
   // Hitung rangkuman
   let belumVerifikasi = 0, sudahVerifikasi = 0;
   let berkasKumpul = {belumKumpul:0, belumLengkap:0, lengkap:0};
+  let belumDaftarUlang = 0, sudahDaftarUlang = 0;
 
   semuaData.forEach((row, idx) => {
-    const st = String(row[keyStatusVrf] || '').toUpperCase();
-    const stTampil = String(row[kolomMap.status] || '').toUpperCase();
-    // Sudah verifikasi = bukan kosong dan bukan "Terdaftar"
     const stVal = row[keyStatusVrf] || row[kolomMap.status] || '';
     if (!stVal || stVal === 'Terdaftar' || stVal === 'Belum Verifikasi') belumVerifikasi++;
     else sudahVerifikasi++;
@@ -1101,6 +1146,10 @@ function renderStatusPpdb() {
     if (bk === 'Lengkap') berkasKumpul.lengkap++;
     else if (bk === 'Belum Lengkap') berkasKumpul.belumLengkap++;
     else berkasKumpul.belumKumpul++;
+
+    const du = keyDaftarUlang !== '__daftarulang__' ? (row[keyDaftarUlang] || 'Belum Daftar Ulang') : (daftarUlangLokal[idx] || 'Belum Daftar Ulang');
+    if (du === 'Sudah Daftar Ulang') sudahDaftarUlang++;
+    else belumDaftarUlang++;
   });
 
   const total = semuaData.length;
@@ -1114,29 +1163,37 @@ function renderStatusPpdb() {
     <div class="stat-card"><div class="stat-icon" style="background:#d4edda;color:#155724;">✅</div>
       <div><div class="stat-num" style="color:#155724;">${sudahVerifikasi}</div><div class="stat-lbl">Sudah Diverifikasi</div></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:#fdecea;color:#c62828;">📂</div>
-      <div><div class="stat-num" style="color:#c62828;">${berkasKumpul.belumKumpul}</div><div class="stat-lbl">Belum Mengumpulkan</div></div></div>
+      <div><div class="stat-num" style="color:#c62828;">${berkasKumpul.belumKumpul}</div><div class="stat-lbl">Belum Kumpulkan Berkas</div></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:#fff3cd;color:#856404;">📄</div>
       <div><div class="stat-num" style="color:#856404;">${berkasKumpul.belumLengkap}</div><div class="stat-lbl">Berkas Belum Lengkap</div></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:#d4edda;color:#155724;">📁</div>
       <div><div class="stat-num" style="color:#155724;">${berkasKumpul.lengkap}</div><div class="stat-lbl">Berkas Lengkap</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fdecea;color:#c62828;">🔄</div>
+      <div><div class="stat-num" style="color:#c62828;">${belumDaftarUlang}</div><div class="stat-lbl">Belum Daftar Ulang</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#d4edda;color:#155724;">✔️</div>
+      <div><div class="stat-num" style="color:#155724;">${sudahDaftarUlang}</div><div class="stat-lbl">Sudah Daftar Ulang</div></div></div>
   `;
 
   // Render tabel ringkas
-  const BERKAS_CLS = {'Belum Mengumpulkan':'st-ditolak','Belum Lengkap':'st-verifikasi','Lengkap':'st-diterima'};
+  const BERKAS_CLS      = {'Belum Mengumpulkan':'st-ditolak','Belum Lengkap':'st-verifikasi','Lengkap':'st-diterima'};
+  const DU_CLS          = {'Belum Daftar Ulang':'st-terdaftar','Sudah Daftar Ulang':'st-diterima'};
 
   document.getElementById('tbodyStatus').innerHTML = semuaData.map((row, idx) => {
-    const nama = row[keyNama] || '-';
+    const nama   = row[keyNama] || '-';
     const noPend = row[keyNoPendaftaran] || '-';
-    const st = row[keyStatusVrf] || row[kolomMap.status] || 'Belum Verifikasi';
-    const stCls = getStatusCls(st);
-    const bk = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan');
-    const bkCls = BERKAS_CLS[bk] || 'st-default';
+    const st     = row[keyStatusVrf] || row[kolomMap.status] || 'Belum Verifikasi';
+    const stCls  = getStatusCls(st);
+    const bk     = keyBerkas !== '__berkas__' ? (row[keyBerkas] || 'Belum Mengumpulkan') : (berkasLokal[idx] || 'Belum Mengumpulkan');
+    const bkCls  = BERKAS_CLS[bk] || 'st-default';
+    const du     = keyDaftarUlang !== '__daftarulang__' ? (row[keyDaftarUlang] || 'Belum Daftar Ulang') : (daftarUlangLokal[idx] || 'Belum Daftar Ulang');
+    const duCls  = DU_CLS[du] || 'st-default';
     return `<tr>
       <td class="col-sticky-no" style="color:var(--teks-sub);font-size:11px;font-weight:700;min-width:48px;">${idx+1}</td>
       <td class="col-sticky-nama" style="left:48px;font-weight:600;">${escapeHtml(nama)}</td>
       <td>${escapeHtml(noPend)}</td>
       <td><span class="status-pill ${stCls}">${escapeHtml(st)}</span></td>
       <td><span class="status-pill ${bkCls}">${escapeHtml(bk)}</span></td>
+      <td><span class="status-pill ${duCls}">${escapeHtml(du)}</span></td>
     </tr>`;
   }).join('');
 }
