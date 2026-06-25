@@ -944,6 +944,7 @@ function renderTabel(){
   const keyVerifikatorDUCol = kolomDef.find(k => k.label.toLowerCase() === 'verifikator daftar ulang')?.key || '';
   const keyTglDaftarUlangCol= kolomDef.find(k => k.label.toLowerCase().includes('tgl daftar ulang'))?.key || '';
   const keyKeteranganCol    = kolomDef.find(k => k.label.toLowerCase() === 'keterangan')?.key || '';
+  const keyStatusCol        = kolomDef.find(k => k.label.toLowerCase() === 'status')?.key || '';
   const kolomTampilRaw = kolomDef.filter(k =>
     kolomTampilTerpilih.has(k.key) &&
     k.key !== keyBerkas &&
@@ -953,7 +954,8 @@ function renderTabel(){
     k.key !== keyTglAksiCol &&
     k.key !== keyVerifikatorDUCol &&
     k.key !== keyTglDaftarUlangCol &&
-    !(keyKeteranganCol && k.key === keyKeteranganCol)
+    !(keyKeteranganCol && k.key === keyKeteranganCol) &&
+    !(keyStatusCol && k.key === keyStatusCol)
   );
   const kolomNama = kolomTampilRaw.find(k => k.key === keyNama);
   const kolomLainnya = kolomTampilRaw.filter(k => k.key !== keyNama);
