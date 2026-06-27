@@ -616,24 +616,64 @@ function updateLinkERapor(url) {
   });
 }
 function updateLinkCBT(admin, guru, siswa) {
-  var links = {'.link-cbt-admin': admin, '.link-cbt-guru': guru, '.link-cbt-siswa': siswa};
-  Object.keys(links).forEach(function(sel){
-    var url = links[sel];
+  // Admin & Guru: buka langsung
+  ['.link-cbt-admin', '.link-cbt-guru'].forEach(function(sel){
+    var url = sel === '.link-cbt-admin' ? admin : guru;
     document.querySelectorAll(sel).forEach(function(el){
       if(url){ el.href = url; el.classList.remove('link-disabled'); }
       else { el.removeAttribute('href'); el.classList.add('link-disabled'); }
     });
+  });
+  // Siswa: intercept klik → copy link + popup panduan incognito
+  document.querySelectorAll('.link-cbt-siswa').forEach(function(el){
+    if(siswa){
+      el.dataset.cbtUrl = siswa;
+      el.removeAttribute('href');
+      el.classList.remove('link-disabled');
+      el.onclick = function(e){
+        e.preventDefault();
+        tampilPopupIncognito(siswa);
+      };
+    } else {
+      el.removeAttribute('href');
+      el.classList.add('link-disabled');
+      el.onclick = null;
+    }
   });
 }
-function updateLinkCBT(admin, guru, siswa) {
-  var links = {'.link-cbt-admin': admin, '.link-cbt-guru': guru, '.link-cbt-siswa': siswa};
-  Object.keys(links).forEach(function(sel){
-    var url = links[sel];
-    document.querySelectorAll(sel).forEach(function(el){
-      if(url){ el.href = url; el.classList.remove('link-disabled'); }
-      else { el.removeAttribute('href'); el.classList.add('link-disabled'); }
-    });
-  });
+
+function tampilPopupIncognito(url) {
+  // Salin link ke clipboard
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).catch(function(){});
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+  }
+  // Tampilkan popup
+  var overlay = document.createElement('div');
+  overlay.id = 'popupIncognitoOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+      <div style="font-size:3rem;margin-bottom:8px">🕵️</div>
+      <h3 style="font-size:1.1rem;font-weight:700;color:#0d3b6e;margin-bottom:8px">Buka di Tab Samaran</h3>
+      <p style="font-size:.85rem;color:#5a6a7e;line-height:1.7;margin-bottom:16px">
+        Link ujian telah <strong>disalin otomatis</strong>.<br>
+        Buka <strong>Tab Samaran (Incognito)</strong> di Chrome, lalu tempel link-nya di sana.
+      </p>
+      <div style="background:#f0f4ff;border-radius:12px;padding:12px 16px;font-size:.82rem;color:#1a5ca8;line-height:2;margin-bottom:20px;text-align:left">
+        1️⃣ Ketuk <strong>⋮</strong> di pojok kanan atas Chrome<br>
+        2️⃣ Pilih <strong>Tab Samaran Baru</strong><br>
+        3️⃣ Ketuk kolom URL → <strong>Tempel</strong> → Buka
+      </div>
+      <button onclick="document.getElementById('popupIncognitoOverlay').remove()" style="background:#0d3b6e;color:#fff;border:none;border-radius:12px;padding:12px 24px;font-size:.95rem;font-weight:600;cursor:pointer;width:100%">Mengerti</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
 }
 
 function toggleDropdown(el) {
