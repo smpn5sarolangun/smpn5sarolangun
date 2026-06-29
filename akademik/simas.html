@@ -219,6 +219,17 @@ body.role-panitia .admin-only { display: none !important; }
 .info-text{font-size:12.5px;color:var(--teks-sub);font-weight:600;}
 .info-text strong{color:var(--teks);}
 
+
+/* ── SEARCH BAR PPDB ── */
+.search-bar-wrap{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.search-bar-wrap .search-icon{font-size:16px;color:var(--teks-sub);flex-shrink:0;}
+.search-bar-wrap input[type=search],.search-bar-wrap input[type=text]{
+  flex:1;padding:9px 14px 9px 36px;border:1.5px solid #dce3ec;border-radius:10px;
+  font-size:13px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a6a7e' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+  color:var(--teks);transition:border-color 0.2s,box-shadow 0.2s;
+}
+.search-bar-wrap input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,126,140,0.12);}
+.search-count{font-size:11.5px;color:var(--teks-sub);font-weight:600;white-space:nowrap;}
 /* Table */
 .table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:auto;max-height:calc(100vh - 200px);}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:780px;}
@@ -539,6 +550,11 @@ td.editing { background: #f0f7ff !important; }
       </div>
     </div>
 
+    <div class="search-bar-wrap">
+      <input type="search" id="inputCariPpdb" placeholder="🔍 Cari nama, sekolah, atau data lainnya…" oninput="onCariPpdb(this.value)">
+      <span class="search-count" id="searchCountPpdb"></span>
+    </div>
+
     <div class="table-wrap">
       <table id="tabelPpdb">
         <thead><tr id="theadRow"></tr></thead>
@@ -564,6 +580,12 @@ td.editing { background: #f0f7ff !important; }
     <!-- Kartu Rangkuman -->
     <div id="statusSummaryRow" class="stats-row" style="margin-bottom:20px;">
       <div class="skeleton" style="grid-column:1/-1;"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+
+    <!-- Search bar Status PPDB -->
+    <div class="search-bar-wrap">
+      <input type="search" id="inputCariStatus" placeholder="🔍 Cari nama, sekolah, status verifikasi…" oninput="onCariStatus(this.value)">
+      <span class="search-count" id="searchCountStatus"></span>
     </div>
 
     <!-- Tabel ringkas -->
@@ -675,6 +697,8 @@ let daftarPanitia = []; // [{nama, username}] untuk dropdown verifikator
 
 let editMode = {}; // {idxAsli: true} — baris yang sedang dalam mode edit
 let statusSortKey = null; // kolom sort tabel Status PPDB
+let queryPpdb   = ''; // teks pencarian di tabel Data PPDB
+let queryStatus = ''; // teks pencarian di tabel Status PPDB
 let statusSortAsc = true; // arah sort tabel Status PPDB
 
 
@@ -1004,8 +1028,22 @@ function renderTabel(){
     });
   });
 
+  // Filter pencarian
+  let tampil = dataTersaring.filter(row => {
+    if (!queryPpdb) return true;
+    const q = queryPpdb.toLowerCase();
+    return Object.values(row).some(v => String(v||'').toLowerCase().includes(q));
+  });
+
+  // Update search count
+  const elCountPpdb = document.getElementById('searchCountPpdb');
+  if (elCountPpdb) {
+    elCountPpdb.textContent = queryPpdb
+      ? `${tampil.length} dari ${dataTersaring.length} data ditemukan`
+      : (dataTersaring.length ? `${dataTersaring.length} data` : '');
+  }
+
   // Sort data
-  let tampil = [...dataTersaring];
   if (sortKey) {
     tampil.sort((a, b) => {
       const va = String(a[sortKey] || '').toLowerCase();
@@ -1430,11 +1468,28 @@ function renderStatusPpdb() {
     });
   }
 
+  // Filter pencarian Status PPDB
+  const dataStatusFiltered = queryStatus
+    ? dataStatus.filter(d => {
+        const q = queryStatus.toLowerCase();
+        return [d.nama, d.sekolah, d.status, d.berkas, d.daftarUlang, d.verifikator, d.verifikatorDu, d.noPend]
+          .some(v => String(v||'').toLowerCase().includes(q));
+      })
+    : dataStatus;
+
+  // Update search count Status
+  const elCountSt = document.getElementById('searchCountStatus');
+  if (elCountSt) {
+    elCountSt.textContent = queryStatus
+      ? `${dataStatusFiltered.length} dari ${dataStatus.length} data ditemukan`
+      : (dataStatus.length ? `${dataStatus.length} data` : '');
+  }
+
   // Render tabel ringkas
   const BERKAS_CLS      = {'Belum Mengumpulkan':'st-ditolak','Belum Lengkap':'st-verifikasi','Lengkap':'st-diterima'};
   const DU_CLS          = {'Belum Daftar Ulang':'st-terdaftar','Sudah Daftar Ulang':'st-diterima'};
 
-  document.getElementById('tbodyStatus').innerHTML = dataStatus.map((d, i) => {
+  document.getElementById('tbodyStatus').innerHTML = dataStatusFiltered.map((d, i) => {
     const stCls  = getStatusCls(d.status);
     const bkCls  = BERKAS_CLS[d.berkas] || 'st-default';
     const duCls  = DU_CLS[d.daftarUlang] || 'st-default';
@@ -1641,6 +1696,16 @@ function updateStatusVrfWarna(sel) {
   const bg = val === 'Verifikasi' ? '#c3e6cb' : '#f5c6cb';
   sel.style.background = bg;
   sel.style.borderColor = bg;
+}
+
+/* ───────────────────── PENCARIAN DATA PPDB & STATUS ───────────────────── */
+function onCariPpdb(val) {
+  queryPpdb = val.trim();
+  renderTabel();
+}
+function onCariStatus(val) {
+  queryStatus = val.trim();
+  renderStatusPpdb();
 }
 
 /* ───────────────────── TOAST ───────────────────── */
