@@ -1463,6 +1463,8 @@ function renderTabPengumuman() {
 
   // Pakai nilai dari sheet kalau sudah dimuat, fallback ke konstanta hardcode
   const status = window._STATUS_PENGUMUMAN || STATUS_PENGUMUMAN;
+
+  if (status === 'belum') {
     container.style.display = 'block';
     cekContent.style.display = 'none';
     container.innerHTML = `
