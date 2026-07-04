@@ -1296,6 +1296,7 @@ select.f-input{appearance:auto;}
   <div class="tab-content" id="tabPeserta" style="display:none;padding-top:0;">
     <div style="max-width:752px;margin:0 auto;">
     <div class="sec-title" style="margin-top:0;">👥 Daftar Peserta Sementara</div>
+    <div id="areaPesertaData">
     <p style="font-size:13px;color:var(--teks-sub);margin:4px 0 16px;">Data bersifat sementara dan akan diperbarui secara berkala.</p>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
       <div style="background:#f0f4f8;border-radius:10px;padding:10px 14px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#0d3b6e;" id="statTotal">-</div><div style="font-size:12px;color:var(--teks-sub);margin-top:2px;">Total Pendaftar</div></div>
@@ -1324,6 +1325,12 @@ select.f-input{appearance:auto;}
       </table>
     </div>
     <p id="pesertaMsg" style="text-align:center;padding:28px;color:var(--teks-sub);font-size:13px;display:none;">Belum ada pendaftar.</p>
+    </div><!-- end areaPesertaData -->
+    <div id="pesertaPengumumanNotice" style="display:none;text-align:center;padding:40px 16px;">
+      <div style="font-size:40px;margin-bottom:12px;">📢</div>
+      <div style="font-size:16px;font-weight:700;color:var(--biru);margin-bottom:8px;">Pengumuman hasil seleksi telah keluar.</div>
+      <div style="font-size:13px;color:var(--teks-sub);">Silakan cek hasil di tab <strong>Pengumuman</strong>.</div>
+    </div>
     </div>
   </div>
 
@@ -1440,12 +1447,13 @@ let ppdbStatus = 'TUTUP';
 
 // ── KONFIGURASI PENGUMUMAN ──
 // Ganti FILE_ID dengan ID file PDF dari Google Drive Anda
-const PDF_DRIVE_ID     = '1wafngX9wU0ctxgetupCk4WcU5MWWs6Xs';
+const PDF_DRIVE_ID     = 'FILE_ID_PDF_ANDA_DISINI';
 // 'pdf' = tampilkan PDF viewer | 'cek' = tampilkan form cek status per siswa
-const MODE_PENGUMUMAN  = 'pdf';
-// true = pengumuman sudah keluar (tab Daftar Peserta berubah, tab Pengumuman aktif)
-// false = pengumuman belum keluar (tab Daftar Peserta normal, tab Pengumuman tampil pesan menunggu)
-const STATUS_PENGUMUMAN = false;
+const MODE_PENGUMUMAN  = 'cek';
+// 'belum'  = pengumuman belum tersedia (Daftar Peserta normal)
+// 'buka'   = pengumuman sudah keluar (PDF/cek status, Daftar Peserta disembunyikan)
+// 'selesai'= pengumuman sudah selesai (pesan selesai, Daftar Peserta disembunyikan)
+const STATUS_PENGUMUMAN = 'belum';
 
 // ── RENDER TAB PENGUMUMAN ──
 function renderTabPengumuman() {
@@ -1453,8 +1461,8 @@ function renderTabPengumuman() {
   const cekContent = document.getElementById('cekStatusContent');
   if (!container) return;
 
-  if (!STATUS_PENGUMUMAN) {
-    // Pengumuman belum keluar
+  // Pakai nilai dari sheet kalau sudah dimuat, fallback ke konstanta hardcode
+  const status = window._STATUS_PENGUMUMAN || STATUS_PENGUMUMAN;
     container.style.display = 'block';
     cekContent.style.display = 'none';
     container.innerHTML = `
@@ -1466,56 +1474,60 @@ function renderTabPengumuman() {
           Pantau terus halaman ini sesuai jadwal yang tertera di tab <strong>Informasi & Syarat</strong>.
         </div>
       </div>`;
-    return;
-  }
 
-  if (MODE_PENGUMUMAN === 'pdf') {
-    // PDF viewer — tanpa toolbar download
+  } else if (status === 'selesai') {
     container.style.display = 'block';
     cekContent.style.display = 'none';
-    const pdfUrl = 'https://drive.google.com/file/d/' + PDF_DRIVE_ID + '/preview';
     container.innerHTML = `
-      <div style="padding:16px 0 0;">
-        <div class="sec-title" style="margin-top:0;">📢 Pengumuman Hasil SPMB 2026/2027</div>
-        <div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);background:#f0f4fa;">
-          <iframe
-            src="${pdfUrl}"
-            style="width:100%;height:80vh;min-height:520px;border:none;display:block;"
-            allow="autoplay"
-            sandbox="allow-scripts allow-same-origin"
-          ></iframe>
+      <div style="text-align:center;padding:48px 24px;">
+        <div style="font-size:52px;margin-bottom:16px;">✅</div>
+        <div style="font-size:18px;font-weight:700;color:#1a7a4a;margin-bottom:10px;">Pengumuman Telah Selesai</div>
+        <div style="font-size:14px;color:var(--teks-sub);max-width:400px;margin:0 auto;line-height:1.7;">
+          Proses pengumuman hasil seleksi SPMB 2026/2027 telah selesai.<br>
+          Terima kasih telah berpartisipasi dalam SPMB SMP Negeri 05 Sarolangun.
         </div>
-        <p style="font-size:11px;color:var(--teks-sub);text-align:center;margin-top:8px;">
-          Jika dokumen tidak tampil, pastikan Anda terhubung ke internet.
-        </p>
       </div>`;
-  } else {
-    // Mode cek status per siswa
-    container.style.display = 'none';
-    cekContent.style.display = 'block';
+
+  } else if (status === 'buka') {
+    if (MODE_PENGUMUMAN === 'pdf') {
+      container.style.display = 'block';
+      cekContent.style.display = 'none';
+      const pdfUrl = 'https://drive.google.com/file/d/' + PDF_DRIVE_ID + '/preview';
+      container.innerHTML = `
+        <div style="padding:16px 0 0;">
+          <div class="sec-title" style="margin-top:0;">📢 Pengumuman Hasil SPMB 2026/2027</div>
+          <div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);background:#f0f4fa;max-width:100%;">
+            <iframe
+              src="${pdfUrl}"
+              style="width:100%;height:80vh;min-height:520px;border:none;display:block;"
+              allow="autoplay"
+              sandbox="allow-scripts allow-same-origin"
+            ></iframe>
+          </div>
+          <p style="font-size:11px;color:var(--teks-sub);text-align:center;margin-top:8px;">
+            Jika dokumen tidak tampil, pastikan Anda terhubung ke internet.
+          </p>
+        </div>`;
+    } else {
+      container.style.display = 'none';
+      cekContent.style.display = 'block';
+    }
   }
 }
 
 // ── RENDER PESERTA — override jika pengumuman sudah keluar ──
 function renderPesertaOrPengumumanNotice() {
-  if (STATUS_PENGUMUMAN) {
-    const tbody = document.getElementById('tbodyPeserta');
-    const msg   = document.getElementById('pesertaMsg');
-    const filterArea = document.querySelector('#tabPeserta .filter-area, #tabPeserta > div:first-child');
-    if (tbody) tbody.innerHTML = '';
-    if (msg) {
-      msg.innerHTML = '📢 Pengumuman hasil seleksi telah keluar.<br><span style="font-size:13px;">Silakan cek hasil di tab <strong>Pengumuman</strong>.</span>';
-      msg.style.display = 'block';
-      msg.style.textAlign = 'center';
-      msg.style.padding = '32px 16px';
-      msg.style.color = 'var(--biru)';
-      msg.style.fontWeight = '600';
-    }
-    // Sembunyikan filter
-    const filterRow = document.querySelector('#tabPeserta > div[style*="display:flex"]');
-    if (filterRow) filterRow.style.display = 'none';
-    return true; // sudah ditangani
+  const status2 = window._STATUS_PENGUMUMAN || STATUS_PENGUMUMAN; const areaSembunyikan = ['buka', 'selesai'].includes(status2);
+  const areaData   = document.getElementById('areaPesertaData');
+  const notice     = document.getElementById('pesertaPengumumanNotice');
+  if (areaSembunyikan) {
+    if (areaData)  areaData.style.display  = 'none';
+    if (notice)    notice.style.display    = 'block';
+    return true;
   }
+  // Status 'belum' — tampilkan normal
+  if (areaData)  areaData.style.display  = 'block';
+  if (notice)    notice.style.display    = 'none';
   return false;
 }
 
@@ -1682,21 +1694,17 @@ function renderPPDBInfo(d) {
   const p = d.data || d;
   ppdbStatus = (p.status||'TUTUP').toUpperCase();
 
-  // Cek status pengumuman - disable input kalau tutup
-  const cekInput = document.getElementById('cekInput');
-  const statusPengumuman = (p.status_pengumuman||'TUTUP').toUpperCase();
-  if(statusPengumuman === 'TUTUP' && cekInput) {
-    cekInput.disabled = true;
-    cekInput.placeholder = 'Informasi hasil seleksi belum dibuka';
-    const bannerPengumuman = document.getElementById('bannerPengumuman');
-    if(bannerPengumuman) bannerPengumuman.innerHTML = `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;text-align:center;color:#856404;margin-bottom:12px;">
-      <div style="font-size:20px;margin-bottom:6px;">🔔</div>
-      <div style="font-weight:700;margin-bottom:4px;">Informasi Hasil Seleksi Belum Dibuka</div>
-      <div style="font-size:13px;">Pantau terus website ini untuk informasi selanjutnya.</div>
-    </div>`;
-    const cekBtn = document.querySelector('#tabCek button');
-    if(cekBtn) cekBtn.disabled = true;
-  }
+  // ── Ambil status pengumuman dari sheet → kontrol tab Pengumuman & Daftar Peserta
+  const rawStatusPengumuman = (p.status_pengumuman||'belum').toLowerCase().trim();
+  // Normalisasi: BUKA→buka, TUTUP→belum, atau langsung belum/buka/selesai
+  let statusPengumuman = rawStatusPengumuman;
+  if (statusPengumuman === 'tutup') statusPengumuman = 'belum';
+  // Override konstanta dengan nilai dari sheet
+  window._STATUS_PENGUMUMAN = statusPengumuman;
+
+  // Re-render tab pengumuman & peserta kalau sudah terbuka
+  if (document.getElementById('pengumumanContainer')) renderTabPengumuman();
+  if (document.getElementById('areaPesertaData'))     renderPesertaOrPengumumanNotice();
 
   // Banner hanya di tab Daftar
   const bannerDaftar = document.getElementById('bannerDaftar');
