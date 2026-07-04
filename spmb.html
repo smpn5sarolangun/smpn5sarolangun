@@ -1338,7 +1338,7 @@ select.f-input{appearance:auto;}
   <div class="tab-content" id="tabCek" style="display:none;padding-top:0;">
     <!-- MODE: pdf → PDF viewer | MODE: cek → form cek status -->
     <!-- Diisi otomatis oleh renderTabPengumuman() -->
-    <div id="pengumumanContainer"></div>
+    <div id="pengumumanContainer" style="max-width:752px;margin:0 auto;"></div>
 
     <!-- Konten Cek Status (disembunyikan, dipakai saat MODE_PENGUMUMAN='cek') -->
     <div id="cekStatusContent" style="display:none;">
@@ -1447,9 +1447,9 @@ let ppdbStatus = 'TUTUP';
 
 // ── KONFIGURASI PENGUMUMAN ──
 // Ganti FILE_ID dengan ID file PDF dari Google Drive Anda
-const PDF_DRIVE_ID     = '1wafngX9wU0ctxgetupCk4WcU5MWWs6Xs';
+const PDF_DRIVE_ID     = 'FILE_ID_PDF_ANDA_DISINI';
 // 'pdf' = tampilkan PDF viewer | 'cek' = tampilkan form cek status per siswa
-const MODE_PENGUMUMAN  = 'pdf';
+const MODE_PENGUMUMAN  = 'cek';
 // 'belum'  = pengumuman belum tersedia (Daftar Peserta normal)
 // 'buka'   = pengumuman sudah keluar (PDF/cek status, Daftar Peserta disembunyikan)
 // 'selesai'= pengumuman sudah selesai (pesan selesai, Daftar Peserta disembunyikan)
