@@ -1713,8 +1713,16 @@ function renderPPDBInfo(d) {
   if(bannerDaftar) {
     if(ppdbStatus === 'BUKA') {
       bannerDaftar.innerHTML = `<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#1a7a4a;margin-bottom:16px;">✅ Pendaftaran Dibuka: ${p.tgl_buka||''} s/d ${p.tgl_tutup||''}</div>`;
+      // Tampilkan form
+      document.querySelectorAll('#tabDaftar > *:not(#bannerDaftar):not(#alertError):not(#alertSukses):not(#kartuSection)').forEach(el => el.style.display = '');
     } else {
-      bannerDaftar.innerHTML = `<div style="background:#fdecea;border:1px solid #f5c6c2;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:#c0392b;margin-bottom:16px;">🔒 Pendaftaran SPMB saat ini Ditutup. Formulir tidak dapat diisi.</div>`;
+      // Sembunyikan seluruh form, tampilkan pesan
+      document.querySelectorAll('#tabDaftar > *:not(#bannerDaftar):not(#alertError):not(#alertSukses):not(#kartuSection)').forEach(el => el.style.display = 'none');
+      bannerDaftar.innerHTML = `
+        <div style="text-align:center;padding:48px 24px;">
+          <div style="font-size:52px;margin-bottom:16px;">🔒</div>
+          <div style="font-size:20px;font-weight:700;color:#c0392b;">Pendaftaran Ditutup</div>
+        </div>`;
       setFormDisabled(true);
     }
   }
