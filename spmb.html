@@ -628,7 +628,7 @@ select.f-input{appearance:auto;}
           <a href="spmb.html#info">Informasi &amp; Syarat</a>
 <a href="spmb.html#registrasi">Registrasi Online</a>
 <a href="spmb.html#peserta">Daftar Peserta</a>
-<a href="spmb.html#cek">Cek Status</a>
+<a href="spmb.html#cek">Pengumuman</a>
         </div>
       </div>
       <div class="nav-dropdown dd-right">
@@ -679,7 +679,7 @@ select.f-input{appearance:auto;}
     <a href="spmb.html#info" class="mob-child">— Informasi &amp; Syarat</a>
     <a href="spmb.html#registrasi" class="mob-child">— Registrasi Online</a>
     <a href="spmb.html#peserta" class="mob-child">— Daftar Peserta</a>
-    <a href="spmb.html#cek" class="mob-child">— Cek Status</a>
+    <a href="spmb.html#cek" class="mob-child">— Pengumuman</a>
 </div>
     <div class="mob-parent-row"><a href="#" onclick="toggleMobSub(this.parentElement.querySelector('.mob-arrow'));return false;" class="mob-parent">Akademik</a><span class="mob-arrow" onclick="toggleMobSub(this)">▾</span></div>
 <div class="mob-sub">
@@ -705,7 +705,7 @@ select.f-input{appearance:auto;}
   <button class="tab-btn active" onclick="switchTab('info',this)"><span>ℹ️</span><span>Informasi & Syarat</span></button>
   <button class="tab-btn" onclick="switchTab('daftar',this)" id="btnDaftar"><span>📝</span><span>Registrasi Online</span></button>
   <button class="tab-btn" onclick="switchTab('peserta',this)"><span>👥</span><span>Daftar Peserta</span></button>
-  <button class="tab-btn" onclick="switchTab('cek',this)"><span>🔍</span><span>Cek Status</span></button>
+  <button class="tab-btn" onclick="switchTab('cek',this)"><span>📢</span><span>Pengumuman</span></button>
 </div>
 
 <div class="main">
@@ -1329,20 +1329,26 @@ select.f-input{appearance:auto;}
 
   <!-- ═══════ TAB CEK ═══════ -->
   <div class="tab-content" id="tabCek" style="display:none;padding-top:0;">
-    <div class="cek-wrap" style="padding-top:0;margin-top:0;">
-      <div class="sec-title" style="text-align:center;">🔍 Cek Status Pendaftaran</div>
-      
-      <div id="bannerPengumuman" style="margin-bottom:16px;"></div>
-      <div class="cek-input-wrap">
-        <input type="text" id="cekInput" class="f-input" placeholder="Masukkan No. Pendaftaran (contoh: SPMB-2026-XXX-001)" onkeydown="if(event.key==='Enter')cekStatus()">
-        <button onclick="cekStatus()" style="background:var(--biru);color:#fff;border:none;border-radius:10px;padding:0 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Cek</button>
-      </div>
-      <div class="result-card" id="resultCard">
-        <div style="font-size:13px;color:var(--teks-sub);">No. Pendaftaran</div>
-        <div style="font-size:20px;font-weight:800;color:var(--biru);margin-bottom:4px;" id="rNomor"></div>
-        <div style="font-size:16px;font-weight:700;" id="rNama"></div>
-        <div style="font-size:12px;color:var(--teks-sub);margin-bottom:8px;" id="rTgl"></div>
-        <div class="result-status" id="rStatus"></div>
+    <!-- MODE: pdf → PDF viewer | MODE: cek → form cek status -->
+    <!-- Diisi otomatis oleh renderTabPengumuman() -->
+    <div id="pengumumanContainer"></div>
+
+    <!-- Konten Cek Status (disembunyikan, dipakai saat MODE_PENGUMUMAN='cek') -->
+    <div id="cekStatusContent" style="display:none;">
+      <div class="cek-wrap" style="padding-top:0;margin-top:0;">
+        <div class="sec-title" style="text-align:center;">🔍 Cek Status Pendaftaran</div>
+        <div id="bannerPengumuman" style="margin-bottom:16px;"></div>
+        <div class="cek-input-wrap">
+          <input type="text" id="cekInput" class="f-input" placeholder="Masukkan No. Pendaftaran (contoh: SPMB-2026-XXX-001)" onkeydown="if(event.key==='Enter')cekStatus()">
+          <button onclick="cekStatus()" style="background:var(--biru);color:#fff;border:none;border-radius:10px;padding:0 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Cek</button>
+        </div>
+        <div class="result-card" id="resultCard">
+          <div style="font-size:13px;color:var(--teks-sub);">No. Pendaftaran</div>
+          <div style="font-size:20px;font-weight:800;color:var(--biru);margin-bottom:4px;" id="rNomor"></div>
+          <div style="font-size:16px;font-weight:700;" id="rNama"></div>
+          <div style="font-size:12px;color:var(--teks-sub);margin-bottom:8px;" id="rTgl"></div>
+          <div class="result-status" id="rStatus"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1432,6 +1438,87 @@ function toggleMobSub(arrow) {
 const PPDB_SCRIPT = 'https://script.google.com/macros/s/AKfycbyB2ESAAwcPW2vufabMbbLGkEEcp-_YksDtU_9QCW7_e5tXzxQA98TWfcR8HrqtiRaoJw/exec';
 let ppdbStatus = 'TUTUP';
 
+// ── KONFIGURASI PENGUMUMAN ──
+// Ganti FILE_ID dengan ID file PDF dari Google Drive Anda
+const PDF_DRIVE_ID     = 'FILE_ID_PDF_ANDA_DISINI';
+// 'pdf' = tampilkan PDF viewer | 'cek' = tampilkan form cek status per siswa
+const MODE_PENGUMUMAN  = 'cek';
+// true = pengumuman sudah keluar (tab Daftar Peserta berubah, tab Pengumuman aktif)
+// false = pengumuman belum keluar (tab Daftar Peserta normal, tab Pengumuman tampil pesan menunggu)
+const STATUS_PENGUMUMAN = false;
+
+// ── RENDER TAB PENGUMUMAN ──
+function renderTabPengumuman() {
+  const container = document.getElementById('pengumumanContainer');
+  const cekContent = document.getElementById('cekStatusContent');
+  if (!container) return;
+
+  if (!STATUS_PENGUMUMAN) {
+    // Pengumuman belum keluar
+    container.style.display = 'block';
+    cekContent.style.display = 'none';
+    container.innerHTML = `
+      <div style="text-align:center;padding:48px 24px;">
+        <div style="font-size:52px;margin-bottom:16px;">📋</div>
+        <div style="font-size:18px;font-weight:700;color:var(--biru);margin-bottom:10px;">Pengumuman Belum Tersedia</div>
+        <div style="font-size:14px;color:var(--teks-sub);max-width:380px;margin:0 auto;line-height:1.7;">
+          Hasil seleksi SPMB 2026/2027 belum diumumkan.<br>
+          Pantau terus halaman ini sesuai jadwal yang tertera di tab <strong>Informasi & Syarat</strong>.
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (MODE_PENGUMUMAN === 'pdf') {
+    // PDF viewer — tanpa toolbar download
+    container.style.display = 'block';
+    cekContent.style.display = 'none';
+    const pdfUrl = 'https://drive.google.com/file/d/' + PDF_DRIVE_ID + '/preview';
+    container.innerHTML = `
+      <div style="padding:16px 0 0;">
+        <div class="sec-title" style="margin-top:0;">📢 Pengumuman Hasil SPMB 2026/2027</div>
+        <div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);background:#f0f4fa;">
+          <iframe
+            src="${pdfUrl}"
+            style="width:100%;height:80vh;min-height:520px;border:none;display:block;"
+            allow="autoplay"
+            sandbox="allow-scripts allow-same-origin"
+          ></iframe>
+        </div>
+        <p style="font-size:11px;color:var(--teks-sub);text-align:center;margin-top:8px;">
+          Jika dokumen tidak tampil, pastikan Anda terhubung ke internet.
+        </p>
+      </div>`;
+  } else {
+    // Mode cek status per siswa
+    container.style.display = 'none';
+    cekContent.style.display = 'block';
+  }
+}
+
+// ── RENDER PESERTA — override jika pengumuman sudah keluar ──
+function renderPesertaOrPengumumanNotice() {
+  if (STATUS_PENGUMUMAN) {
+    const tbody = document.getElementById('tbodyPeserta');
+    const msg   = document.getElementById('pesertaMsg');
+    const filterArea = document.querySelector('#tabPeserta .filter-area, #tabPeserta > div:first-child');
+    if (tbody) tbody.innerHTML = '';
+    if (msg) {
+      msg.innerHTML = '📢 Pengumuman hasil seleksi telah keluar.<br><span style="font-size:13px;">Silakan cek hasil di tab <strong>Pengumuman</strong>.</span>';
+      msg.style.display = 'block';
+      msg.style.textAlign = 'center';
+      msg.style.padding = '32px 16px';
+      msg.style.color = 'var(--biru)';
+      msg.style.fontWeight = '600';
+    }
+    // Sembunyikan filter
+    const filterRow = document.querySelector('#tabPeserta > div[style*="display:flex"]');
+    if (filterRow) filterRow.style.display = 'none';
+    return true; // sudah ditangani
+  }
+  return false;
+}
+
 // ── TABS ──
 function switchTab(tab, btn) {
   ['Info','Daftar','Peserta','Cek'].forEach(t => {
@@ -1447,6 +1534,7 @@ function switchTab(tab, btn) {
     history.replaceState(null, '', hashMap[tab]);
   }
   if(tab === 'peserta') muatDaftarPeserta();
+  if(tab === 'cek') renderTabPengumuman();
 }
 
 // ── DAFTAR PESERTA ──
@@ -1454,6 +1542,9 @@ let _pesertaData = [];
 let _pesertaSudahMuat = false;
 
 function muatDaftarPeserta() {
+  // Kalau pengumuman sudah keluar, tampilkan notifikasi saja
+  if (renderPesertaOrPengumumanNotice()) return;
+
   document.getElementById('tbodyPeserta').innerHTML =
     '<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--teks-sub);">Memuat data...</td></tr>';
   document.getElementById('pesertaMsg').style.display = 'none';
