@@ -691,7 +691,9 @@ tr:hover td{background:#f8fafc;}
     <!-- Tabel Absensi Terbaru -->
     <div class="tabel-area">
       <div class="tabel-header">
-        <h3>📝 Absensi Hari Ini <span id="totalAbsenHariIni" style="font-size:13px;font-weight:600;color:var(--teal);background:#e8f6f8;padding:2px 10px;border-radius:20px;margin-left:6px;">0</span></h3>
+        <h3>📝 Absensi Hari Ini <span id="totalAbsenHariIni" style="font-size:13px;font-weight:600;color:var(--teal);background:#e8f6f8;padding:2px 10px;border-radius:20px;margin-left:6px;">0</span>
+          <span id="serverSyncBadge" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:4px;display:none;"></span>
+        </h3>
         <button onclick="refreshDashboardDanTabel()" style="background:none;border:none;cursor:pointer;color:var(--teal);font-size:13px;font-weight:600;">🔄 Refresh</button>
         <button onclick="kirimUlangCache()" style="background:#e53935;border:none;cursor:pointer;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;margin-left:8px;">📤 Kirim Ulang</button>
       </div>
@@ -2359,6 +2361,7 @@ async function refreshDashboardDanTabel() {
     var merged = rAbsen.data.concat(quickData);
     simpanCacheAbsen(merged);
     renderTabelAbsenHariIni(merged);
+    updateServerSyncBadge(rAbsen.data.length);
   }
 }
 
@@ -2388,6 +2391,7 @@ async function loadTabelAbsenHariIni() {
     });
     const merged = r.data.concat(quickData);
     simpanCacheAbsen(merged);
+    updateServerSyncBadge(r.data.length);
     // ★ Sinkronkan _sudahAbsenSet dengan data server (termasuk absen dari perangkat lain)
     if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
     var normNx = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
@@ -2450,6 +2454,7 @@ async function refreshStatistikSaja() {
       const merged = serverData.concat(quickUpdated);
       simpanCacheAbsen(merged);
       renderTabelAbsenHariIni(merged);
+      updateServerSyncBadge(serverData.length);
     }
 
     // ★ Hitung statistik dari cache lokal — realtime, tidak tunggu server
@@ -2459,6 +2464,23 @@ async function refreshStatistikSaja() {
 }
 
 // ★ Hitung semua statistik dari DOM tabel — realtime, tidak tunggu cache/server
+function updateServerSyncBadge(serverCount) {
+  var badge = document.getElementById('serverSyncBadge');
+  if (!badge) return;
+  var lokal = parseInt((document.getElementById('totalAbsenHariIni')||{}).textContent||'0') || 0;
+  var selisih = lokal - serverCount;
+  badge.style.display = 'inline';
+  if (selisih <= 0) {
+    badge.style.background = '#e8f5e9';
+    badge.style.color = '#2e7d32';
+    badge.textContent = '✅ Server: ' + serverCount;
+  } else {
+    badge.style.background = '#fff3e0';
+    badge.style.color = '#e65100';
+    badge.textContent = '⚠️ Server: ' + serverCount + ' (belum terkirim: ' + selisih + ')';
+  }
+}
+
 function hitungStatistikLokal() {
   var onTime = 0, terlambat = 0, izin = 0, sakit = 0, alpa = 0, belumPulang = 0;
 
