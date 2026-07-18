@@ -2434,19 +2434,12 @@ async function refreshStatistikSaja() {
       const serverData = rAbsen.data || [];
       const cacheAda = ambilCacheAbsen() || [];
       const serverNisnSet = new Set(serverData.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
-      const BATAS_BUFFER = 10 * 60 * 1000; // 10 menit — buffer untuk request yg sedang berjalan
-      const now = Date.now();
-      // Ambil NISN yang ada di retry queue
-      const retryQueue = ambilRetryQueue() || [];
-      const retryNisnSet = new Set(retryQueue.map(function(q){ return String(q.nisn||'').replace(/^0+/,''); }));
 
       const quickData = cacheAda.filter(function(x){
         var nisnKey = String(x.nisn||"").replace(/^0+/,"");
-        if (serverNisnSet.has(nisnKey)) return false; // sudah ada di server, pakai data server
-        if (x._terkirim) return false;                // sudah terkirim tapi server hapus -> langsung hilang
-        if (retryNisnSet.has(nisnKey)) return true;   // ada di queue -> pertahankan
-        var umur = now - (x._ts || 0);
-        return umur < BATAS_BUFFER;                   // belum terkirim, masih baru -> pertahankan sementara
+        if (serverNisnSet.has(nisnKey)) return false; // sudah ada di server → pakai data server
+        if (x._terkirim) return false;                // sudah terkirim tapi tidak ada di server → hilangkan
+        return true;                                  // ★ belum terkirim → pertahankan sampai masuk server
       });
       const serverByNisn = {};
       serverData.forEach(function(d){ serverByNisn[String(d.nisn||'').replace(/^0+/,'')] = d; });
@@ -4165,7 +4158,7 @@ window.kirimUlangCache = async function() {
     // ★ Tabel menampilkan jam berformat titik (mis. "07.36") lewat fmtJam(),
     //   tapi validasi & payload ke server memakai format titik-dua ("07:36").
     //   Normalisasi di sini agar konsisten dengan format yang dipakai di seluruh aplikasi.
-    jam = jam.trim().replace('—','').replace('.', ':');
+    jam = jam.trim().replace('—','').replace(/\./g, ':');
     if (!status) status = jam ? (jam <= batas ? 'OnTime' : 'Terlambat') : '';
     if (nama.trim() && status.trim()) {
       domData.push({nisn: nisn.trim(), nama: nama.trim(), kelas: kelas.trim(),
@@ -4243,7 +4236,7 @@ window.kirimUlangCache = async function() {
   var belumTerkirim = domData.filter(function(d){
     if (!d.nama && !d.nisn) return false;
     if (d.nisn && serverNisnSet.has(normN(d.nisn))) return false;
-    if (!d.nisn && d.nama && serverNamaSet.has(d.nama.trim().toLowerCase())) return false;
+    if (d.nama && serverNamaSet.has(d.nama.trim().toLowerCase())) return false; // cocok via nama → skip
     return true;
   });
 
@@ -4276,7 +4269,7 @@ window.kirimUlangCache = async function() {
   //   selalu mengembalikan format titik-dua yang dipakai server.
   var normJam = function(j) {
     if (!j) return '';
-    var s = String(j).trim().replace('.', ':');
+    var s = String(j).trim().replace(/\./g, ':');
     return /^\d{2}:\d{2}/.test(s) ? s.slice(0,5) : '';
   };
 
@@ -4284,7 +4277,9 @@ window.kirimUlangCache = async function() {
     var jamMasuk  = normJam(d.jamMasuk);
     var jamPulang = normJam(d.jamPulang);
     var status    = d.status || (jamMasuk ? (jamMasuk <= batas ? 'OnTime' : 'Terlambat') : '');
-    if (jamMasuk && status) {
+    var isNoJam   = ['Izin','Sakit','Alpa'].indexOf(status) >= 0;
+    // ★ Izin/Sakit/Alpa tidak punya jam — tetap kirim asal ada status
+    if ((jamMasuk || isNoJam) && status) {
       itemsMasuk.push({nisn: d.nisn, nama: d.nama||'', kelas: d.kelas||'', status: status, jamMasuk: jamMasuk, tanggal: tgl});
     }
     if (jamPulang) {
