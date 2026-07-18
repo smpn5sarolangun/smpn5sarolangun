@@ -1384,6 +1384,13 @@ window.addEventListener('load', async () => {
   const cacheAbsen = ambilCacheAbsen();
   if (cacheDash)  _updateDashboardUI(cacheDash);
   if (cacheAbsen) renderTabelAbsenHariIni(cacheAbsen, true);
+  // ★ Badge server — baca _serverCount dari cache utama, sama cara tabel baca data
+  try {
+    var _rawCache = JSON.parse(localStorage.getItem('absensi_hari_ini_v6') || 'null');
+    if (_rawCache && _rawCache._serverCount !== undefined && _rawCache.tgl === getTglHariIni()) {
+      updateServerSyncBadge(_rawCache._serverCount);
+    }
+  } catch(e) {}
   // Isi stTotalSiswa dari cache khusus getSiswa — selalu akurat, tidak pernah stale
   try {
     var cachedTotal = parseInt(localStorage.getItem(TOTAL_SISWA_KEY)) || 0;
@@ -2432,9 +2439,13 @@ async function loadTabelAbsenHariIni() {
 async function refreshStatistikSaja() {
   try {
     const today = getTglHariIni();
+    // ★ Fetch paralel — badge server update begitu rAbsen selesai, tidak tunggu rDash
     const [rDash, rAbsen] = await Promise.all([
       apiGet('getDashboard'),
-      apiGet('getAbsensiHari', {tanggal: today})
+      apiGet('getAbsensiHari', {tanggal: today}).then(function(r) {
+        if (r.ok && r.data) updateServerSyncBadge(r.data.length);
+        return r;
+      })
     ]);
 
     // ★ Update jadwal & info dari server (totalKelas, tanggal, jadwal)
