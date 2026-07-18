@@ -2389,8 +2389,14 @@ async function loadTabelAbsenHariIni() {
   // Render dari cache dulu (meski kosong) agar tidak loading
   if (localStorage.getItem('absensi_hari_ini_v6')) {
     renderTabelAbsenHariIni(cacheAda);
+    // ★ Baca _serverCount langsung dari raw localStorage — sama persis cara tabel baca cache
+    try {
+      var _sc = JSON.parse(localStorage.getItem('absensi_hari_ini_v6') || 'null');
+      if (_sc && _sc._serverCount !== undefined && _sc.tgl === getTglHariIni()) {
+        updateServerSyncBadge(_sc._serverCount);
+      }
+    } catch(e) {}
   }
-  loadServerSyncBadgeFromCache(); // ★ selalu panggil, tidak tergantung kondisi cache tabel
   // Fetch server di background
   try {
     const r = await apiGet('getAbsensiHari', {tanggal: today});
