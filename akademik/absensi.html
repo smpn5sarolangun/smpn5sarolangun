@@ -696,6 +696,7 @@ tr:hover td{background:#f8fafc;}
         </h3>
         <button onclick="refreshDashboardDanTabel()" style="background:none;border:none;cursor:pointer;color:var(--teal);font-size:13px;font-weight:600;">🔄 Refresh</button>
         <button onclick="kirimUlangCache()" style="background:#e53935;border:none;cursor:pointer;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;margin-left:8px;">📤 Kirim Ulang</button>
+        <button onclick="lihatLogKirim()" title="Log pengiriman" style="background:none;border:1px solid #dde3ee;cursor:pointer;color:var(--teks-sub);font-size:14px;padding:4px 8px;border-radius:20px;margin-left:4px;">🔍</button>
       </div>
       <div style="padding:0 0 8px 0;">
         <div class="search-wrap">
@@ -1423,7 +1424,7 @@ window.addEventListener('load', async () => {
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
-  loadServerSyncBadgeFromCache(); // tampilkan angka server dari cache sebelum fetch selesai
+  setTimeout(loadServerSyncBadgeFromCache, 500); // tampilkan angka server dari cache setelah tabel render
   await loadToggleAlpa(); // load status toggle alpa
   setInterval(refreshStatistikSaja, 10 * 1000);
   // Kirim ulang scan yang mungkin gagal di sesi sebelumnya
@@ -1963,31 +1964,41 @@ async function konfirmasiAbsen() {
     // ★ Kirim pakai absenManual — tidak kena LockService, langsung tulis ke sheet
     //   Status sudah dihitung di client (OnTime/Terlambat/Pulang), server tinggal catat
     if (MODE_ABSEN === 'masuk') {
+      var _t0Masuk = Date.now();
       apiPost({action: 'absenManual', nisn: qNisn, nama: qNama, kelas: qKelas,
                status: qStatus, tanggal: qTgl, jamMasuk: qJam, keterangan: ''})
         .then(function(r) {
+          var durasi = Date.now() - _t0Masuk;
           if (r && r.ok) {
             tandaiCacheTerkirim(qNisn);
+            catatLogKirim({nisn:qNisn, nama:qNama, action:'absenMasuk', status:qStatus, hasil:'ok', durasi:durasi});
           } else {
-            // Apapun errornya (termasuk false positive "sudah") → masuk retry
-            // Server akan cek ulang dan tolak kalau memang sudah ada
             tambahRetryQueue('absenMasuk', qNisn, TOKEN, qJam, qNama, qKelas, qStatus);
+            catatLogKirim({nisn:qNisn, nama:qNama, action:'absenMasuk', status:qStatus, hasil:'gagal', durasi:durasi, error:(r&&r.error)||'server ok:false', response:JSON.stringify(r)});
           }
         })
-        .catch(function() {
+        .catch(function(e) {
+          var durasi = Date.now() - _t0Masuk;
           tambahRetryQueue('absenMasuk', qNisn, TOKEN, qJam, qNama, qKelas, qStatus);
+          catatLogKirim({nisn:qNisn, nama:qNama, action:'absenMasuk', status:qStatus, hasil: durasi>=19000?'timeout':'network', durasi:durasi, error:String(e)});
         });
     } else {
+      var _t0Pulang = Date.now();
       apiPost({action: 'absenPulang', nisn: qNisn, token: TOKEN, jamAsli: qJam})
         .then(function(r) {
+          var durasi = Date.now() - _t0Pulang;
           if (r && r.ok) {
             tandaiCacheTerkirim(qNisn);
+            catatLogKirim({nisn:qNisn, nama:qNama, action:'absenPulang', status:'Pulang', hasil:'ok', durasi:durasi});
           } else {
             tambahRetryQueue('absenPulang', qNisn, TOKEN, qJam, qNama, qKelas, 'Pulang');
+            catatLogKirim({nisn:qNisn, nama:qNama, action:'absenPulang', status:'Pulang', hasil:'gagal', durasi:durasi, error:(r&&r.error)||'server ok:false', response:JSON.stringify(r)});
           }
         })
-        .catch(function() {
+        .catch(function(e) {
+          var durasi = Date.now() - _t0Pulang;
           tambahRetryQueue('absenPulang', qNisn, TOKEN, qJam, qNama, qKelas, 'Pulang');
+          catatLogKirim({nisn:qNisn, nama:qNama, action:'absenPulang', status:'Pulang', hasil: durasi>=19000?'timeout':'network', durasi:durasi, error:String(e)});
         });
     }
     return;
@@ -2504,6 +2515,59 @@ function loadServerSyncBadgeFromCache() {
       badge.textContent = '⚠️ Server: ' + obj.count + ' (belum terkirim: ' + selisih + ')';
     }
   } catch(e) {}
+}
+
+// ★ Logger kegagalan kirim
+var SEND_LOG_KEY = 'absensi_send_log';
+var MAX_LOG = 200;
+
+function catatLogKirim(data) {
+  try {
+    var logs = JSON.parse(localStorage.getItem(SEND_LOG_KEY) || '[]');
+    logs.unshift({
+      ts: new Date().toISOString(),
+      nisn: data.nisn || '',
+      nama: data.nama || '',
+      action: data.action || '',
+      status: data.status || '',
+      hasil: data.hasil || '',       // 'ok' / 'gagal' / 'timeout' / 'network'
+      durasi: data.durasi || 0,      // ms
+      error: data.error || '',
+      response: data.response || ''
+    });
+    if (logs.length > MAX_LOG) logs = logs.slice(0, MAX_LOG);
+    localStorage.setItem(SEND_LOG_KEY, JSON.stringify(logs));
+  } catch(e) {}
+}
+
+function lihatLogKirim() {
+  var logs = JSON.parse(localStorage.getItem(SEND_LOG_KEY) || '[]');
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:16px;padding:20px;width:90%;max-width:560px;max-height:80vh;overflow-y:auto;font-size:12px;';
+  var judul = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><b style="font-size:14px;">🔍 Log Pengiriman</b><div><button onclick="if(confirm('Hapus semua log?'))localStorage.removeItem(''+SEND_LOG_KEY+'');this.closest('.log-modal').remove();" style="background:#ffebee;border:none;border-radius:8px;padding:4px 10px;cursor:pointer;color:#c62828;font-size:11px;margin-right:8px;">🗑 Hapus</button><button onclick="this.closest('.log-modal').remove()" style="background:#f5f5f5;border:none;border-radius:8px;padding:4px 10px;cursor:pointer;">✕ Tutup</button></div></div>';
+  if (!logs.length) {
+    box.innerHTML = judul + '<div style="color:#aaa;text-align:center;padding:20px;">Belum ada log</div>';
+  } else {
+    var rows = logs.map(function(l) {
+      var warna = l.hasil === 'ok' ? '#e8f5e9' : '#ffebee';
+      var icon  = l.hasil === 'ok' ? '✅' : '❌';
+      var durasi = l.durasi ? (l.durasi/1000).toFixed(1)+'s' : '-';
+      var jam = l.ts ? l.ts.replace('T',' ').slice(0,19) : '-';
+      return '<div style="background:'+warna+';border-radius:8px;padding:8px 10px;margin-bottom:6px;">'
+        + icon + ' <b>' + (l.nama||l.nisn) + '</b> — ' + l.action + ' — ' + l.status
+        + '<br><span style="color:#888;">'+jam+' | durasi: '+durasi+'</span>'
+        + (l.error ? '<br><span style="color:#c62828;">'+l.error+'</span>' : '')
+        + (l.response ? '<br><span style="color:#666;word-break:break-all;">'+l.response+'</span>' : '')
+        + '</div>';
+    }).join('');
+    box.innerHTML = judul + '<div style="color:#888;margin-bottom:8px;">'+logs.length+' entri — terbaru di atas</div>' + rows;
+  }
+  modal.className = 'log-modal';
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
 }
 
 function hitungStatistikLokal() {
