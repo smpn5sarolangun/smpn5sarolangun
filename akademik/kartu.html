@@ -12,8 +12,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
-  --teal:#0a7566;--teal2:#0d9a88;--merah:#c0392b;
-  --putaka:#a08030;--putaka2:#8a6c28;--krem:#fdf6e3;
+  --teal:#024e5a;--teal2:#04606f;--merah:#c0392b;
+  --putaka:#a08030;--putaka2:#8a6c28;--krem:#f4f5f0;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a;}
@@ -78,14 +78,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   box-shadow:0 4px 18px rgba(0,0,0,0.15);position:relative;
   background:var(--krem);flex-shrink:0;
 }
-.pustaka .kartu-depan{background:#fdf6e3;}
+.pustaka .kartu-depan{background:var(--krem);}
 
 /* HEADER */
 .kd-header{
   position:absolute;top:0;left:0;right:0;height:110px;
   display:flex;align-items:flex-start;padding:6px 14px 0;gap:0;overflow:visible;
 }
-.pelajar .kd-header{background:linear-gradient(135deg,#0a7566 0%,#0d9a88 55%,#0a6e5e 100%);}
+.pelajar .kd-header{background:linear-gradient(135deg,#003c44 0%,#04606f 100%);}
 .pustaka .kd-header{background:linear-gradient(135deg,var(--putaka) 0%,var(--putaka2) 55%,#6b4a18 100%);}
 
 
@@ -117,7 +117,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 }
 .kd-foto img{width:100%;height:100%;object-fit:cover;object-position:top center;}
 .kd-foto .avatar{font-size:28px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
-.pelajar .kd-foto .avatar{background:linear-gradient(135deg,var(--teal),#0d3b6e);}
+.pelajar .kd-foto .avatar{background:linear-gradient(135deg,var(--teal),var(--teal2));}
 .pustaka .kd-foto .avatar{background:linear-gradient(135deg,var(--putaka),#6b4a18);}
 
 /* NISN STRIPE dalam area hijau, pendek */
@@ -156,7 +156,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   box-shadow:0 4px 18px rgba(0,0,0,0.15);position:relative;
   background:var(--krem);flex-shrink:0;
 }
-.pustaka .kartu-depan{background:#fdf6e3;}
+.pustaka .kartu-depan{background:var(--krem);}
 
 /* ════ KARTU BELAKANG ════ */
 .kartu-belakang{
@@ -164,13 +164,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
   box-shadow:0 4px 18px rgba(0,0,0,0.15);
   background:var(--krem);display:flex;flex-direction:column;flex-shrink:0;
 }
-.pustaka .kartu-belakang{background:#fdf6e3;}
+.pustaka .kartu-belakang{background:var(--krem);}
 
 .kb-strip-top{height:26px;position:relative;overflow:visible;}
 .kb-strip-top::before{content:'';position:absolute;top:0;left:-10px;width:300px;height:200%;background:rgba(255,255,255,0.12);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kb-strip-top::after{content:'';position:absolute;top:0;left:-55px;width:100px;height:200%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kb-strip-top-right{position:absolute;top:0;right:20px;width:50px;height:200%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
-.pelajar .kb-strip-top{background:linear-gradient(135deg,#0a7566,#0d9a88);}
+.pelajar .kb-strip-top{background:linear-gradient(135deg,#003c44,#04606f);}
 .pustaka .kb-strip-top{background:linear-gradient(135deg,var(--putaka),var(--putaka2));}
 .kb-strip-red{height:6px;background:var(--merah);position:relative;z-index:10;}
 .pustaka .kb-strip-red{background:var(--merah);}
