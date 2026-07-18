@@ -1423,6 +1423,7 @@ window.addEventListener('load', async () => {
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
+  loadServerSyncBadgeFromCache(); // tampilkan angka server dari cache sebelum fetch selesai
   await loadToggleAlpa(); // load status toggle alpa
   setInterval(refreshStatistikSaja, 10 * 1000);
   // Kirim ulang scan yang mungkin gagal di sesi sebelumnya
@@ -2467,6 +2468,10 @@ async function refreshStatistikSaja() {
 function updateServerSyncBadge(serverCount) {
   var badge = document.getElementById('serverSyncBadge');
   if (!badge) return;
+  // Simpan ke cache agar tetap tampil setelah reload
+  try {
+    localStorage.setItem('server_count_cache', JSON.stringify({count: serverCount, tgl: getTglHariIni()}));
+  } catch(e) {}
   var lokal = parseInt((document.getElementById('totalAbsenHariIni')||{}).textContent||'0') || 0;
   var selisih = lokal - serverCount;
   if (selisih <= 0) {
@@ -2478,6 +2483,27 @@ function updateServerSyncBadge(serverCount) {
     badge.style.color = '#e65100';
     badge.textContent = '⚠️ Server: ' + serverCount + ' (belum terkirim: ' + selisih + ')';
   }
+}
+
+// Tampilkan angka server dari cache saat pertama load — sebelum fetch selesai
+function loadServerSyncBadgeFromCache() {
+  try {
+    var obj = JSON.parse(localStorage.getItem('server_count_cache') || 'null');
+    if (!obj || obj.tgl !== getTglHariIni()) return; // expired beda hari
+    var badge = document.getElementById('serverSyncBadge');
+    if (!badge) return;
+    var lokal = parseInt((document.getElementById('totalAbsenHariIni')||{}).textContent||'0') || 0;
+    var selisih = lokal - obj.count;
+    if (selisih <= 0) {
+      badge.style.background = '#e8f5e9';
+      badge.style.color = '#2e7d32';
+      badge.textContent = '✅ Server: ' + obj.count;
+    } else {
+      badge.style.background = '#fff3e0';
+      badge.style.color = '#e65100';
+      badge.textContent = '⚠️ Server: ' + obj.count + ' (belum terkirim: ' + selisih + ')';
+    }
+  } catch(e) {}
 }
 
 function hitungStatistikLokal() {
