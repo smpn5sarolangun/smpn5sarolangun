@@ -2500,6 +2500,28 @@ function updateServerSyncBadge(serverCount) {
   }
 }
 
+// Baca angka server dari cache utama saat pertama load — sama cara tabel DOM baca cache
+function loadServerSyncBadgeFromCache() {
+  try {
+    var obj = JSON.parse(localStorage.getItem('absensi_hari_ini_v6') || 'null');
+    if (!obj || obj.tgl !== getTglHariIni() || obj._serverCount === undefined) return;
+    var badge = document.getElementById('serverSyncBadge');
+    if (!badge) return;
+    var serverCount = obj._serverCount;
+    var lokal = obj.data ? obj.data.length : 0;
+    var selisih = lokal - serverCount;
+    if (selisih <= 0) {
+      badge.style.background = '#e8f5e9';
+      badge.style.color = '#2e7d32';
+      badge.textContent = '✅ Server: ' + serverCount;
+    } else {
+      badge.style.background = '#fff3e0';
+      badge.style.color = '#e65100';
+      badge.textContent = '⚠️ Server: ' + serverCount + (selisih > 0 ? ' (kurang ' + selisih + ')' : ' (lebih ' + Math.abs(selisih) + ')');
+    }
+  } catch(e) {}
+}
+
 // ★ Logger kegagalan kirim
 var SEND_LOG_KEY = 'absensi_send_log';
 var MAX_LOG = 200;
