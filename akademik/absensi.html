@@ -1424,13 +1424,15 @@ window.addEventListener('load', async () => {
   (ambilCacheAbsen()||[]).forEach(function(d){ if(d.nisn) window._sudahAbsenSet.add(normN2(d.nisn)); });
   console.log('_sudahAbsenSet terisi:', window._sudahAbsenSet.size, 'dari cache lokal');
 
-  await Promise.all([loadKelas(), loadDashboard(), loadSiswa()]);
+  // ★ loadTabelAbsenHariIni() dijalankan BARENG (paralel), bukan menunggu 3 request
+  // lain kelar dulu — supaya di browser baru (cache kosong) data lengkap & badge
+  // server tidak antre di belakang getKelas/getDashboard/getSiswa.
+  const pTabelAbsen = loadTabelAbsenHariIni();
+  await Promise.all([loadKelas(), loadDashboard(), loadSiswa(), pTabelAbsen]);
   hitungStatistikLokal(); // ★ hitung statistik dari cache lokal saat load
   setTimeout(hitungStatistikLokal, 300); // ★ ulang setelah render tabel benar-benar selesai
   fokusNisn();
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
-  // Load semua data absensi hari ini (tidak blokir scan)
-  loadTabelAbsenHariIni();
   await loadToggleAlpa(); // load status toggle alpa
   setInterval(refreshStatistikSaja, 10 * 1000);
   // Kirim ulang scan yang mungkin gagal di sesi sebelumnya
@@ -1678,24 +1680,11 @@ async function loadDashboard() {
     const d = r.data;
     _updateDashboardUI(d);
 
-    // Tabel absensi terbaru — hanya render jika tabel masih kosong
-    // (menghindari overwrite baris scan yang baru masuk tapi belum tersimpan di server)
-    const tbody = document.getElementById('tabelAbsenHariIni');
-    const sudahAdaBaris = tbody && tbody.querySelectorAll('tr[data-nisn]').length > 0;
-    if (!sudahAdaBaris) {
-      if (!d.terbaru || !d.terbaru.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
-      } else {
-        tbody.innerHTML = d.terbaru.map(row => `
-          <tr data-nisn="${row.nisn||''}">
-            <td style="font-weight:600">${row.nama}</td>
-            <td>${row.kelas}</td>
-            <td>${fmtJam(row.jamMasuk)||'—'}</td>
-            <td>${fmtJam(row.jamPulang)||'—'}</td>
-            <td><span class="badge badge-${row.status.toLowerCase().replace(' ','')}">${row.status}</span></td>
-          </tr>`).join('');
-      }
-    }
+    // ★ Preview 'd.terbaru' (dibatasi jumlahnya oleh server) TIDAK dipakai lagi untuk
+    // mengisi tabel — dulu ini bikin tabel sempat kelihatan cuma sebagian (mis. 20 baris)
+    // sebelum ditimpa data lengkap dari loadTabelAbsenHariIni(). Sekarang tabel
+    // sepenuhnya jadi tanggung jawab loadTabelAbsenHariIni() (cache dulu → lalu data
+    // lengkap dari getAbsensiHari, yang sekarang jalan paralel sejak awal).
 
     // Tabel per kelas
     const tbKelas = document.getElementById('tabelKelas');
@@ -2250,10 +2239,14 @@ function ambilCacheDashboard() {
 }
 
 // ── Render tabel absensi hari ini dari data sheet ───────────────
-// ★ PATCH — tidak pernah replace/kosongkan tbody, hanya tambah baris yang belum ada
+// ★ PATCH v2 — tidak menimpa baris yang masih valid, TAPI baris yang NISN-nya
+// sudah tidak ada lagi di `data` (karena dihapus di sheet & sudah dikonfirmasi
+// _terkirim oleh pemanggil) tetap dibuang dari tampilan. Lihat rekonsiliasi di bawah.
 function renderTabelAbsenHariIni(data, dariCache) {
   const tbody = document.getElementById('tabelAbsenHariIni');
   if (!tbody) return;
+
+  var normNisn = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
 
   if (!data || !data.length) {
     // Hanya tampilkan placeholder kalau tabel benar-benar kosong
@@ -2265,18 +2258,29 @@ function renderTabelAbsenHariIni(data, dariCache) {
 
   if (!dariCache) simpanCacheAbsen(data);
 
-  // Kumpulkan NISN yang sudah ada di DOM — tidak akan ditimpa
+  // ★ Rekonsiliasi hapus: baris DOM yang NISN-nya tidak lagi ada di `data`
+  // (pemanggil — loadTabelAbsenHariIni/refreshDashboardDanTabel/refreshStatistikSaja —
+  // sudah memfilter `data` ini dengan aturan _terkirim, jadi kalau sebuah NISN
+  // benar-benar hilang dari sini artinya memang sudah dihapus di sheet, bukan
+  // sekadar belum sempat sinkron). Baris tanpa data-nisn (identifier via nama) dibiarkan.
+  var dataNisnSet = {};
+  data.forEach(function(r){ var n = normNisn(r.nisn); if (n) dataNisnSet[n] = true; });
+  Array.from(tbody.querySelectorAll('tr[data-nisn]')).forEach(function(row) {
+    var n = normNisn(row.dataset.nisn);
+    if (n && !dataNisnSet[n]) row.remove();
+  });
+
+  // Kumpulkan NISN yang sudah ada di DOM (setelah rekonsiliasi) — tidak akan ditimpa
   var domNisn = {};
   tbody.querySelectorAll('tr[data-nisn]').forEach(function(row) {
-    var n = String(row.dataset.nisn||'').replace(/\.0$/,'').replace(/^0+/,'');
+    var n = normNisn(row.dataset.nisn);
     if (n) domNisn[n] = true;
   });
 
   // Hapus baris placeholder "Belum ada" jika masih ada
   Array.from(tbody.querySelectorAll('tr:not([data-nisn])')).forEach(function(r){ r.remove(); });
 
-  // Hitung duplikat untuk badge GANDA — normalisasi NISN dulu
-  var normNisn = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
+  // Hitung duplikat untuk badge GANDA
   var nisnCount = {};
   data.forEach(function(r){
     var n = normNisn(r.nisn) || r.nama;
@@ -2378,6 +2382,7 @@ async function refreshDashboardDanTabel() {
       if (!x.nisn && !x.nama) return false;
       if (x.nisn && serverNisn.has(String(x.nisn||'').replace(/^0+/,''))) return false;
       if (!x.nisn && serverNama.has(String(x.nama||'').trim().toLowerCase())) return false;
+      if (x._terkirim) return false; // ★ sudah pernah terkirim tapi sekarang hilang di server (dihapus di sheet) → buang
       return true;
     });
     var merged = rAbsen.data.concat(quickData);
@@ -2416,7 +2421,8 @@ async function loadTabelAbsenHariIni() {
       if (!x.nisn && !x.nama) return false; // skip entry benar-benar kosong
       if (x.nisn && serverNisn.has(String(x.nisn||'').replace(/^0+/,''))) return false; // ada di server via nisn
       if (!x.nisn && serverNama.has(String(x.nama||'').trim().toLowerCase())) return false; // ada via nama
-      return true; // belum ada di server → pertahankan
+      if (x._terkirim) return false; // ★ sudah pernah terkirim tapi sekarang hilang di server (dihapus di sheet) → buang
+      return true; // belum ada di server & belum pernah terkirim → pertahankan (masih dalam proses sinkron)
     });
     const merged = r.data.concat(quickData);
     simpanCacheAbsen(merged, r.data.length);
@@ -2425,7 +2431,7 @@ async function loadTabelAbsenHariIni() {
     if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
     var normNx = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
     merged.forEach(function(d){ if(d.nisn) window._sudahAbsenSet.add(normNx(d.nisn)); });
-    // ★ Aman dipanggil kapanpun — render patch-based, tidak pernah hapus baris yang ada
+    // ★ Baris yang NISN-nya sudah tidak ada di `merged` (terhapus & terkonfirmasi _terkirim) ikut dibuang dari DOM
     renderTabelAbsenHariIni(merged);
     // Hitung setelah render server selesai (data paling lengkap)
     hitungBelumMasuk();
