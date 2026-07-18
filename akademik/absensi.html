@@ -2180,16 +2180,20 @@ function getTglHariIni() {
 }
 
 // Cache absensi tabel
-function simpanCacheAbsen(data) {
-  try { localStorage.setItem(ABSEN_CACHE_KEY, JSON.stringify({
-    tgl: getTglHariIni(), ts: Date.now(), data
-  })); } catch(e){}
+function simpanCacheAbsen(data, serverCount) {
+  try {
+    // Pertahankan _serverCount lama kalau tidak ada yang baru
+    var existing = JSON.parse(localStorage.getItem(ABSEN_CACHE_KEY)||'null');
+    var sc = (serverCount !== undefined) ? serverCount : (existing && existing._serverCount !== undefined ? existing._serverCount : undefined);
+    var obj = {tgl: getTglHariIni(), ts: Date.now(), data: data};
+    if (sc !== undefined) obj._serverCount = sc;
+    localStorage.setItem(ABSEN_CACHE_KEY, JSON.stringify(obj));
+  } catch(e){}
 }
 function ambilCacheAbsen() {
   try {
     const obj = JSON.parse(localStorage.getItem(ABSEN_CACHE_KEY)||'null');
     if (!obj) return null;
-    // Expired jika beda hari ATAU lebih dari 5 menit
     if (obj.tgl !== getTglHariIni()) { // expired jika beda hari
       localStorage.removeItem(ABSEN_CACHE_KEY);
       return null;
@@ -2371,7 +2375,7 @@ async function refreshDashboardDanTabel() {
       return true;
     });
     var merged = rAbsen.data.concat(quickData);
-    simpanCacheAbsen(merged);
+    simpanCacheAbsen(merged, rAbsen.data.length);
     renderTabelAbsenHariIni(merged);
     updateServerSyncBadge(rAbsen.data.length);
   }
@@ -2402,7 +2406,7 @@ async function loadTabelAbsenHariIni() {
       return true; // belum ada di server → pertahankan
     });
     const merged = r.data.concat(quickData);
-    simpanCacheAbsen(merged);
+    simpanCacheAbsen(merged, r.data.length);
     updateServerSyncBadge(r.data.length);
     // ★ Sinkronkan _sudahAbsenSet dengan data server (termasuk absen dari perangkat lain)
     if (!window._sudahAbsenSet) window._sudahAbsenSet = new Set();
@@ -2464,7 +2468,7 @@ async function refreshStatistikSaja() {
         return serverByNisn[key] ? Object.assign({}, x, serverByNisn[key]) : x;
       });
       const merged = serverData.concat(quickUpdated);
-      simpanCacheAbsen(merged);
+      simpanCacheAbsen(merged, serverData.length);
       renderTabelAbsenHariIni(merged);
       updateServerSyncBadge(serverData.length);
     }
