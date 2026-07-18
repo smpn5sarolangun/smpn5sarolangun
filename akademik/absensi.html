@@ -4162,7 +4162,10 @@ window.kirimUlangCache = async function() {
     var kelas  = (row.querySelector('td:nth-child(3)') || {}).textContent || '';
     var jam    = (row.querySelector('td:nth-child(4)') || {}).textContent || '';
     var status = (row.querySelector('.badge') || {}).textContent || '';
-    jam = jam.trim().replace('—','');
+    // ★ Tabel menampilkan jam berformat titik (mis. "07.36") lewat fmtJam(),
+    //   tapi validasi & payload ke server memakai format titik-dua ("07:36").
+    //   Normalisasi di sini agar konsisten dengan format yang dipakai di seluruh aplikasi.
+    jam = jam.trim().replace('—','').replace('.', ':');
     if (!status) status = jam ? (jam <= batas ? 'OnTime' : 'Terlambat') : '';
     if (nama.trim() && status.trim()) {
       domData.push({nisn: nisn.trim(), nama: nama.trim(), kelas: kelas.trim(),
@@ -4266,9 +4269,20 @@ window.kirimUlangCache = async function() {
   var itemsMasuk  = [];
   var itemsPulang = [];
 
+  // ★ Normalisasi jam: data dari DOM/cache bisa berformat titik ("07.36") atau
+  //   titik-dua ("07:36"). Regex lama hanya menerima titik-dua sehingga SEMUA
+  //   baris gagal divalidasi (jamMasuk selalu jadi '') dan tidak pernah terkirim
+  //   walau memang belum ada di server. Fungsi ini menerima keduanya lalu
+  //   selalu mengembalikan format titik-dua yang dipakai server.
+  var normJam = function(j) {
+    if (!j) return '';
+    var s = String(j).trim().replace('.', ':');
+    return /^\d{2}:\d{2}/.test(s) ? s.slice(0,5) : '';
+  };
+
   belumTerkirim.forEach(function(d) {
-    var jamMasuk  = (d.jamMasuk  && /^\d{2}:\d{2}/.test(d.jamMasuk))  ? d.jamMasuk.slice(0,5)  : '';
-    var jamPulang = (d.jamPulang && /^\d{2}:\d{2}/.test(d.jamPulang)) ? d.jamPulang.slice(0,5) : '';
+    var jamMasuk  = normJam(d.jamMasuk);
+    var jamPulang = normJam(d.jamPulang);
     var status    = d.status || (jamMasuk ? (jamMasuk <= batas ? 'OnTime' : 'Terlambat') : '');
     if (jamMasuk && status) {
       itemsMasuk.push({nisn: d.nisn, nama: d.nama||'', kelas: d.kelas||'', status: status, jamMasuk: jamMasuk, tanggal: tgl});
