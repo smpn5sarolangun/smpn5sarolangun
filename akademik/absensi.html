@@ -1424,7 +1424,6 @@ window.addEventListener('load', async () => {
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
-  setTimeout(loadServerSyncBadgeFromCache, 100); // tampilkan angka server dari cache setelah tabel render
   await loadToggleAlpa(); // load status toggle alpa
   setInterval(refreshStatistikSaja, 10 * 1000);
   // Kirim ulang scan yang mungkin gagal di sesi sebelumnya
@@ -2390,6 +2389,7 @@ async function loadTabelAbsenHariIni() {
   // Render dari cache dulu (meski kosong) agar tidak loading
   if (localStorage.getItem('absensi_hari_ini_v6')) {
     renderTabelAbsenHariIni(cacheAda);
+    loadServerSyncBadgeFromCache(); // ★ baca _serverCount dari cache — sama cara tabel baca data
   }
   // Fetch server di background
   try {
