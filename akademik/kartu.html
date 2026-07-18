@@ -12,8 +12,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
-  --teal:#024e5a;--teal2:#04606f;--merah:#c0392b;
-  --putaka:#a08030;--putaka2:#8a6c28;--krem:#f4f5f0;
+  --teal:#0a7566;--teal2:#0d9a88;--merah:#c0392b;
+  --putaka:#a08030;--putaka2:#8a6c28;--krem:#fdf6e3;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a;}
@@ -72,20 +72,20 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .btn-dl-db{background:#6d4c41;color:#fff;}
 .btn-dl-db:hover{background:#4e342e;}
 
-/* ════ KARTU DEPAN 8.6cm x 5.6cm ════ */
+/* ════ KARTU DEPAN 323x204px ════ */
 .kartu-depan{
-  width:8.6cm;height:5.6cm;border-radius:0;overflow:hidden;
+  width:323px;height:204px;border-radius:0;overflow:hidden;
   box-shadow:0 4px 18px rgba(0,0,0,0.15);position:relative;
   background:var(--krem);flex-shrink:0;
 }
-.pustaka .kartu-depan{background:var(--krem);}
+.pustaka .kartu-depan{background:#fdf6e3;}
 
 /* HEADER */
 .kd-header{
   position:absolute;top:0;left:0;right:0;height:110px;
   display:flex;align-items:flex-start;padding:6px 14px 0;gap:0;overflow:visible;
 }
-.pelajar .kd-header{background:linear-gradient(135deg,#003c44 0%,#04606f 100%);}
+.pelajar .kd-header{background:linear-gradient(135deg,#0a7566 0%,#0d9a88 55%,#0a6e5e 100%);}
 .pustaka .kd-header{background:linear-gradient(135deg,var(--putaka) 0%,var(--putaka2) 55%,#6b4a18 100%);}
 
 
@@ -96,7 +96,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .kd-stripe-b{position:absolute;top:0;left:-10px;width:500px;height:100%;background:rgba(255,255,255,0.18);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kd-stripe-c{position:absolute;top:0;right:20px;width:50px;height:100%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 
-.kd-header-txt{flex:1;text-align:right;padding:0 6px 0 0;padding-top:8px;}
+.kd-header-txt{flex:1;text-align:right;padding:0 12px 0 0;padding-top:8px;}
 .kd-header-txt .judul{font-size:16px;font-weight:900;color:#f8c400;letter-spacing:2px;text-transform:uppercase;line-height:1.15;}
 .kd-header-txt .sekolah{font-size:13px;font-weight:800;color:#fff;line-height:1.2;margin-top:2px;}
 .kd-header-txt .alamat{font-size:7px;color:rgba(255,255,255,0.82);line-height:1.4;margin-top:2px;}
@@ -109,15 +109,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 
 /* FOTO overlap naik ke header */
 .kd-foto{
-  position:absolute;top:54px;left:21px;
-  width:88px;height:91px;
+  position:absolute;top:58px;left:16px;
+  width:93px;height:123px;
   background:#c8d0da;overflow:hidden;
   display:flex;align-items:center;justify-content:center;
   border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.2);z-index:2;
 }
 .kd-foto img{width:100%;height:100%;object-fit:cover;object-position:top center;}
 .kd-foto .avatar{font-size:28px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
-.pelajar .kd-foto .avatar{background:linear-gradient(135deg,var(--teal),var(--teal2));}
+.pelajar .kd-foto .avatar{background:linear-gradient(135deg,var(--teal),#0d3b6e);}
 .pustaka .kd-foto .avatar{background:linear-gradient(135deg,var(--putaka),#6b4a18);}
 
 /* NISN STRIPE dalam area hijau, pendek */
@@ -128,42 +128,49 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .kd-nisn-no{font-size:16px;font-weight:800;color:#fff;letter-spacing:2px;}
 
 /* NAMA NISN TTL bawah foto */
-.kd-data{position:absolute;top:150px;left:21px;right:113px;}
-.kd-nama{font-size:12px;font-weight:800;line-height:1.1;margin-bottom:1px;text-transform:uppercase;}
+.kd-data{position:absolute;top:188px;left:16px;right:185px;}
+.kd-nama{font-size:13px;font-weight:800;line-height:1.1;margin-bottom:2px;text-transform:uppercase;}
 .pelajar .kd-nama{color:var(--teal);}
 .pustaka .kd-nama{color:var(--putaka);}
 .kd-nisn-txt{font-size:9.5px;color:#333;margin-bottom:1px;font-weight:600;}
-.kd-ttl{font-size:9px;color:#555;line-height:1.1;}
+.kd-ttl{font-size:9px;color:#555;line-height:1.3;}
 
 /* BARCODE lebih besar */
-.kd-barcode{position:absolute;bottom:6px;left:21px;width:150px;height:20px;}
+.kd-barcode{position:absolute;bottom:10px;left:16px;width:150px;height:26px;}
 .kd-barcode svg{width:100%;height:100%;}
 
 /* QR geser bawah */
-.kd-qr{position:absolute;right:21px;top:126px;width:82px;height:82px;}
+.kd-qr{position:absolute;right:16px;top:126px;width:82px;height:82px;}
 .kd-qr canvas,.kd-qr img{width:82px!important;height:82px!important;}
 
 /* INFO SEKOLAH hampir sejajar barcode, ada jarak dengan QR */
 .kd-sekolah{
-  position:absolute;right:21px;bottom:10px;
-  text-align:right;font-size:7.5px;color:#000;line-height:1.7;
+  position:absolute;right:16px;bottom:10px;
+  text-align:right;font-size:7.5px;color:#555;line-height:1.7;
 }
-.kd-sekolah strong{display:block;font-size:8px;color:#000;font-weight:800;}
-.kd-sekolah .tahun{font-size:7px;color:#000;}
+.kd-sekolah strong{display:block;font-size:8px;color:#0d3b6e;font-weight:800;}
+.kd-sekolah .tahun{font-size:7px;color:#999;}
+
+.kartu-depan{
+  width:430px;height:270px;border-radius:0;overflow:hidden;
+  box-shadow:0 4px 18px rgba(0,0,0,0.15);position:relative;
+  background:var(--krem);flex-shrink:0;
+}
+.pustaka .kartu-depan{background:#fdf6e3;}
 
 /* ════ KARTU BELAKANG ════ */
 .kartu-belakang{
-  width:8.6cm;height:5.6cm;border-radius:0;overflow:hidden;
+  width:430px;height:270px;border-radius:0;overflow:hidden;
   box-shadow:0 4px 18px rgba(0,0,0,0.15);
   background:var(--krem);display:flex;flex-direction:column;flex-shrink:0;
 }
-.pustaka .kartu-belakang{background:var(--krem);}
+.pustaka .kartu-belakang{background:#fdf6e3;}
 
 .kb-strip-top{height:26px;position:relative;overflow:visible;}
 .kb-strip-top::before{content:'';position:absolute;top:0;left:-10px;width:300px;height:200%;background:rgba(255,255,255,0.12);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kb-strip-top::after{content:'';position:absolute;top:0;left:-55px;width:100px;height:200%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
 .kb-strip-top-right{position:absolute;top:0;right:20px;width:50px;height:200%;background:rgba(255,255,255,0.22);transform:skewX(-60deg);transform-origin:bottom left;pointer-events:none;}
-.pelajar .kb-strip-top{background:linear-gradient(135deg,#003c44,#04606f);}
+.pelajar .kb-strip-top{background:linear-gradient(135deg,#0a7566,#0d9a88);}
 .pustaka .kb-strip-top{background:linear-gradient(135deg,var(--putaka),var(--putaka2));}
 .kb-strip-red{height:6px;background:var(--merah);position:relative;z-index:10;}
 .pustaka .kb-strip-red{background:var(--merah);}
