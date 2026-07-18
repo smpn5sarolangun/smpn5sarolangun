@@ -696,7 +696,7 @@ tr:hover td{background:#f8fafc;}
         </h3>
         <button onclick="refreshDashboardDanTabel()" style="background:none;border:none;cursor:pointer;color:var(--teal);font-size:13px;font-weight:600;">🔄 Refresh</button>
         <button onclick="kirimUlangCache()" style="background:#e53935;border:none;cursor:pointer;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;margin-left:8px;">📤 Kirim Ulang</button>
-        <button onclick="lihatLogKirim()" title="Log pengiriman" style="background:none;border:1px solid #dde3ee;cursor:pointer;color:var(--teks-sub);font-size:14px;padding:4px 8px;border-radius:20px;margin-left:4px;">🔍</button>
+        <button onclick="lihatLogKirim()" title="Log pengiriman" style="background:none;border:1px solid #dde3ee;cursor:pointer;color:var(--teks-sub);font-size:14px;padding:4px 8px;border-radius:20px;margin-left:4px;">📋</button>
       </div>
       <div style="padding:0 0 8px 0;">
         <div class="search-wrap">
@@ -1424,7 +1424,7 @@ window.addEventListener('load', async () => {
   initRekapBulananKelas(); // cache kelas saat dataSiswa siap
   // Load semua data absensi hari ini (tidak blokir scan)
   loadTabelAbsenHariIni();
-  setTimeout(loadServerSyncBadgeFromCache, 500); // tampilkan angka server dari cache setelah tabel render
+  setTimeout(loadServerSyncBadgeFromCache, 100); // tampilkan angka server dari cache setelah tabel render
   await loadToggleAlpa(); // load status toggle alpa
   setInterval(refreshStatistikSaja, 10 * 1000);
   // Kirim ulang scan yang mungkin gagal di sesi sebelumnya
@@ -2479,9 +2479,13 @@ async function refreshStatistikSaja() {
 function updateServerSyncBadge(serverCount) {
   var badge = document.getElementById('serverSyncBadge');
   if (!badge) return;
-  // Simpan ke cache agar tetap tampil setelah reload
+  // Simpan ke cache utama — sama persis cara tabel DOM simpan data
   try {
-    localStorage.setItem('server_count_cache', JSON.stringify({count: serverCount, tgl: getTglHariIni()}));
+    var obj = JSON.parse(localStorage.getItem('absensi_hari_ini_v6') || 'null');
+    if (obj && obj.tgl === getTglHariIni()) {
+      obj._serverCount = serverCount;
+      localStorage.setItem('absensi_hari_ini_v6', JSON.stringify(obj));
+    }
   } catch(e) {}
   var lokal = parseInt((document.getElementById('totalAbsenHariIni')||{}).textContent||'0') || 0;
   var selisih = lokal - serverCount;
@@ -2492,29 +2496,8 @@ function updateServerSyncBadge(serverCount) {
   } else {
     badge.style.background = '#fff3e0';
     badge.style.color = '#e65100';
-    badge.textContent = '⚠️ Server: ' + serverCount + ' (belum terkirim: ' + selisih + ')';
+    badge.textContent = '⚠️ Server: ' + serverCount + (selisih > 0 ? ' (kurang ' + selisih + ')' : ' (lebih ' + Math.abs(selisih) + ')');
   }
-}
-
-// Tampilkan angka server dari cache saat pertama load — sebelum fetch selesai
-function loadServerSyncBadgeFromCache() {
-  try {
-    var obj = JSON.parse(localStorage.getItem('server_count_cache') || 'null');
-    if (!obj || obj.tgl !== getTglHariIni()) return; // expired beda hari
-    var badge = document.getElementById('serverSyncBadge');
-    if (!badge) return;
-    var lokal = parseInt((document.getElementById('totalAbsenHariIni')||{}).textContent||'0') || 0;
-    var selisih = lokal - obj.count;
-    if (selisih <= 0) {
-      badge.style.background = '#e8f5e9';
-      badge.style.color = '#2e7d32';
-      badge.textContent = '✅ Server: ' + obj.count;
-    } else {
-      badge.style.background = '#fff3e0';
-      badge.style.color = '#e65100';
-      badge.textContent = '⚠️ Server: ' + obj.count + ' (belum terkirim: ' + selisih + ')';
-    }
-  } catch(e) {}
 }
 
 // ★ Logger kegagalan kirim
