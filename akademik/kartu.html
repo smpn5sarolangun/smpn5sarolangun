@@ -110,7 +110,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 /* FOTO overlap naik ke header */
 .kd-foto{
   position:absolute;top:58px;left:21px;
-  width:93px;height:123px;
+  width:93px;height:108px;
   background:#c8d0da;overflow:hidden;
   display:flex;align-items:center;justify-content:center;
   border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.2);z-index:2;
@@ -128,8 +128,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef2f7;color:#1e2a3a
 .kd-nisn-no{font-size:16px;font-weight:800;color:#fff;letter-spacing:2px;}
 
 /* NAMA NISN TTL bawah foto */
-.kd-data{position:absolute;top:188px;left:21px;right:185px;}
-.kd-nama{font-size:13px;font-weight:800;line-height:1.1;margin-bottom:2px;text-transform:uppercase;}
+.kd-data{position:absolute;top:178px;left:21px;right:185px;}
+.kd-nama{font-size:13px;font-weight:800;line-height:1.1;margin-bottom:2px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pelajar .kd-nama{color:var(--teal);}
 .pustaka .kd-nama{color:var(--putaka);}
 .kd-nisn-txt{font-size:9.5px;color:#333;margin-bottom:1px;font-weight:600;}
@@ -490,6 +490,16 @@ function updateSel() {
   el.textContent = selectedSet.size > 0 ? ('✅ ' + selectedSet.size + ' dipilih') : '';
 }
 
+function autoFitNama(el, maxSize = 14, minSize = 8) {
+  if (!el) return;
+  let size = maxSize;
+  el.style.fontSize = size + 'px';
+  while (el.scrollWidth > el.clientWidth && size > minSize) {
+    size -= 0.5;
+    el.style.fontSize = size + 'px';
+  }
+}
+
 function renderKartu(data) {
   const area = document.getElementById('kartuArea');
   document.getElementById('infoCount').innerHTML =
@@ -510,7 +520,14 @@ function renderKartu(data) {
     if (bcEl) {
       try { JsBarcode(bcEl, kodeKartu, { format: 'CODE128', width: 1.6, height: 26, displayValue: false, margin: 0, lineColor: '#1e2a3a' }); } catch(e) {}
     }
+    const namaFitEl = document.querySelector('#depan-' + i + ' .kd-nama');
+    autoFitNama(namaFitEl);
   });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      data.forEach((s, i) => autoFitNama(document.querySelector('#depan-' + i + ' .kd-nama')));
+    });
+  }
   updateSel();
 }
 
