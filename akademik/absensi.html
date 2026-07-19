@@ -2262,10 +2262,19 @@ function renderTabelAbsenHariIni(data, dariCache) {
   // Data yang dihapus dari sheet akan hilang dari cache saat merged diperbarui
   // dan tidak muncul lagi setelah reload
 
-  // Kumpulkan NISN yang sudah ada di DOM (setelah rekonsiliasi) — tidak akan ditimpa
+  // Kumpulkan NISN yang ada di data terbaru (server+cache tervalidasi)
+  var incomingNisn = {};
+  data.forEach(function(r) {
+    var n = normNisn(r.nisn);
+    if (n) incomingNisn[n] = true;
+  });
+
+  // Kumpulkan NISN yang sudah ada di DOM — sekaligus buang baris yang NISN-nya
+  // sudah tidak ada lagi di data terbaru (berarti dihapus di sheet)
   var domNisn = {};
   tbody.querySelectorAll('tr[data-nisn]').forEach(function(row) {
     var n = normNisn(row.dataset.nisn);
+    if (n && !incomingNisn[n]) { row.remove(); return; } // ★ dihapus di server → hapus dari DOM juga
     if (n) domNisn[n] = true;
   });
 
