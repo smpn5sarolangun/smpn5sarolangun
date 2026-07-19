@@ -2258,17 +2258,9 @@ function renderTabelAbsenHariIni(data, dariCache) {
 
   if (!dariCache) simpanCacheAbsen(data);
 
-  // ★ Rekonsiliasi hapus: baris DOM yang NISN-nya tidak lagi ada di `data`
-  // (pemanggil — loadTabelAbsenHariIni/refreshDashboardDanTabel/refreshStatistikSaja —
-  // sudah memfilter `data` ini dengan aturan _terkirim, jadi kalau sebuah NISN
-  // benar-benar hilang dari sini artinya memang sudah dihapus di sheet, bukan
-  // sekadar belum sempat sinkron). Baris tanpa data-nisn (identifier via nama) dibiarkan.
-  var dataNisnSet = {};
-  data.forEach(function(r){ var n = normNisn(r.nisn); if (n) dataNisnSet[n] = true; });
-  Array.from(tbody.querySelectorAll('tr[data-nisn]')).forEach(function(row) {
-    var n = normNisn(row.dataset.nisn);
-    if (n && !dataNisnSet[n]) row.remove();
-  });
+  // ★ Render patch-based — tidak pernah hapus baris yang ada di DOM
+  // Data yang dihapus dari sheet akan hilang dari cache saat merged diperbarui
+  // dan tidak muncul lagi setelah reload
 
   // Kumpulkan NISN yang sudah ada di DOM (setelah rekonsiliasi) — tidak akan ditimpa
   var domNisn = {};
