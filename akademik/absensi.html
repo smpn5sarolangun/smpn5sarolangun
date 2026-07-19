@@ -2419,7 +2419,7 @@ async function loadTabelAbsenHariIni() {
     window._serverNisnSet = serverNisn; // ★ simpan untuk kirimUlangCache
     const quickData = cacheAda.filter(function(x){
       if (!x.nisn && !x.nama) return false; // skip entry benar-benar kosong
-      if (x._terkirim) return false; // ★ sudah pernah terkirim → cek dulu sebelum apapun, kalau hilang di server berarti dihapus
+      if (x._terkirim) return false; // ★ sudah pernah terkirim → cek dulu, kalau hilang di server berarti dihapus dari sheet
       if (x.nisn && serverNisn.has(String(x.nisn||'').replace(/^0+/,''))) return false; // ada di server via nisn
       if (!x.nisn && serverNama.has(String(x.nama||'').trim().toLowerCase())) return false; // ada via nama
       return true; // belum ada di server & belum pernah terkirim → pertahankan
@@ -2480,7 +2480,7 @@ async function refreshStatistikSaja() {
 
       const quickData = cacheAda.filter(function(x){
         var nisnKey = String(x.nisn||"").replace(/^0+/,"");
-        if (x._terkirim) return false;                // ★ sudah terkirim → kalau hilang di server berarti dihapus
+        if (x._terkirim) return false;                // ★ sudah terkirim → kalau hilang di server berarti dihapus dari sheet
         if (serverNisnSet.has(nisnKey)) return false; // sudah ada di server → pakai data server
         return true;                                  // belum terkirim → pertahankan sampai masuk server
       });
