@@ -1515,8 +1515,8 @@ function startClock() {
 
 // ── API HELPER ─────────────────────────────────────────
 async function apiGet(action, params={}) {
-  const qs = new URLSearchParams({action, token:TOKEN, ...params}).toString();
-  const res = await fetch(`${SCRIPT_URL}?${qs}`);
+  const qs = new URLSearchParams({action, token:TOKEN, ...params, _:Date.now()}).toString();
+  const res = await fetch(`${SCRIPT_URL}?${qs}`, {cache:'no-store'});
   return res.json();
 }
 
