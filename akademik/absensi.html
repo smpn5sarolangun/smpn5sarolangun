@@ -2249,7 +2249,11 @@ function renderTabelAbsenHariIni(data, dariCache) {
   var normNisn = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
 
   if (!data || !data.length) {
-    // Hanya tampilkan placeholder kalau tabel benar-benar kosong
+    // ★ Data terbaru kosong total (bukan dari cache awal) → baris lama di DOM
+    // sudah tidak valid lagi, buang semua sebelum tampilkan placeholder
+    if (!dariCache) {
+      tbody.querySelectorAll('tr[data-nisn]').forEach(function(row){ row.remove(); });
+    }
     if (!tbody.querySelectorAll('tr[data-nisn]').length && !dariCache) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
     }
