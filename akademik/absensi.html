@@ -1523,7 +1523,7 @@ async function apiGet(action, params={}) {
 async function apiPost(body) {
   // Gunakan text/plain untuk hindari CORS preflight
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 35000); // timeout 35 detik (handle GAS cold start)
+  const timer = setTimeout(() => controller.abort(), 60000); // timeout 60 detik (handle GAS cold start)
   try {
     const res = await fetch(SCRIPT_URL, {
       method:'POST',
@@ -2419,10 +2419,10 @@ async function loadTabelAbsenHariIni() {
     window._serverNisnSet = serverNisn; // ★ simpan untuk kirimUlangCache
     const quickData = cacheAda.filter(function(x){
       if (!x.nisn && !x.nama) return false; // skip entry benar-benar kosong
+      if (x._terkirim) return false; // ★ sudah pernah terkirim → cek dulu sebelum apapun, kalau hilang di server berarti dihapus
       if (x.nisn && serverNisn.has(String(x.nisn||'').replace(/^0+/,''))) return false; // ada di server via nisn
       if (!x.nisn && serverNama.has(String(x.nama||'').trim().toLowerCase())) return false; // ada via nama
-      if (x._terkirim) return false; // ★ sudah pernah terkirim tapi sekarang hilang di server (dihapus di sheet) → buang
-      return true; // belum ada di server & belum pernah terkirim → pertahankan (masih dalam proses sinkron)
+      return true; // belum ada di server & belum pernah terkirim → pertahankan
     });
     const merged = r.data.concat(quickData);
     simpanCacheAbsen(merged, r.data.length);
@@ -2480,9 +2480,9 @@ async function refreshStatistikSaja() {
 
       const quickData = cacheAda.filter(function(x){
         var nisnKey = String(x.nisn||"").replace(/^0+/,"");
+        if (x._terkirim) return false;                // ★ sudah terkirim → kalau hilang di server berarti dihapus
         if (serverNisnSet.has(nisnKey)) return false; // sudah ada di server → pakai data server
-        if (x._terkirim) return false;                // sudah terkirim tapi tidak ada di server → hilangkan
-        return true;                                  // ★ belum terkirim → pertahankan sampai masuk server
+        return true;                                  // belum terkirim → pertahankan sampai masuk server
       });
       const serverByNisn = {};
       serverData.forEach(function(d){ serverByNisn[String(d.nisn||'').replace(/^0+/,'')] = d; });
@@ -2514,7 +2514,14 @@ function updateServerSyncBadge(serverCount) {
       localStorage.setItem('absensi_hari_ini_v6', JSON.stringify(obj));
     }
   } catch(e) {}
-  var lokal = parseInt((document.getElementById('totalAbsenHariIni')||{}).textContent||'0') || 0;
+  // Hitung lokal dari cache langsung — DOM mungkin belum ter-update saat dipanggil dari init
+  var lokalDariCache = 0;
+  try {
+    var _cacheObj = JSON.parse(localStorage.getItem('absensi_hari_ini_v6') || 'null');
+    if (_cacheObj && _cacheObj.tgl === getTglHariIni() && _cacheObj.data) lokalDariCache = _cacheObj.data.length;
+  } catch(e) {}
+  var lokalDariDom = parseInt((document.getElementById('totalAbsenHariIni')||{}).textContent||'0') || 0;
+  var lokal = lokalDariDom || lokalDariCache; // pakai DOM kalau sudah ada, fallback ke cache
   var selisih = lokal - serverCount;
   if (selisih <= 0) {
     badge.style.background = '#e8f5e9';
