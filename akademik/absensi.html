@@ -2417,12 +2417,19 @@ async function loadTabelAbsenHariIni() {
     const serverNisn = new Set(r.data.map(function(d){return String(d.nisn||'').replace(/^0+/,'');}));
     const serverNama = new Set(r.data.map(function(d){return String(d.nama||'').trim().toLowerCase();}));
     window._serverNisnSet = serverNisn; // ★ simpan untuk kirimUlangCache
+    const _batasBuffer = 10 * 60 * 1000; // 10 menit buffer
+    const _now = Date.now();
+    const _retryQueue = ambilRetryQueue() || [];
+    const _retryNisnSet = new Set(_retryQueue.map(function(q){ return String(q.nisn||'').replace(/^0+/,''); }));
     const quickData = cacheAda.filter(function(x){
       if (!x.nisn && !x.nama) return false; // skip entry benar-benar kosong
-      if (x._terkirim) return false; // ★ sudah pernah terkirim → cek dulu, kalau hilang di server berarti dihapus dari sheet
-      if (x.nisn && serverNisn.has(String(x.nisn||'').replace(/^0+/,''))) return false; // ada di server via nisn
+      var nisnKey = String(x.nisn||'').replace(/^0+/,'');
+      if (x.nisn && serverNisn.has(nisnKey)) return false; // ada di server via nisn
       if (!x.nisn && serverNama.has(String(x.nama||'').trim().toLowerCase())) return false; // ada via nama
-      return true; // belum ada di server & belum pernah terkirim → pertahankan
+      if (x._terkirim) return false; // ★ sudah terkirim tapi tidak ada di server → dihapus dari sheet → buang
+      if (_retryNisnSet.has(nisnKey)) return true; // ada di retry queue → pertahankan
+      var umur = _now - (x._ts || 0);
+      return umur < _batasBuffer; // belum terkirim & baru → pertahankan sementara
     });
     const merged = r.data.concat(quickData);
     simpanCacheAbsen(merged, r.data.length);
@@ -2478,11 +2485,18 @@ async function refreshStatistikSaja() {
       const cacheAda = ambilCacheAbsen() || [];
       const serverNisnSet = new Set(serverData.map(function(d){ return String(d.nisn||'').replace(/^0+/,''); }));
 
+      const BATAS_BUFFER = 10 * 60 * 1000; // 10 menit buffer untuk request yang sedang berjalan
+      const now = Date.now();
+      const retryQueue = ambilRetryQueue() || [];
+      const retryNisnSet = new Set(retryQueue.map(function(q){ return String(q.nisn||'').replace(/^0+/,''); }));
+
       const quickData = cacheAda.filter(function(x){
         var nisnKey = String(x.nisn||"").replace(/^0+/,"");
-        if (x._terkirim) return false;                // ★ sudah terkirim → kalau hilang di server berarti dihapus dari sheet
         if (serverNisnSet.has(nisnKey)) return false; // sudah ada di server → pakai data server
-        return true;                                  // belum terkirim → pertahankan sampai masuk server
+        if (x._terkirim) return false;                // ★ sudah terkirim tapi tidak ada di server → dihapus dari sheet → buang
+        if (retryNisnSet.has(nisnKey)) return true;   // ada di retry queue → pertahankan sampai berhasil kirim
+        var umur = now - (x._ts || 0);
+        return umur < BATAS_BUFFER;                   // belum terkirim & baru (<10 menit) → pertahankan sementara
       });
       const serverByNisn = {};
       serverData.forEach(function(d){ serverByNisn[String(d.nisn||'').replace(/^0+/,'')] = d; });
