@@ -2470,9 +2470,7 @@ async function loadTabelAbsenHariIni() {
       if (x.nisn && serverNisn.has(nisnKey)) return false; // ada di server via nisn
       if (!x.nisn && serverNama.has(String(x.nama||'').trim().toLowerCase())) return false; // ada via nama
       if (x._terkirim && (_now - (x._ts||0)) > GRACE_HAPUS_MS) return false; // ★ sudah terkirim, lewat masa toleransi, tapi tidak ada di server → dihapus dari sheet → buang
-      if (_retryNisnSet.has(nisnKey)) return true; // ada di retry queue → pertahankan
-      var umur = _now - (x._ts || 0);
-      return umur < _batasBuffer; // belum terkirim & baru → pertahankan sementara
+      return true; // ★ belum confirmed terkirim → PERTAHANKAN selamanya (tidak ada batas waktu), _sudahAbsenSet sudah menjaga dari absen ganda
     });
     const merged = r.data.concat(quickData);
     simpanCacheAbsen(merged, r.data.length);
@@ -2537,9 +2535,7 @@ async function refreshStatistikSaja() {
         var nisnKey = String(x.nisn||"").replace(/^0+/,"");
         if (serverNisnSet.has(nisnKey)) return false; // sudah ada di server → pakai data server
         if (x._terkirim && (now - (x._ts||0)) > GRACE_HAPUS_MS) return false; // ★ sudah terkirim, lewat masa toleransi, tapi tidak ada di server → dihapus dari sheet → buang
-        if (retryNisnSet.has(nisnKey)) return true;   // ada di retry queue → pertahankan sampai berhasil kirim
-        var umur = now - (x._ts || 0);
-        return umur < BATAS_BUFFER;                   // belum terkirim & baru (<10 menit) → pertahankan sementara
+        return true; // ★ belum confirmed terkirim → PERTAHANKAN selamanya (tidak ada batas waktu), _sudahAbsenSet sudah menjaga dari absen ganda
       });
       const serverByNisn = {};
       serverData.forEach(function(d){ serverByNisn[String(d.nisn||'').replace(/^0+/,'')] = d; });
