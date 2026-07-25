@@ -2242,19 +2242,7 @@ function ambilCacheDashboard() {
 // ★ PATCH v2 — tidak menimpa baris yang masih valid, TAPI baris yang NISN-nya
 // sudah tidak ada lagi di `data` (karena dihapus di sheet & sudah dikonfirmasi
 // _terkirim oleh pemanggil) tetap dibuang dari tampilan. Lihat rekonsiliasi di bawah.
-// ★ Masa toleransi untuk entri yang baru dikonfirmasi terkirim (_terkirim:true) —
-// selama masih dalam masa ini, entri yang belum kelihatan di respons server TIDAK
-// langsung dianggap "dihapus di sheet". Ini mengantisipasi jeda propagasi Sheets/Apps
-// Script antara tulis (POST) dan baca-balik (GET getAbsensiHari) yang kadang lebih
-// lambat dari siklus polling 10 detik.
 var GRACE_HAPUS_MS = 3 * 60 * 1000; // 3 menit
-
-// ★ Penyangga penghapusan — baris/tabel baru benar-benar dihapus dari DOM kalau
-// terkonfirmasi hilang dari server di 2 panggilan berturut-turut (bukan cuma sekali),
-// supaya 1 respons server yang kebetulan kosong/glitch tidak langsung menghapus data valid.
-var _hapusPendingNisn = {};
-var _hapusPendingSemua = 0;
-var HAPUS_KONFIRMASI_MS = 30000;
 
 function renderTabelAbsenHariIni(data, dariCache) {
   const tbody = document.getElementById('tabelAbsenHariIni');
@@ -2263,32 +2251,24 @@ function renderTabelAbsenHariIni(data, dariCache) {
   var normNisn = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
 
   if (!data || !data.length) {
-    // ★ Data terbaru kosong total (bukan dari cache awal) — jangan langsung percaya,
-    // baru hapus semua baris kalau kekosongan ini terkonfirmasi 2x berturut-turut
+    // ★ Data terbaru kosong total (bukan dari cache awal) — setiap entri yang tadinya
+    // ada di cache sudah melalui pengecekan grace period (GRACE_HAPUS_MS) sendiri-sendiri
+    // sebelum sampai di titik ini, jadi aman langsung bersihkan tabel di sini juga.
     if (!dariCache) {
-      var adaRowSkrg = tbody.querySelectorAll('tr[data-nisn]').length > 0;
-      if (adaRowSkrg) {
-        var now0 = Date.now();
-        if (!_hapusPendingSemua) {
-          _hapusPendingSemua = now0; // pertama kali kelihatan kosong → tunggu konfirmasi berikutnya
-        } else if (now0 - _hapusPendingSemua >= HAPUS_KONFIRMASI_MS) {
-          tbody.querySelectorAll('tr[data-nisn]').forEach(function(row){ row.remove(); });
-          _hapusPendingSemua = 0;
-        }
-      }
+      tbody.querySelectorAll('tr[data-nisn]').forEach(function(row){ row.remove(); });
     }
     if (!tbody.querySelectorAll('tr[data-nisn]').length && !dariCache) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
     }
     return;
   }
-  _hapusPendingSemua = 0; // ★ data terbukti ada lagi → batalkan rencana hapus-semua
 
   if (!dariCache) simpanCacheAbsen(data);
 
-  // ★ Render patch-based — baris hanya dihapus kalau NISN-nya terkonfirmasi hilang
-  // dari data server 2x berturut-turut (lihat _hapusPendingNisn), bukan langsung di
-  // panggilan pertama, supaya glitch/response tidak lengkap tidak menghapus data valid
+  // ★ Render patch-based — baris dihapus begitu NISN-nya tidak lagi ada di data
+  // terbaru. Data hanya bisa "tidak ada" di titik ini setelah lolos grace period
+  // GRACE_HAPUS_MS (persisten di cache, aman dari reload halaman) di level pemanggil,
+  // jadi tidak perlu penyangga tambahan di sini.
 
   // Kumpulkan NISN yang ada di data terbaru (server+cache tervalidasi)
   var incomingNisn = {};
@@ -2298,27 +2278,15 @@ function renderTabelAbsenHariIni(data, dariCache) {
   });
 
   // Kumpulkan NISN yang sudah ada di DOM — baris yang NISN-nya sudah tidak ada lagi
-  // di data terbaru baru dihapus setelah terkonfirmasi 2x (lihat HAPUS_KONFIRMASI_MS)
+  // di data terbaru (data sudah lolos grace period GRACE_HAPUS_MS yang persisten di
+  // cache) langsung dihapus dari DOM. Tidak perlu debounce tambahan di sini karena
+  // grace period 3 menit di level cache sudah cukup kuat menyaring glitch sesaat,
+  // dan debounce berbasis memori sebelumnya rapuh terhadap reload halaman.
   var domNisn = {};
-  var nowR = Date.now();
   tbody.querySelectorAll('tr[data-nisn]').forEach(function(row) {
     var n = normNisn(row.dataset.nisn);
-    if (n && !incomingNisn[n]) {
-      if (!_hapusPendingNisn[n]) {
-        _hapusPendingNisn[n] = nowR; // pertama kali kelihatan hilang → tunggu konfirmasi berikutnya
-        domNisn[n] = true; // tetap dianggap valid untuk sekarang
-      } else if (nowR - _hapusPendingNisn[n] >= HAPUS_KONFIRMASI_MS) {
-        row.remove(); // ★ terkonfirmasi hilang 2x → dihapus di server, hapus dari DOM juga
-        delete _hapusPendingNisn[n];
-      } else {
-        domNisn[n] = true; // belum cukup lama sejak pertama hilang, tetap dipertahankan
-      }
-      return;
-    }
-    if (n) {
-      delete _hapusPendingNisn[n]; // ★ ternyata masih ada di data → batalkan rencana hapus
-      domNisn[n] = true;
-    }
+    if (n && !incomingNisn[n]) { row.remove(); return; } // ★ dihapus di server (lolos grace period) → hapus dari DOM juga
+    if (n) domNisn[n] = true;
   });
 
   // Hapus baris placeholder "Belum ada" jika masih ada
