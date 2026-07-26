@@ -2264,21 +2264,23 @@ var GRACE_HAPUS_MS = 3 * 60 * 1000; // 3 menit
 function renderTabelAbsenHariIni(data, dariCache) {
   const tbody = document.getElementById('tabelAbsenHariIni');
   if (!tbody) return;
-  data = data || [];
 
   var normNisn = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
 
-  if (!dariCache) simpanCacheAbsen(data);
+  if (!data || !data.length) {
+    // ★ Data terbaru kosong total — TIDAK PERNAH menghapus baris yang sudah terisi
+    // hanya karena ini terjadi. Skenario ini (seluruh data kosong sekaligus) berisiko
+    // terlalu besar untuk dipercaya begitu saja (race dengan proses tulis massal di
+    // server, respons tidak lengkap, dsb) — beda dengan penghapusan per-siswa di bawah
+    // yang sudah lolos grace period dan terbukti aman. Placeholder cuma tampil kalau
+    // tabel memang belum pernah terisi sama sekali.
+    if (!tbody.querySelectorAll('tr[data-nisn]').length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
+    }
+    return;
+  }
 
-  // ★ FIX: dulu ada guard "kalau `data` kosong total, JANGAN PERNAH hapus baris
-  // yang sudah ada" — dengan alasan menghindari respons glitch/tidak lengkap.
-  // Tapi ini REDUNDAN: setiap entri yang sampai di `data` (dari pemanggil) sudah
-  // lolos vetting `_terkirim` + `GRACE_HAPUS_MS` (3 menit) di level quickData —
-  // jadi kalau semua entri hari ini memang sudah lolos grace period itu (misal
-  // semuanya dihapus manual di sheet), `data` yang kosong total DI SINI itu sah,
-  // bukan glitch. Guard lama itu justru membuat baris tidak pernah otomatis
-  // hilang kalau SEMUA data hari ini dihapus (harus reload manual). Sekarang
-  // proses hapus per-NISN di bawah tetap jalan seperti biasa untuk kasus ini.
+  if (!dariCache) simpanCacheAbsen(data);
 
   // ★ Render patch-based — baris dihapus begitu NISN-nya tidak lagi ada di data
   // terbaru. Data hanya bisa "tidak ada" di titik ini setelah lolos grace period
@@ -2306,16 +2308,6 @@ function renderTabelAbsenHariIni(data, dariCache) {
 
   // Hapus baris placeholder "Belum ada" jika masih ada
   Array.from(tbody.querySelectorAll('tr:not([data-nisn])')).forEach(function(r){ r.remove(); });
-
-  // ★ FIX: cek kosong-total di SINI (setelah proses hapus per-NISN di atas jalan),
-  // bukan sebelum — supaya kasus "semua data memang terhapus" ikut ke-clear duluan,
-  // baru placeholder ditampilkan kalau tabel betul-betul kosong sesudahnya.
-  if (!data.length) {
-    if (!tbody.querySelectorAll('tr[data-nisn]').length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
-    }
-    return;
-  }
 
   // Hitung duplikat untuk badge GANDA
   var nisnCount = {};
