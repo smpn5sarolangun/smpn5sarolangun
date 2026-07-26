@@ -2268,13 +2268,13 @@ function renderTabelAbsenHariIni(data, dariCache) {
   var normNisn = function(n){ return String(n||'').trim().replace(/\.0$/,'').replace(/^0+/,''); };
 
   if (!data || !data.length) {
-    // ★ Data terbaru kosong total (bukan dari cache awal) — setiap entri yang tadinya
-    // ada di cache sudah melalui pengecekan grace period (GRACE_HAPUS_MS) sendiri-sendiri
-    // sebelum sampai di titik ini, jadi aman langsung bersihkan tabel di sini juga.
-    if (!dariCache) {
-      tbody.querySelectorAll('tr[data-nisn]').forEach(function(row){ row.remove(); });
-    }
-    if (!tbody.querySelectorAll('tr[data-nisn]').length && !dariCache) {
+    // ★ Data terbaru kosong total — TIDAK PERNAH menghapus baris yang sudah terisi
+    // hanya karena ini terjadi. Skenario ini (seluruh data kosong sekaligus) berisiko
+    // terlalu besar untuk dipercaya begitu saja (race dengan proses tulis massal di
+    // server, respons tidak lengkap, dsb) — beda dengan penghapusan per-siswa di bawah
+    // yang sudah lolos grace period dan terbukti aman. Placeholder cuma tampil kalau
+    // tabel memang belum pernah terisi sama sekali.
+    if (!tbody.querySelectorAll('tr[data-nisn]').length) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#9aabb8;">Belum ada absensi hari ini</td></tr>';
     }
     return;
@@ -3346,15 +3346,21 @@ async function simpanMdStatus(i) {
   if (srch) { srch.value = ''; filterMdList(''); }
 
   // 7. Kirim ke server di background
+  var _mulaiMdStatus = Date.now();
   apiPost({action:'absenManual', nisn:nisnFinal, nama:nama, kelas:kelas, status:st, keterangan:'', tanggal:tglHariIni, jamMasuk:jamMasuk||''})
     .then(function(r) {
+      var durasiMd = Date.now() - _mulaiMdStatus;
       if (r && r.ok) {
         tandaiCacheTerkirim(nisnFinal);
+        catatLogKirim({nisn: nisnFinal, nama: nama, action: 'absenManual', status: st, hasil: 'ok', durasi: durasiMd});
       } else {
+        catatLogKirim({nisn: nisnFinal, nama: nama, action: 'absenManual', status: st, hasil: 'gagal', durasi: durasiMd, error: (r && r.error) || 'server ok:false'});
         if (st === 'OnTime' || st === 'Terlambat') tambahRetryQueue('absenMasuk', nisnFinal, TOKEN, jamMasuk, nama, kelas, st);
       }
     })
-    .catch(function() {
+    .catch(function(e) {
+      var durasiMd = Date.now() - _mulaiMdStatus;
+      catatLogKirim({nisn: nisnFinal, nama: nama, action: 'absenManual', status: st, hasil: durasiMd>=19000?'timeout':'network', durasi: durasiMd, error: String(e)});
       if (st === 'OnTime' || st === 'Terlambat') tambahRetryQueue('absenMasuk', nisnFinal, TOKEN, jamMasuk, nama, kelas, st);
     });
 }
@@ -4369,7 +4375,10 @@ async function simpanJadwal() {
 
 async function prosesAlpaManual() {
   if (!confirm('Proses Alpa untuk semua siswa yang belum absen hari ini?')) return;
+  var _mulaiAlpa = Date.now();
   const r = await apiPost({action:'prosesAlpa', tanggal:''});
+  var durasiAlpa = Date.now() - _mulaiAlpa;
+  catatLogKirim({nisn: '', nama: '(Proses Alpa massal)', action: 'prosesAlpa', status: 'Alpa', hasil: r && r.ok ? 'ok' : 'gagal', durasi: durasiAlpa, error: (r && r.error) || '', response: JSON.stringify(r)});
   alert(r.ok ? r.pesan : (r.error||'Gagal'));
   if (r.ok) loadDashboard();
 }
