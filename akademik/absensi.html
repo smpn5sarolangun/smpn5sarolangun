@@ -2059,6 +2059,19 @@ function tambahRetryQueue(action, nisn, token, jam, nama, kelas, status) {
   }
 }
 var _sedangProsesRetry = false; // ★ cegah concurrent retry
+// ★ FIX: hanya error yang JELAS permanen boleh bikin item di-drop dari retry queue.
+// Sebelumnya "apapun selain kata 'sibuk'" langsung di-drop setelah 1x gagal — akibatnya
+// error transient (mis. timeout yang direspons server sebagai pesan lain, gangguan
+// sesaat, dsb) bikin auto-retry berhenti diam-diam padahal harusnya masih layak dicoba lagi.
+// Default sekarang: TETAP di queue (coba lagi 15 detik kemudian), kecuali error-nya
+// termasuk daftar permanen di bawah ini.
+function _errorRetryPermanen(err) {
+  if (!err) return false;
+  var e = String(err).toLowerCase();
+  return e.includes('tidak ditemukan') || e.includes('tidak valid') || e.includes('invalid')
+      || e.includes('bukan siswa') || e.includes('unauthorized') || e.includes('token');
+}
+
 async function prosesRetryQueue() {
   if (_sedangProsesRetry) return;
   _sedangProsesRetry = true;
@@ -2119,24 +2132,28 @@ async function prosesRetryQueue() {
               tandaiCacheTerkirim(h.nisn);
               catatLogKirim({nisn: h.nisn, nama: itemAsli.nama||'', action: 'absenMasuk', status: itemAsli.status||'', hasil: 'ok', durasi: durasiRetryMasuk});
             }
-            // error lain (bukan network, bukan sibuk) → hapus juga agar tidak loop selamanya
-            // data sudah ada di cache lokal, bisa kirim ulang manual via tombol Kirim Ulang
-            else if (!h.error || !h.error.toLowerCase().includes('sibuk')) {
+            // ★ FIX: hanya hapus dari queue kalau error-nya memang permanen (mis. NISN
+            // tidak ditemukan / data tidak valid) — error lain (termasuk "sibuk" atau
+            // error tak dikenal) TETAP di queue supaya terus dicoba tiap 15 detik.
+            else if (_errorRetryPermanen(h.error)) {
               hapusIdx.push(idx);
               catatLogKirim({nisn: h.nisn, nama: itemAsli.nama||'', action: 'absenMasuk', status: itemAsli.status||'', hasil: 'gagal', durasi: durasiRetryMasuk, error: h.error||''});
-              console.warn('[Retry] Drop item nisn=' + h.nisn + ' error: ' + h.error);
+              console.warn('[Retry] Drop item nisn=' + h.nisn + ' (error permanen): ' + h.error);
             }
+            // else: sibuk / error lain / tak dikenal → biarkan di queue, coba lagi 15 detik
           });
         } else if (r && r.ok === false && r.error && r.error.toLowerCase().includes('sibuk')) {
           // Server sibuk → biarkan semua di queue, coba lagi 15 detik
-        } else if (r && r.ok === false) {
-          // Error lain dari server → hapus semua batch ini agar tidak loop
+        } else if (r && r.ok === false && _errorRetryPermanen(r.error)) {
+          // ★ FIX: hanya hapus seluruh batch kalau error-nya memang permanen.
+          // Error lain (tak dikenal) dibiarkan di queue, coba lagi 15 detik.
           qMasuk.forEach(function(q){
             var idx = queue.indexOf(q);
             if (idx !== -1) hapusIdx.push(idx);
             catatLogKirim({nisn: q.nisn, nama: q.nama||'', action: 'absenMasuk', status: q.status||'', hasil: 'gagal', durasi: durasiRetryMasuk, error: (r&&r.error)||'server ok:false'});
           });
         }
+        // else (r.ok===false, error bukan permanen & bukan "sibuk") → biarkan di queue juga
       } catch(e) {
         // Network error / timeout → biarkan di queue, coba lagi 15 detik
         var durasiRetryMasukErr = Date.now() - _mulaiRetryMasuk;
@@ -2159,11 +2176,11 @@ async function prosesRetryQueue() {
           hapusIdx.push(qIdx);
           tandaiCacheTerkirim(item.nisn);
           catatLogKirim({nisn: item.nisn, nama: item.nama||'', action: 'absenPulang', status: 'Pulang', hasil: 'ok', durasi: durasiRetryPulang});
-        } else if (rp && rp.error && !rp.error.toLowerCase().includes('sibuk')) {
-          hapusIdx.push(qIdx); // error permanen → drop
+        } else if (rp && rp.error && _errorRetryPermanen(rp.error)) {
+          hapusIdx.push(qIdx); // ★ FIX: hanya drop kalau error benar-benar permanen
           catatLogKirim({nisn: item.nisn, nama: item.nama||'', action: 'absenPulang', status: 'Pulang', hasil: 'gagal', durasi: durasiRetryPulang, error: rp.error||''});
         }
-        // sibuk / network error → biarkan di queue
+        // sibuk / error lain / tak dikenal / network error → biarkan di queue, coba lagi
       } catch(e) {
         var durasiRetryPulangErr = Date.now() - _mulaiRetryPulang;
         catatLogKirim({nisn: item.nisn, nama: item.nama||'', action: 'absenPulang', status: 'Pulang', hasil: durasiRetryPulangErr>=19000?'timeout':'network', durasi: durasiRetryPulangErr, error: String(e)});
@@ -2225,6 +2242,10 @@ function tandaiCacheTerkirim(nisn) {
     cache.forEach(function(d) {
       if (normN(d.nisn) === key && !d._terkirim) {
         d._terkirim = true;
+        d._confirmTs = Date.now(); // ★ FIX: catat jam server BENAR-BENAR konfirmasi,
+        // bukan pakai _ts (jam scan awal) sebagai fallback — supaya masa tenggang
+        // GRACE_HAPUS_MS dihitung dari saat sukses, bukan dari saat scan (yang bisa
+        // sudah lewat dari masa tenggang kalau sempat gagal & baru sukses lewat retry).
         changed = true;
       }
     });
