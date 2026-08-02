@@ -697,6 +697,7 @@ tr:hover td{background:#f8fafc;}
         <button onclick="refreshDashboardDanTabel()" style="background:none;border:none;cursor:pointer;color:var(--teal);font-size:13px;font-weight:600;">🔄 Refresh</button>
         <button onclick="kirimUlangCache()" style="background:#e53935;border:none;cursor:pointer;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;margin-left:8px;">📤 Kirim Ulang</button>
         <button onclick="lihatLogKirim()" title="Log pengiriman" style="background:none;border:1px solid #dde3ee;cursor:pointer;color:var(--teks-sub);font-size:14px;padding:4px 8px;border-radius:20px;margin-left:4px;">📋</button>
+        <button onclick="lihatLogDebugEvict()" title="Log debug: data hilang/pending" style="background:none;border:1px solid #dde3ee;cursor:pointer;color:var(--teks-sub);font-size:14px;padding:4px 8px;border-radius:20px;margin-left:4px;">🔬</button>
       </div>
       <div style="padding:0 0 8px 0;">
         <div class="search-wrap">
@@ -2485,7 +2486,27 @@ async function loadTabelAbsenHariIni() {
       var nisnKey = String(x.nisn||'').replace(/^0+/,'');
       if (x.nisn && serverNisn.has(nisnKey)) return false; // ada di server via nisn
       if (!x.nisn && serverNama.has(String(x.nama||'').trim().toLowerCase())) return false; // ada via nama
-      if (x._terkirim && (_now - (x._confirmTs||x._ts||0)) > GRACE_HAPUS_MS) return false; // ★ sudah terkirim, lewat masa toleransi, tapi tidak ada di server → dihapus dari sheet → buang
+      if (x._terkirim) {
+        var _selisih = _now - (x._confirmTs||x._ts||0);
+        if (_selisih > GRACE_HAPUS_MS) {
+          // ★ DEBUG LOG: kejadian evict — dicatat SEBELUM dibuang, buat investigasi
+          catatLogEvict({
+            nisn: x.nisn, nama: x.nama || '',
+            ts_scan: x._ts || null, ts_confirm: x._confirmTs || null,
+            selisih_menit: Math.round(_selisih / 60000),
+            totalDiServerSaatItu: r.data.length,
+            sumber: 'loadTabelAbsenHariIni'
+          });
+          return false; // ★ sudah terkirim, lewat masa toleransi, tapi tidak ada di server → dihapus dari sheet → buang
+        }
+        // ★ DEBUG LOG: masih menunggu, belum ketemu di server, belum lewat batas waktu
+        catatLogPending({
+          nisn: x.nisn, nama: x.nama || '',
+          selisih_menit: Math.round(_selisih / 60000),
+          totalDiServerSaatItu: r.data.length,
+          sumber: 'loadTabelAbsenHariIni'
+        });
+      }
       return true; // ★ belum confirmed terkirim → PERTAHANKAN selamanya (tidak ada batas waktu), _sudahAbsenSet sudah menjaga dari absen ganda
     });
     // ★ Tandai entri dari server sebagai confirmed (_terkirim + _confirmTs fresh) — supaya
@@ -2560,7 +2581,27 @@ async function refreshStatistikSaja() {
       const quickData = cacheAda.filter(function(x){
         var nisnKey = String(x.nisn||"").replace(/^0+/,"");
         if (serverNisnSet.has(nisnKey)) return false; // sudah ada di server → pakai data server
-        if (x._terkirim && (now - (x._confirmTs||x._ts||0)) > GRACE_HAPUS_MS) return false; // ★ sudah terkirim, lewat masa toleransi, tapi tidak ada di server → dihapus dari sheet → buang
+        if (x._terkirim) {
+          var _selisih = now - (x._confirmTs||x._ts||0);
+          if (_selisih > GRACE_HAPUS_MS) {
+            // ★ DEBUG LOG: kejadian evict — dicatat SEBELUM dibuang, buat investigasi
+            catatLogEvict({
+              nisn: x.nisn, nama: x.nama || '',
+              ts_scan: x._ts || null, ts_confirm: x._confirmTs || null,
+              selisih_menit: Math.round(_selisih / 60000),
+              totalDiServerSaatItu: serverData.length,
+              sumber: 'refreshStatistikSaja'
+            });
+            return false; // ★ sudah terkirim, lewat masa toleransi, tapi tidak ada di server → dihapus dari sheet → buang
+          }
+          // ★ DEBUG LOG: masih menunggu, belum ketemu di server, belum lewat batas waktu
+          catatLogPending({
+            nisn: x.nisn, nama: x.nama || '',
+            selisih_menit: Math.round(_selisih / 60000),
+            totalDiServerSaatItu: serverData.length,
+            sumber: 'refreshStatistikSaja'
+          });
+        }
         return true; // ★ belum confirmed terkirim → PERTAHANKAN selamanya (tidak ada batas waktu), _sudahAbsenSet sudah menjaga dari absen ganda
       });
       const serverByNisn = {};
@@ -2625,6 +2666,25 @@ function loadServerSyncBadgeFromCache() {
 // ★ Logger kegagalan kirim
 var SEND_LOG_KEY = 'absensi_send_log';
 var MAX_LOG = 200;
+
+// ★ DEBUG LOG (sementara, untuk investigasi kasus "hilang balik ke belum masuk")
+// Log ini TIDAK memengaruhi perilaku aplikasi sama sekali — murni pencatatan pasif.
+var DEBUG_PENDING_LOG_KEY = 'absensi_debug_pending_log';
+var DEBUG_EVICT_LOG_KEY   = 'absensi_debug_evict_log';
+var MAX_DEBUG_LOG = 300;
+
+function _catatDebugLog(key, entry) {
+  try {
+    var logs = JSON.parse(localStorage.getItem(key) || '[]');
+    logs.unshift(Object.assign({ ts: new Date().toISOString() }, entry));
+    if (logs.length > MAX_DEBUG_LOG) logs = logs.slice(0, MAX_DEBUG_LOG);
+    localStorage.setItem(key, JSON.stringify(logs));
+  } catch(e) {}
+}
+// Dipanggil tiap polling untuk item yang _terkirim=true tapi belum ketemu di respons server
+function catatLogPending(data) { _catatDebugLog(DEBUG_PENDING_LOG_KEY, data); }
+// Dipanggil PERSIS sebelum sebuah item dibuang dari cache/tabel karena dianggap hilang di server
+function catatLogEvict(data)   { _catatDebugLog(DEBUG_EVICT_LOG_KEY, data); }
 
 function catatLogKirim(data) {
   try {
@@ -2701,6 +2761,93 @@ function lihatLogKirim() {
       box.appendChild(item);
     });
   }
+}
+
+// ★ Viewer untuk log debug (pending + evict) — investigasi kasus "hilang balik ke belum masuk"
+function lihatLogDebugEvict() {
+  var logsEvict   = JSON.parse(localStorage.getItem(DEBUG_EVICT_LOG_KEY) || '[]');
+  var logsPending = JSON.parse(localStorage.getItem(DEBUG_PENDING_LOG_KEY) || '[]');
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:16px;padding:20px;width:90%;max-width:560px;max-height:80vh;overflow-y:auto;font-size:12px;';
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;';
+  var judul = document.createElement('b');
+  judul.style.fontSize = '14px';
+  judul.textContent = '🔬 Log Debug — Evict & Pending';
+  var btnGroup = document.createElement('div');
+  var btnHapus = document.createElement('button');
+  btnHapus.textContent = '🗑 Hapus Semua';
+  btnHapus.style.cssText = 'background:#ffebee;border:none;border-radius:8px;padding:4px 10px;cursor:pointer;color:#c62828;font-size:11px;margin-right:8px;';
+  btnHapus.onclick = function(){ if(confirm('Hapus semua log debug?')){ localStorage.removeItem(DEBUG_EVICT_LOG_KEY); localStorage.removeItem(DEBUG_PENDING_LOG_KEY); modal.remove(); } };
+  var btnTutup = document.createElement('button');
+  btnTutup.textContent = '✕ Tutup';
+  btnTutup.style.cssText = 'background:#f5f5f5;border:none;border-radius:8px;padding:4px 10px;cursor:pointer;';
+  btnTutup.onclick = function(){ modal.remove(); };
+  btnGroup.appendChild(btnHapus);
+  btnGroup.appendChild(btnTutup);
+  header.appendChild(judul);
+  header.appendChild(btnGroup);
+  box.appendChild(header);
+
+  var bagianEvict = document.createElement('div');
+  var judulEvict = document.createElement('div');
+  judulEvict.style.cssText = 'font-weight:700;color:#c62828;margin:10px 0 6px;';
+  judulEvict.textContent = '❌ Kejadian Evict (' + logsEvict.length + ')';
+  bagianEvict.appendChild(judulEvict);
+  if (!logsEvict.length) {
+    var kosong1 = document.createElement('div');
+    kosong1.style.cssText = 'color:#aaa;padding:8px 0;';
+    kosong1.textContent = 'Belum ada kejadian evict tercatat.';
+    bagianEvict.appendChild(kosong1);
+  } else {
+    logsEvict.forEach(function(l) {
+      var item = document.createElement('div');
+      item.style.cssText = 'background:#ffebee;border-radius:8px;padding:8px 10px;margin-bottom:6px;';
+      var jamEvict   = l.ts ? l.ts.replace('T',' ').slice(0,19) : '-';
+      var jamScan    = l.ts_scan ? new Date(l.ts_scan).toISOString().replace('T',' ').slice(0,19) : '-';
+      var jamConfirm = l.ts_confirm ? new Date(l.ts_confirm).toISOString().replace('T',' ').slice(0,19) : '-';
+      item.innerHTML = '<b>' + (l.nama||l.nisn) + '</b> (NISN ' + l.nisn + ')'
+        + '<br><span style="color:#888;">di-evict: ' + jamEvict + ' | sumber: ' + (l.sumber||'-') + '</span>'
+        + '<br><span style="color:#888;">scan: ' + jamScan + ' | confirm: ' + jamConfirm + ' | selisih: ' + l.selisih_menit + ' menit</span>'
+        + '<br><span style="color:#888;">total data di server saat itu: ' + l.totalDiServerSaatItu + '</span>';
+      bagianEvict.appendChild(item);
+    });
+  }
+  box.appendChild(bagianEvict);
+
+  var bagianPending = document.createElement('div');
+  var judulPending = document.createElement('div');
+  judulPending.style.cssText = 'font-weight:700;color:#f57c00;margin:14px 0 6px;';
+  judulPending.textContent = '⏳ Masih Pending / Belum Ketemu di Server (' + logsPending.length + ')';
+  bagianPending.appendChild(judulPending);
+  if (!logsPending.length) {
+    var kosong2 = document.createElement('div');
+    kosong2.style.cssText = 'color:#aaa;padding:8px 0;';
+    kosong2.textContent = 'Belum ada entri pending tercatat.';
+    bagianPending.appendChild(kosong2);
+  } else {
+    logsPending.slice(0, 50).forEach(function(l) {
+      var item = document.createElement('div');
+      item.style.cssText = 'background:#fff3e0;border-radius:8px;padding:6px 10px;margin-bottom:4px;';
+      var jam = l.ts ? l.ts.replace('T',' ').slice(0,19) : '-';
+      item.innerHTML = '<b>' + (l.nama||l.nisn) + '</b> (NISN ' + l.nisn + ')'
+        + '<br><span style="color:#888;">' + jam + ' | belum ketemu ' + l.selisih_menit + ' menit | sumber: ' + (l.sumber||'-') + ' | total server: ' + l.totalDiServerSaatItu + '</span>';
+      bagianPending.appendChild(item);
+    });
+    if (logsPending.length > 50) {
+      var lebih = document.createElement('div');
+      lebih.style.cssText = 'color:#aaa;text-align:center;padding:6px;';
+      lebih.textContent = '... dan ' + (logsPending.length - 50) + ' entri lainnya';
+      bagianPending.appendChild(lebih);
+    }
+  }
+  box.appendChild(bagianPending);
 }
 
 function hitungStatistikLokal() {
