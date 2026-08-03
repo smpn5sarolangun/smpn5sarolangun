@@ -1362,7 +1362,8 @@ window.addEventListener('load', async () => {
   document.getElementById('usernameTop').textContent = user || 'Admin';
 
   // Set tanggal default
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTglHariIni(); // ★ FIX: sebelumnya new Date().toISOString().split('T')[0]
+  // (UTC) — salah 1 hari selama jam 00:00–06:59 WIB, karena UTC tertinggal 7 jam dari WIB.
   document.getElementById('tglRekam').value = today;
   document.getElementById('izinTgl').value = today;
   document.getElementById('rekapDari').value = today;
@@ -2416,7 +2417,9 @@ function renderTabelAbsenHariIni(data, dariCache) {
 
 
 async function refreshDashboardDanTabel() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTglHariIni(); // ★ FIX: sebelumnya new Date().toISOString().split('T')[0]
+  // (UTC) — bikin query getAbsensiHari salah tanggal (mundur 1 hari) selama jam
+  // 00:00–06:59 WIB, akibatnya data hari sebelumnya sempat nyasar tampil di tabel hari ini.
   const [rDash, rAbsen] = await Promise.all([
     apiGet('getDashboard'),
     apiGet('getAbsensiHari', {tanggal: today})
@@ -2934,7 +2937,9 @@ function tambahKeTabeAbsenHariIni(siswa, result) {
   try {
     const existing = ambilCacheAbsen() || [];
     existing.push({
-      tanggal: new Date().toISOString().split('T')[0],
+      tanggal: getTglHariIni(), // ★ FIX: sebelumnya new Date().toISOString().split('T')[0] (UTC)
+      // — entri baru bisa distempel tanggal KEMARIN selama jam 00:00–06:59 WIB, bikin
+      // dianggap bukan data "hari ini" pas dicek ulang (cekSudahAbsenHariIni, dsb).
       nisn, nama, kelas,
       jamMasuk:  MODE_ABSEN==='masuk'  ? fmtJam(jam) : '',
       jamPulang: MODE_ABSEN==='pulang' ? fmtJam(jam) : '',
@@ -2975,7 +2980,7 @@ function togglePanelManual() {
   panel.style.display = show ? 'block' : 'none';
   if (show) {
     // Isi tanggal hari ini
-    document.getElementById('manualTgl').value = new Date().toISOString().split('T')[0];
+    document.getElementById('manualTgl').value = getTglHariIni(); // ★ FIX: sebelumnya new Date().toISOString().split('T')[0] (UTC)
     // Isi kelas dari dataKelas
     const sel = document.getElementById('manualKelas');
     while(sel.options.length > 1) sel.remove(1);
@@ -3020,7 +3025,7 @@ async function submitManual() {
     playSukses();
     tampilManualMsg(`✅ ${opt.dataset.nama} — ${status} berhasil dicatat`, false);
     // Update tabel jika tanggal hari ini
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTglHariIni(); // ★ FIX: sebelumnya new Date().toISOString().split('T')[0] (UTC)
     if (tgl === today) {
       tambahKeTabeAbsenHariIni(
         {nisn: opt.dataset.nisn, nama: opt.dataset.nama, kelas},
