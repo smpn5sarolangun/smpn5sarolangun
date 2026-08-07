@@ -2166,11 +2166,32 @@ async function prosesRetryQueue() {
                 sumber: 'prosesRetryQueue', errorRetryBerulang: h.error
               });
             }
-            // else: "sibuk" → biarkan di queue, coba lagi 15 detik, tidak perlu dicatat
-            // (sudah dipahami sebagai antrean lock, bukan misteri)
+            // ★ FIX: sebelumnya error "sibuk" sengaja TIDAK dicatat sama sekali (dianggap
+            // "sudah dipahami, bukan misteri") — tapi ini menghilangkan jejak: kalau retry
+            // gagal terus-menerus dengan "sibuk" dalam waktu lama (bukan cuma sesaat pas
+            // jam rebutan), kita gak bisa bedakan itu dari "retry berhenti jalan sama
+            // sekali" — dua-duanya kelihatan sama-sama kosong di log. Sekarang dicatat
+            // ringan ke log debug (tanpa memenuhi Log Pengiriman utama) supaya jejak
+            // percobaannya kelihatan — bisa dipakai buat mastiin retry beneran jalan
+            // terus atau berhenti diam-diam.
+            else if (h.error && h.error.toLowerCase().includes('sibuk')) {
+              _catatDebugLog(DEBUG_PENDING_LOG_KEY, {
+                nisn: h.nisn, nama: itemAsli.nama || '',
+                selisih_menit: null, totalDiServerSaatItu: null,
+                sumber: 'prosesRetryQueue', errorRetryBerulang: h.error
+              });
+            }
           });
         } else if (r && r.ok === false && r.error && r.error.toLowerCase().includes('sibuk')) {
           // Server sibuk → biarkan semua di queue, coba lagi 15 detik
+          // ★ FIX: catat ringan ke log debug juga (level seluruh batch gagal, bukan per-item)
+          qMasuk.forEach(function(q){
+            _catatDebugLog(DEBUG_PENDING_LOG_KEY, {
+              nisn: q.nisn, nama: q.nama || '',
+              selisih_menit: null, totalDiServerSaatItu: null,
+              sumber: 'prosesRetryQueue-batch', errorRetryBerulang: r.error
+            });
+          });
         } else if (r && r.ok === false && _errorRetryPermanen(r.error)) {
           // ★ FIX: hanya hapus seluruh batch kalau error-nya memang permanen.
           // Error lain (tak dikenal) dibiarkan di queue, coba lagi 15 detik.
@@ -2222,8 +2243,15 @@ async function prosesRetryQueue() {
             selisih_menit: null, totalDiServerSaatItu: null,
             sumber: 'prosesRetryQueue-pulang', errorRetryBerulang: rp.error
           });
+        } else if (rp && rp.error && rp.error.toLowerCase().includes('sibuk')) {
+          // ★ FIX: catat ringan juga buat kasus "sibuk" di retry pulang, konsisten
+          // dengan retry masuk — biar jejak percobaannya kelihatan.
+          _catatDebugLog(DEBUG_PENDING_LOG_KEY, {
+            nisn: item.nisn, nama: item.nama || '',
+            selisih_menit: null, totalDiServerSaatItu: null,
+            sumber: 'prosesRetryQueue-pulang', errorRetryBerulang: rp.error
+          });
         }
-        // sibuk → biarkan di queue, coba lagi 15 detik, tidak perlu dicatat
       } catch(e) {
         var durasiRetryPulangErr = Date.now() - _mulaiRetryPulang;
         catatLogKirim({nisn: item.nisn, nama: item.nama||'', action: 'absenPulang', status: 'Pulang', hasil: durasiRetryPulangErr>=19000?'timeout':'network', durasi: durasiRetryPulangErr, error: String(e)});
@@ -2717,6 +2745,16 @@ var DEBUG_PENDING_LOG_KEY = 'absensi_debug_pending_log';
 var DEBUG_EVICT_LOG_KEY   = 'absensi_debug_evict_log';
 var MAX_DEBUG_LOG = 300;
 
+// ★ FIX: log disimpan dalam format UTC (standar, tidak ambigu), tapi ditampilkan
+// dalam WIB biar gak bikin bingung pas dibaca manual. Data yang tersimpan TIDAK
+// diubah — cuma cara TAMPILANNYA yang dikonversi tiap kali dirender.
+function fmtJamLog(iso) {
+  if (!iso) return '-';
+  try {
+    return new Date(iso).toLocaleString('sv-SE', {timeZone: 'Asia/Jakarta'}) + ' WIB';
+  } catch(e) { return iso; }
+}
+
 function _catatDebugLog(key, entry) {
   try {
     var logs = JSON.parse(localStorage.getItem(key) || '[]');
@@ -2842,7 +2880,7 @@ function lihatLogKirim() {
       var icon = l.hasil === 'ok' ? '✅' : (l.hasil === 'retry-gagal' ? '🔁' : '❌');
       var labelStatus = l.hasil === 'retry-gagal' ? ' — gagal kirim otomatis, masih dicoba ulang' : '';
       var durasi = l.durasi ? (l.durasi/1000).toFixed(1)+'s' : '-';
-      var jam = l.ts ? l.ts.replace('T',' ').slice(0,19) : '-';
+      var jam = fmtJamLog(l.ts);
       item.innerHTML = icon + ' <b>' + (l.nama||l.nisn) + '</b> — ' + l.action + ' — ' + l.status + labelStatus
         + '<br><span style="color:#888;">'+jam+' | durasi: '+durasi+'</span>'
         + (l.error ? '<br><span style="color:#c62828;">'+l.error+'</span>' : '')
@@ -2943,9 +2981,9 @@ function lihatLogDebugEvict() {
       fEvict.forEach(function(l) {
         var item = document.createElement('div');
         item.style.cssText = 'background:#ffebee;border-radius:8px;padding:8px 10px;margin-bottom:6px;';
-        var jamEvict   = l.ts ? l.ts.replace('T',' ').slice(0,19) : '-';
-        var jamScan    = l.ts_scan ? new Date(l.ts_scan).toISOString().replace('T',' ').slice(0,19) : '-';
-        var jamConfirm = l.ts_confirm ? new Date(l.ts_confirm).toISOString().replace('T',' ').slice(0,19) : '-';
+        var jamEvict   = fmtJamLog(l.ts);
+        var jamScan    = fmtJamLog(l.ts_scan ? new Date(l.ts_scan).toISOString() : null);
+        var jamConfirm = fmtJamLog(l.ts_confirm ? new Date(l.ts_confirm).toISOString() : null);
         item.innerHTML = '<b>' + (l.nama||l.nisn) + '</b> (NISN ' + l.nisn + ')'
           + '<br><span style="color:#888;">di-evict: ' + jamEvict + ' | sumber: ' + (l.sumber||'-') + '</span>'
           + '<br><span style="color:#888;">scan: ' + jamScan + ' | confirm: ' + jamConfirm + ' | selisih: ' + l.selisih_menit + ' menit</span>'
@@ -2966,7 +3004,7 @@ function lihatLogDebugEvict() {
       fPending.slice(0, 50).forEach(function(l) {
         var item = document.createElement('div');
         item.style.cssText = 'background:#fff3e0;border-radius:8px;padding:6px 10px;margin-bottom:4px;';
-        var jam = l.ts ? l.ts.replace('T',' ').slice(0,19) : '-';
+        var jam = fmtJamLog(l.ts);
         item.innerHTML = '<b>' + (l.nama||l.nisn) + '</b> (NISN ' + l.nisn + ')'
           + '<br><span style="color:#888;">' + jam + ' | ' + (l.errorRetryBerulang
               ? 'gagal retry berulang: ' + l.errorRetryBerulang
