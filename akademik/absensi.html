@@ -2391,17 +2391,26 @@ async function lihatRiwayatKemarin() {
   box.appendChild(headerWrap);
 
   var listWrap = document.createElement('div');
-  listWrap.style.cssText = 'overflow-y:auto;padding:12px 20px 20px;flex:1;';
+  listWrap.style.cssText = 'overflow-y:auto;padding:0 20px 20px;flex:1;';
   box.appendChild(listWrap);
 
   var info = document.createElement('div');
-  info.style.cssText = 'color:#888;margin-bottom:8px;';
+  info.style.cssText = 'color:#888;margin:12px 0 6px;';
   listWrap.appendChild(info);
 
-  var warnaStatus = { Sakit: {bg:'#e0f2f1', txt:'#00695c', icon:'🤒'}, Izin: {bg:'#e8eaf6', txt:'#3949ab', icon:'📝'}, Alpa: {bg:'#ffebee', txt:'#c62828', icon:'❌'} };
+  // ★ Header kolom — kayak tabel tapi tanpa garis/border yang keliatan
+  var headerRow = document.createElement('div');
+  headerRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:0 10px 6px;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.3px;';
+  headerRow.innerHTML = '<div style="width:22px;flex-shrink:0;">No</div>'
+    + '<div style="flex:1;">Nama</div>'
+    + '<div style="width:44px;flex-shrink:0;text-align:center;">Kelas</div>'
+    + '<div style="width:90px;flex-shrink:0;text-align:right;">Keterangan</div>';
+  listWrap.appendChild(headerRow);
+
+  var warnaStatus = { Sakit: {txt:'#00695c', icon:'🤒'}, Izin: {txt:'#3949ab', icon:'📝'}, Alpa: {txt:'#c62828', icon:'❌'} };
 
   function renderList(filterText) {
-    while (listWrap.children.length > 1) listWrap.removeChild(listWrap.lastChild);
+    while (listWrap.children.length > 2) listWrap.removeChild(listWrap.lastChild);
     var q = (filterText||'').trim().toLowerCase();
     var filtered = !q ? data.list : data.list.filter(function(x) {
       return String(x.nama||'').toLowerCase().includes(q) || String(x.kelas||'').toLowerCase().includes(q);
@@ -2431,13 +2440,15 @@ async function lihatRiwayatKemarin() {
       listWrap.appendChild(nihil);
       return;
     }
-    filtered.forEach(function(x) {
-      var w = warnaStatus[x.status] || {bg:'#f5f5f5', txt:'#666', icon:'•'};
+    filtered.forEach(function(x, idx) {
+      var w = warnaStatus[x.status] || {txt:'#666', icon:'•'};
       var item = document.createElement('div');
-      item.style.cssText = 'background:'+w.bg+';border-radius:8px;padding:8px 10px;margin-bottom:6px;';
-      item.innerHTML = w.icon + ' <b>' + x.nama + '</b> — ' + x.kelas
-        + '<br><span style="color:'+w.txt+';font-weight:600;">' + x.status + '</span>'
-        + (x.keterangan ? ' <span style="color:#666;">— ' + x.keterangan + '</span>' : '');
+      item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;'
+        + (idx % 2 === 0 ? 'background:#fafafa;' : '');
+      item.innerHTML = '<div style="width:22px;flex-shrink:0;color:#bbb;font-size:12px;">'+(idx+1)+'</div>'
+        + '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">'+x.nama+'</div>'
+        + '<div style="width:44px;flex-shrink:0;text-align:center;font-size:11px;color:#888;">'+x.kelas+'</div>'
+        + '<div style="width:90px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:'+w.txt+';">'+w.icon+' '+x.status+'</div>';
       listWrap.appendChild(item);
     });
   }
@@ -3488,6 +3499,10 @@ function bukаModalDetail(status) {
   judul.style.color = info.color;
   modal.classList.add('open');
 
+  // ★ Tab "Riwayat Kemarin" cuma muncul di modal Belum Masuk
+  var tabRiwayat = document.getElementById('mdRiwayatTab');
+  if (tabRiwayat) tabRiwayat.style.display = (status === 'belumMasuk') ? 'inline-block' : 'none';
+
   // Baca langsung dari tabel DOM - instan, tidak fetch server
   const tbody = document.getElementById('tabelAbsenHariIni');
   const rows  = tbody ? Array.from(tbody.querySelectorAll('tr')) : [];
@@ -3557,8 +3572,7 @@ function bukаModalDetail(status) {
       isi.parentNode.insertBefore(mdSticky, isi);
     }
     mdSticky.innerHTML = '<div class="search-wrap" style="margin-bottom:8px;"><input type="text" id="mdSearch" placeholder="🔍 Cari nama..." autocomplete="off" oninput="onSearchInput(this,filterMdList)" style="width:100%;padding:9px 14px;border:1.5px solid #dde3ee;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;box-sizing:border-box;outline:none;"><button class="search-clear" onclick="clearSearch(&apos;mdSearch&apos;,filterMdList)">✕</button></div>'
-      + '<p style="font-size:12px;color:var(--teks-sub);margin:0 0 4px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk — klik nama untuk input</p>'
-      + '<p onclick="lihatRiwayatKemarin()" style="font-size:11px;color:#5c6bc0;margin:0 0 8px;font-weight:700;cursor:pointer;text-decoration:underline;">🗓️ Riwayat Kehadiran Kemarin — klik untuk lihat</p>'
+      + '<p style="font-size:12px;color:var(--teks-sub);margin:0 0 8px;" id="mdCountBM">' + siswaList.length + ' siswa belum masuk — klik nama untuk input</p>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
       + '<span style="font-size:11px;font-weight:700;color:#666;">Tandai Semua:</span>'
       + '<button onclick="bulkMdStatus(\'Hadir\')" style="padding:4px 12px;border:2px solid var(--hijau);border-radius:8px;color:var(--hijau);background:#fff;font-weight:700;font-size:12px;cursor:pointer;">✅ Hadir</button>'
@@ -5138,8 +5152,9 @@ function bukaHalamanKartu(){
 <!-- Modal Detail Siswa -->
 <div class="modal-detail" id="modalDetail" onclick="if(event.target===this)tutupModalDetail()">
   <div class="modal-detail-box">
-    <div class="modal-detail-head">
-      <h3 id="modalDetailJudul">Detail Siswa</h3>
+    <div class="modal-detail-head" style="flex-wrap:wrap;gap:8px;">
+      <h3 id="modalDetailJudul" style="margin:0;">Detail Siswa</h3>
+      <button id="mdRiwayatTab" onclick="lihatRiwayatKemarin()" style="display:none;margin-left:auto;margin-right:8px;background:#ede7f6;color:#5c3fa8;border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">🗓️ Riwayat Kemarin</button>
       <button onclick="tutupModalDetail()"
         style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--teks-sub);">✕</button>
     </div>
