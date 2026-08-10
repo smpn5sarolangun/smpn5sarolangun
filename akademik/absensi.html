@@ -2306,31 +2306,15 @@ function mundurTanggal(tglStr, n) {
 // "Belum Masuk".
 var _riwayatKemarinCache = null;
 
-async function muatRiwayatKemarin() {
+// ★ Ambil riwayat Alpa+Izin+Sakit untuk SATU tanggal spesifik (persis, tanpa
+// deteksi mundur) — dipakai baik oleh mode default (hari aktif terakhir) maupun
+// mode pilih tanggal manual.
+async function fetchRiwayatTanggal(tgl) {
   var normNisnRK = function(n) { return String(n||'').trim().replace(/\.0$/, '').replace(/^0+/, ''); };
   try {
-    // ★ Cari "hari aktif terakhir": mundur dari H-1, cek apakah ada data OnTime/
-    // Terlambat (bukti fisik ada siswa datang) — kalau kosong, dianggap hari libur,
-    // mundur lagi. Cek OnTime/Terlambat dipilih daripada cek Alpa/Izin/Sakit karena
-    // hampir mustahil hari sekolah aktif tanpa satupun siswa OnTime/Terlambat,
-    // sedangkan 0 Alpa/Izin/Sakit itu wajar terjadi di hari normal (semua rajin).
-    var tglCek = getTglKemarin();
-    var rData = null;
-    for (var mundur = 0; mundur < 7; mundur++) {
-      var r = await apiGet('getAbsensiHari', {tanggal: tglCek});
-      if (r.ok && r.data) {
-        var adaAktivitas = r.data.some(function(d) {
-          var st = String(d.status||d[6]||'').trim();
-          return st === 'OnTime' || st === 'Terlambat';
-        });
-        if (adaAktivitas) { rData = r.data; break; }
-      }
-      tglCek = mundurTanggal(tglCek, 1);
-    }
-
-    if (!rData) { _riwayatKemarinCache = { tanggal: null, list: [] }; return; }
-
-    var list = rData.filter(function(d) {
+    var r = await apiGet('getAbsensiHari', {tanggal: tgl});
+    if (!r.ok || !r.data) return { tanggal: tgl, list: [] };
+    var list = r.data.filter(function(d) {
       var st = String(d.status||d[6]||'').trim();
       return st === 'Sakit' || st === 'Izin' || st === 'Alpa';
     }).map(function(d) {
@@ -2344,8 +2328,34 @@ async function muatRiwayatKemarin() {
     });
     // ★ Urut per kelas dulu, baru nama
     list.sort(function(a,b){ return a.kelas.localeCompare(b.kelas, undefined, {numeric:true}) || a.nama.localeCompare(b.nama); });
+    return { tanggal: tgl, list: list };
+  } catch(e) {
+    return { tanggal: tgl, list: [] };
+  }
+}
 
-    _riwayatKemarinCache = { tanggal: tglCek, list: list };
+async function muatRiwayatKemarin() {
+  try {
+    // ★ Cari "hari aktif terakhir": mundur dari H-1, cek apakah ada data OnTime/
+    // Terlambat (bukti fisik ada siswa datang) — kalau kosong, dianggap hari libur,
+    // mundur lagi. Cek OnTime/Terlambat dipilih daripada cek Alpa/Izin/Sakit karena
+    // hampir mustahil hari sekolah aktif tanpa satupun siswa OnTime/Terlambat,
+    // sedangkan 0 Alpa/Izin/Sakit itu wajar terjadi di hari normal (semua rajin).
+    var tglCek = getTglKemarin();
+    var found = false;
+    for (var mundur = 0; mundur < 7; mundur++) {
+      var r = await apiGet('getAbsensiHari', {tanggal: tglCek});
+      if (r.ok && r.data) {
+        var adaAktivitas = r.data.some(function(d) {
+          var st = String(d.status||d[6]||'').trim();
+          return st === 'OnTime' || st === 'Terlambat';
+        });
+        if (adaAktivitas) { found = true; break; }
+      }
+      tglCek = mundurTanggal(tglCek, 1);
+    }
+
+    _riwayatKemarinCache = found ? await fetchRiwayatTanggal(tglCek) : { tanggal: null, list: [] };
   } catch(e) {
     _riwayatKemarinCache = { tanggal: null, list: [] };
   }
@@ -2353,7 +2363,7 @@ async function muatRiwayatKemarin() {
 
 // ★ Popup "Riwayat Kehadiran Kemarin" — dibuka dari judul di modal "Belum Masuk".
 // Isinya Alpa+Izin+Sakit dari hari aktif terakhir (bisa mundur lebih dari 1 hari
-// kalau H-1 ternyata libur), diurutkan per kelas.
+// kalau H-1 ternyata libur), diurutkan per kelas. Ada pilihan tanggal manual juga.
 async function lihatRiwayatKemarin() {
   if (!_riwayatKemarinCache) {
     await muatRiwayatKemarin();
@@ -2386,8 +2396,22 @@ async function lihatRiwayatKemarin() {
   var inputCari = document.createElement('input');
   inputCari.type = 'text';
   inputCari.placeholder = '🔎 Cari nama atau kelas...';
-  inputCari.style.cssText = 'width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;';
+  inputCari.style.cssText = 'width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;margin-bottom:8px;';
   headerWrap.appendChild(inputCari);
+
+  var dateWrap = document.createElement('div');
+  dateWrap.style.cssText = 'display:flex;align-items:center;gap:8px;';
+  var dateLabel = document.createElement('span');
+  dateLabel.style.cssText = 'font-size:11px;color:#888;white-space:nowrap;';
+  dateLabel.textContent = 'Atau pilih tanggal:';
+  var dateInput = document.createElement('input');
+  dateInput.type = 'date';
+  dateInput.value = data.tanggal || '';
+  dateInput.max = getTglHariIni();
+  dateInput.style.cssText = 'flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;';
+  dateWrap.appendChild(dateLabel);
+  dateWrap.appendChild(dateInput);
+  headerWrap.appendChild(dateWrap);
   box.appendChild(headerWrap);
 
   var listWrap = document.createElement('div');
@@ -2407,7 +2431,7 @@ async function lihatRiwayatKemarin() {
     + '<div style="width:90px;flex-shrink:0;text-align:right;">Keterangan</div>';
   listWrap.appendChild(headerRow);
 
-  var warnaStatus = { Sakit: {txt:'#00695c', icon:'🤒'}, Izin: {txt:'#3949ab', icon:'📝'}, Alpa: {txt:'#c62828', icon:'❌'} };
+  var warnaStatus = { Sakit: {txt:'#00695c'}, Izin: {txt:'#3949ab'}, Alpa: {txt:'#c62828'} };
 
   function renderList(filterText) {
     while (listWrap.children.length > 2) listWrap.removeChild(listWrap.lastChild);
@@ -2441,18 +2465,25 @@ async function lihatRiwayatKemarin() {
       return;
     }
     filtered.forEach(function(x, idx) {
-      var w = warnaStatus[x.status] || {txt:'#666', icon:'•'};
+      var w = warnaStatus[x.status] || {txt:'#666'};
       var item = document.createElement('div');
       item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;'
         + (idx % 2 === 0 ? 'background:#fafafa;' : '');
       item.innerHTML = '<div style="width:22px;flex-shrink:0;color:#bbb;font-size:12px;">'+(idx+1)+'</div>'
         + '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">'+x.nama+'</div>'
         + '<div style="width:44px;flex-shrink:0;text-align:center;font-size:11px;color:#888;">'+x.kelas+'</div>'
-        + '<div style="width:90px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:'+w.txt+';">'+w.icon+' '+x.status+'</div>';
+        + '<div style="width:90px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:'+w.txt+';">'+x.status+'</div>';
       listWrap.appendChild(item);
     });
   }
   inputCari.addEventListener('input', function(){ renderList(inputCari.value); });
+  dateInput.addEventListener('change', async function(){
+    if (!dateInput.value) return;
+    judul.textContent = '🗓️ Riwayat Kehadiran — ' + fmtTgl(dateInput.value.split('-').reverse().join('/'));
+    info.textContent = 'Memuat...';
+    data = await fetchRiwayatTanggal(dateInput.value);
+    renderList(inputCari.value);
+  });
   renderList('');
 }
 
