@@ -2312,18 +2312,20 @@ var _riwayatKemarinCache = null;
 async function fetchRiwayatTanggal(tgl) {
   var normNisnRK = function(n) { return String(n||'').trim().replace(/\.0$/, '').replace(/^0+/, ''); };
   try {
-    var r = await apiGet('getAbsensiHari', {tanggal: tgl});
+    // ★ Pakai action 'getRiwayatTanggal' (endpoint terpisah, aman untuk tanggal
+    // bebas) — BUKAN 'getAbsensiHari' yang dipakai proses absen harian.
+    var r = await apiGet('getRiwayatTanggal', {tanggal: tgl});
     if (!r.ok || !r.data) return { tanggal: tgl, list: [] };
     var list = r.data.filter(function(d) {
-      var st = String(d.status||d[6]||'').trim();
+      var st = String(d.status||'').trim();
       return st === 'Sakit' || st === 'Izin' || st === 'Alpa';
     }).map(function(d) {
       return {
-        nisn: normNisnRK(d.nisn || d[1] || ''),
-        nama: d.nama || d[2] || '',
-        kelas: d.kelas || d[3] || '',
-        status: d.status || d[6] || '',
-        keterangan: d.keterangan || d[7] || ''
+        nisn: normNisnRK(d.nisn || ''),
+        nama: d.nama || '',
+        kelas: d.kelas || '',
+        status: d.status || '',
+        keterangan: d.ket || '' // ★ FIX: field backend namanya 'ket', bukan 'keterangan'
       };
     });
     // ★ Urut per kelas dulu, baru nama
@@ -2344,10 +2346,12 @@ async function muatRiwayatKemarin() {
     var tglCek = getTglKemarin();
     var found = false;
     for (var mundur = 0; mundur < 7; mundur++) {
-      var r = await apiGet('getAbsensiHari', {tanggal: tglCek});
+      // ★ FIX: pakai 'getRiwayatTanggal' (endpoint terpisah, aman untuk tanggal
+      // bebas) — BUKAN 'getAbsensiHari' yang cuma andal untuk ±1-2 hari terakhir.
+      var r = await apiGet('getRiwayatTanggal', {tanggal: tglCek});
       if (r.ok && r.data) {
         var adaAktivitas = r.data.some(function(d) {
-          var st = String(d.status||d[6]||'').trim();
+          var st = String(d.status||'').trim();
           return st === 'OnTime' || st === 'Terlambat';
         });
         if (adaAktivitas) { found = true; break; }
@@ -2428,10 +2432,10 @@ async function lihatRiwayatKemarin() {
   headerRow.innerHTML = '<div style="width:22px;flex-shrink:0;">No</div>'
     + '<div style="flex:1;">Nama</div>'
     + '<div style="width:44px;flex-shrink:0;text-align:center;">Kelas</div>'
-    + '<div style="width:90px;flex-shrink:0;text-align:right;">Keterangan</div>';
+    + '<div style="width:90px;flex-shrink:0;text-align:left;">Keterangan</div>';
   listWrap.appendChild(headerRow);
 
-  var warnaStatus = { Sakit: {txt:'#00695c'}, Izin: {txt:'#3949ab'}, Alpa: {txt:'#c62828'} };
+  var warnaStatus = { Sakit: {txt:'#1a1a1a'}, Izin: {txt:'#1a1a1a'}, Alpa: {txt:'#1a1a1a'} };
 
   function renderList(filterText) {
     while (listWrap.children.length > 2) listWrap.removeChild(listWrap.lastChild);
@@ -2472,7 +2476,7 @@ async function lihatRiwayatKemarin() {
       item.innerHTML = '<div style="width:22px;flex-shrink:0;color:#bbb;font-size:12px;">'+(idx+1)+'</div>'
         + '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">'+x.nama+'</div>'
         + '<div style="width:44px;flex-shrink:0;text-align:center;font-size:11px;color:#888;">'+x.kelas+'</div>'
-        + '<div style="width:90px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:'+w.txt+';">'+x.status+'</div>';
+        + '<div style="width:90px;flex-shrink:0;text-align:left;font-size:12px;font-weight:700;color:'+w.txt+';">'+x.status+'</div>';
       listWrap.appendChild(item);
     });
   }
