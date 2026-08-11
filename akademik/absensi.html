@@ -2435,7 +2435,7 @@ async function lihatRiwayatKemarin() {
     + '<div style="width:90px;flex-shrink:0;text-align:left;">Keterangan</div>';
   listWrap.appendChild(headerRow);
 
-  var warnaStatus = { Sakit: {txt:'#1a1a1a'}, Izin: {txt:'#1a1a1a'}, Alpa: {txt:'#1a1a1a'} };
+  var warnaStatus = { Sakit: {txt:'#2e7d32'}, Izin: {txt:'#1565c0'}, Alpa: {txt:'#c62828'} };
 
   function renderList(filterText) {
     while (listWrap.children.length > 2) listWrap.removeChild(listWrap.lastChild);
@@ -2473,9 +2473,9 @@ async function lihatRiwayatKemarin() {
       var item = document.createElement('div');
       item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;'
         + (idx % 2 === 0 ? 'background:#fafafa;' : '');
-      item.innerHTML = '<div style="width:22px;flex-shrink:0;color:#bbb;font-size:12px;">'+(idx+1)+'</div>'
-        + '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">'+x.nama+'</div>'
-        + '<div style="width:44px;flex-shrink:0;text-align:center;font-size:11px;color:#888;">'+x.kelas+'</div>'
+      item.innerHTML = '<div style="width:22px;flex-shrink:0;color:#1a1a1a;font-size:12px;">'+(idx+1)+'</div>'
+        + '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:#1a1a1a;">'+x.nama+'</div>'
+        + '<div style="width:44px;flex-shrink:0;text-align:center;font-size:11px;color:#1a1a1a;">'+x.kelas+'</div>'
         + '<div style="width:90px;flex-shrink:0;text-align:left;font-size:12px;font-weight:700;color:'+w.txt+';">'+x.status+'</div>';
       listWrap.appendChild(item);
     });
