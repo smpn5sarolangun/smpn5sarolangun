@@ -2336,6 +2336,59 @@ async function fetchRiwayatTanggal(tgl) {
   }
 }
 
+// ★ Hitung frekuensi status berturut-turut (hanya HARI EFEKTIF, hari libur/tidak
+// aktif dilewati tanpa dihitung) untuk tiap siswa di `daftarSiswa`, mundur dari
+// `tglAwal`. Berhenti untuk siswa tsb begitu ketemu status yang beda di suatu hari
+// efektif (termasuk kalau ternyata dia OnTime/Terlambat/hadir). Satu kali jalan
+// mundur dipakai bareng untuk SEMUA siswa (bukan per-siswa) biar hemat request.
+// Return: {nisn_ternormalisasi: jumlahBerturutTurut} — nilai minimal 1 (hari itu sendiri).
+async function hitungFrekuensiBerturut(daftarSiswa, tglAwal) {
+  var normN = function(n) { return String(n||'').trim().replace(/\.0$/, '').replace(/^0+/, ''); };
+  var freq = {};   // nisn -> jumlah berturut-turut (termasuk tglAwal)
+  var aktif = {};  // nisn -> status yang lagi dicek; dihapus begitu streak putus
+  daftarSiswa.forEach(function(x) {
+    var n = normN(x.nisn);
+    freq[n] = 1;
+    aktif[n] = x.status;
+  });
+  if (!tglAwal) return freq;
+
+  var tglCek = tglAwal;
+  var hariEfektifDicek = 0;
+  var langkahKalender = 0;
+  var MAX_HARI_EFEKTIF = 30;      // ★ batas mundur maksimal 30 hari SEKOLAH efektif
+  var MAX_LANGKAH_KALENDER = 120; // ★ pengaman total kalau ada libur panjang (mis. libur semester)
+
+  while (Object.keys(aktif).length > 0 && hariEfektifDicek < MAX_HARI_EFEKTIF && langkahKalender < MAX_LANGKAH_KALENDER) {
+    tglCek = mundurTanggal(tglCek, 1);
+    langkahKalender++;
+    var r;
+    try { r = await apiGet('getRiwayatTanggal', {tanggal: tglCek}); } catch(e) { r = null; }
+    if (!r || !r.ok || !r.data) continue; // gagal ambil data → lewati, jangan dihitung
+
+    var adaAktivitas = r.data.some(function(d) {
+      var st = String(d.status||'').trim();
+      return st === 'OnTime' || st === 'Terlambat';
+    });
+    if (!adaAktivitas) continue; // ★ hari libur / bukan hari sekolah → dilewati, TIDAK dihitung mundur
+    hariEfektifDicek++;
+
+    var statusHariIni = {};
+    r.data.forEach(function(d) {
+      statusHariIni[normN(d.nisn||'')] = String(d.status||'').trim();
+    });
+
+    Object.keys(aktif).forEach(function(n) {
+      if (statusHariIni[n] === aktif[n]) {
+        freq[n]++;
+      } else {
+        delete aktif[n]; // beda status (atau ternyata hadir) → streak putus, berhenti hitung
+      }
+    });
+  }
+  return freq;
+}
+
 async function muatRiwayatKemarin() {
   try {
     // ★ Cari "hari aktif terakhir": mundur dari H-1, cek apakah ada data OnTime/
@@ -2432,7 +2485,8 @@ async function lihatRiwayatKemarin() {
   headerRow.innerHTML = '<div style="width:22px;flex-shrink:0;">No</div>'
     + '<div style="flex:1;">Nama</div>'
     + '<div style="width:44px;flex-shrink:0;text-align:center;">Kelas</div>'
-    + '<div style="width:90px;flex-shrink:0;text-align:left;">Keterangan</div>';
+    + '<div style="width:74px;flex-shrink:0;text-align:left;">Keterangan</div>'
+    + '<div style="width:60px;flex-shrink:0;text-align:center;">Berturut</div>';
   listWrap.appendChild(headerRow);
 
   var warnaStatus = { Sakit: {txt:'#2e7d32'}, Izin: {txt:'#1565c0'}, Alpa: {txt:'#c62828'} };
@@ -2473,22 +2527,58 @@ async function lihatRiwayatKemarin() {
       var item = document.createElement('div');
       item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;'
         + (idx % 2 === 0 ? 'background:#fafafa;' : '');
+
+      // ★ Frekuensi berturut-turut (hari efektif) — tampil "…" selagi dihitung
+      var freqTxt = '…';
+      var freqTitle = 'Sedang menghitung riwayat berturut-turut...';
+      var freqBg = '#f0f0f0', freqColor = '#999';
+      if (data.freqMap) {
+        var jumlah = data.freqMap[x.nisn] || 1;
+        freqTxt = jumlah + 'x';
+        freqTitle = x.status + ' ' + jumlah + ' hari berturut-turut (hari efektif)';
+        if (jumlah >= 3) { freqBg = '#fdecea'; freqColor = '#c62828'; } // ★ 3x+ ditandai merah, butuh perhatian
+        else if (jumlah === 2) { freqBg = '#fff8e1'; freqColor = '#e67e22'; }
+        else { freqBg = '#f0f0f0'; freqColor = '#888'; }
+      }
+
       item.innerHTML = '<div style="width:22px;flex-shrink:0;color:#1a1a1a;font-size:12px;">'+(idx+1)+'</div>'
         + '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:#1a1a1a;">'+x.nama+'</div>'
         + '<div style="width:44px;flex-shrink:0;text-align:center;font-size:11px;color:#1a1a1a;">'+x.kelas+'</div>'
-        + '<div style="width:90px;flex-shrink:0;text-align:left;font-size:12px;font-weight:700;color:'+w.txt+';">'+x.status+'</div>';
+        + '<div style="width:74px;flex-shrink:0;text-align:left;font-size:12px;font-weight:700;color:'+w.txt+';">'+x.status+'</div>'
+        + '<div style="width:60px;flex-shrink:0;text-align:center;" title="'+freqTitle+'">'
+        +   '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:'+freqBg+';color:'+freqColor+';">'+freqTxt+'</span>'
+        + '</div>';
       listWrap.appendChild(item);
     });
   }
   inputCari.addEventListener('input', function(){ renderList(inputCari.value); });
+
+  // ★ reqVersion mencegah hasil hitung frekuensi yang "basi" (dari tanggal lama)
+  // menimpa tampilan setelah user keburu ganti tanggal lagi.
+  var reqVersion = 0;
+  function muatFrekuensiLalu(targetData, myVersion) {
+    if (!targetData.list.length) { targetData.freqMap = {}; return; }
+    hitungFrekuensiBerturut(targetData.list, targetData.tanggal).then(function(freq) {
+      if (myVersion !== reqVersion) return; // sudah ganti tanggal, buang hasil ini
+      targetData.freqMap = freq;
+      renderList(inputCari.value);
+    });
+  }
+
   dateInput.addEventListener('change', async function(){
     if (!dateInput.value) return;
     judul.textContent = '🗓️ Riwayat Kehadiran — ' + fmtTgl(dateInput.value.split('-').reverse().join('/'));
     info.textContent = 'Memuat...';
+    reqVersion++;
     data = await fetchRiwayatTanggal(dateInput.value);
+    data.freqMap = null;
     renderList(inputCari.value);
+    muatFrekuensiLalu(data, reqVersion);
   });
+
+  data.freqMap = null;
   renderList('');
+  muatFrekuensiLalu(data, reqVersion);
 }
 
 // Cache absensi tabel
