@@ -2389,6 +2389,25 @@ async function hitungFrekuensiBerturut(daftarSiswa, tglAwal) {
   return freq;
 }
 
+// ★ Cache frekuensi berturut-turut per tanggal, di localStorage. Cuma dipakai
+// untuk tanggal yang SUDAH LEWAT (bukan hari ini) — sebab hari yang sudah lewat
+// datanya historis dan tidak mungkin berubah lagi, jadi aman disimpan permanen
+// dan tidak perlu dihitung ulang tiap kali modal dibuka.
+var RIWAYAT_FREQ_CACHE_KEY = 'riwayatFreqCacheV1';
+function ambilFreqCache(tgl) {
+  try {
+    var obj = JSON.parse(localStorage.getItem(RIWAYAT_FREQ_CACHE_KEY) || '{}');
+    return obj[tgl] || null;
+  } catch(e) { return null; }
+}
+function simpanFreqCache(tgl, freqMap) {
+  try {
+    var obj = JSON.parse(localStorage.getItem(RIWAYAT_FREQ_CACHE_KEY) || '{}');
+    obj[tgl] = freqMap;
+    localStorage.setItem(RIWAYAT_FREQ_CACHE_KEY, JSON.stringify(obj));
+  } catch(e) {}
+}
+
 async function muatRiwayatKemarin() {
   try {
     // ★ Cari "hari aktif terakhir": mundur dari H-1, cek apakah ada data OnTime/
@@ -2558,10 +2577,23 @@ async function lihatRiwayatKemarin() {
   var reqVersion = 0;
   function muatFrekuensiLalu(targetData, myVersion) {
     if (!targetData.list.length) { targetData.freqMap = {}; return; }
-    hitungFrekuensiBerturut(targetData.list, targetData.tanggal).then(function(freq) {
+    var tgl = targetData.tanggal;
+    var sudahLewat = tgl !== getTglHariIni(); // ★ hari ini selalu dihitung ulang (data masih bisa berubah)
+
+    if (sudahLewat) {
+      var cached = ambilFreqCache(tgl);
+      if (cached) {
+        targetData.freqMap = cached;
+        renderList(inputCari.value);
+        return; // ★ sudah ada di cache, tidak perlu hitung ulang / panggil API sama sekali
+      }
+    }
+
+    hitungFrekuensiBerturut(targetData.list, tgl).then(function(freq) {
       if (myVersion !== reqVersion) return; // sudah ganti tanggal, buang hasil ini
       targetData.freqMap = freq;
       renderList(inputCari.value);
+      if (sudahLewat) simpanFreqCache(tgl, freq); // ★ simpan cache cuma utk tanggal yg sudah lewat
     });
   }
 
