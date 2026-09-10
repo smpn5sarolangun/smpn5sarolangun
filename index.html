@@ -616,29 +616,13 @@ function updateLinkERapor(url) {
   });
 }
 function updateLinkCBT(admin, guru, siswa) {
-  // Admin & Guru: buka langsung
-  ['.link-cbt-admin', '.link-cbt-guru'].forEach(function(sel){
-    var url = sel === '.link-cbt-admin' ? admin : guru;
+  // Admin, Guru, & Siswa: buka langsung
+  ['.link-cbt-admin', '.link-cbt-guru', '.link-cbt-siswa'].forEach(function(sel){
+    var url = sel === '.link-cbt-admin' ? admin : (sel === '.link-cbt-guru' ? guru : siswa);
     document.querySelectorAll(sel).forEach(function(el){
-      if(url){ el.href = url; el.classList.remove('link-disabled'); }
+      if(url){ el.href = url; el.classList.remove('link-disabled'); el.onclick = null; el.removeAttribute('target'); el.target = '_blank'; }
       else { el.removeAttribute('href'); el.classList.add('link-disabled'); }
     });
-  });
-  // Siswa: intercept klik → copy link + popup panduan incognito
-  document.querySelectorAll('.link-cbt-siswa').forEach(function(el){
-    if(siswa){
-      el.dataset.cbtUrl = siswa;
-      el.removeAttribute('href');
-      el.classList.remove('link-disabled');
-      el.onclick = function(e){
-        e.preventDefault();
-        tampilPopupIncognito(siswa);
-      };
-    } else {
-      el.removeAttribute('href');
-      el.classList.add('link-disabled');
-      el.onclick = null;
-    }
   });
 }
 
