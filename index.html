@@ -340,6 +340,7 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
         <div class="dropdown-menu">
           <a href="#" class="link-cbt-admin link-disabled" target="_blank">Admin</a>
           <a href="#" class="link-cbt-guru link-disabled" target="_blank">Guru</a>
+          <a href="#" class="link-cbt-pengawas link-disabled" target="_blank">Pengawas</a>
           <a href="#" class="link-cbt-siswa link-disabled" target="_blank">Siswa</a>
         </div>
       </div>
@@ -388,6 +389,7 @@ body::before{content:'';display:block;height:96px;background:var(--biru);positio
 <div class="mob-sub">
     <a href="#" class="link-cbt-admin mob-child link-disabled" target="_blank">— Admin</a>
     <a href="#" class="link-cbt-guru mob-child link-disabled" target="_blank">— Guru</a>
+    <a href="#" class="link-cbt-pengawas mob-child link-disabled" target="_blank">— Pengawas</a>
     <a href="#" class="link-cbt-siswa mob-child link-disabled" target="_blank">— Siswa</a>
 </div>
     <a href="kontak.html">Kontak</a>
@@ -615,10 +617,10 @@ function updateLinkERapor(url) {
     else { el.removeAttribute('href'); el.classList.add('link-disabled'); }
   });
 }
-function updateLinkCBT(admin, guru, siswa) {
-  // Admin, Guru, & Siswa: buka langsung
-  ['.link-cbt-admin', '.link-cbt-guru', '.link-cbt-siswa'].forEach(function(sel){
-    var url = sel === '.link-cbt-admin' ? admin : (sel === '.link-cbt-guru' ? guru : siswa);
+function updateLinkCBT(admin, guru, siswa, pengawas) {
+  // Admin, Guru, Pengawas, & Siswa: buka langsung
+  ['.link-cbt-admin', '.link-cbt-guru', '.link-cbt-pengawas', '.link-cbt-siswa'].forEach(function(sel){
+    var url = sel === '.link-cbt-admin' ? admin : (sel === '.link-cbt-guru' ? guru : (sel === '.link-cbt-pengawas' ? pengawas : siswa));
     document.querySelectorAll(sel).forEach(function(el){
       if(url){ el.href = url; el.classList.remove('link-disabled'); el.onclick = null; el.removeAttribute('target'); el.target = '_blank'; }
       else { el.removeAttribute('href'); el.classList.add('link-disabled'); }
@@ -724,8 +726,7 @@ function renderProfilBeranda(d){
   if(p.misi_kokurikuler){const el=document.getElementById('misiKoku');if(el)el.innerHTML=p.misi_kokurikuler;}
   if(p.misi_ekstrakurikuler){const el=document.getElementById('misiEkstra');if(el)el.innerHTML=p.misi_ekstrakurikuler;}
   updateLinkERapor(p.url_erapor);
-  updateLinkCBT(p.url_cbt_admin, p.url_cbt_guru, p.url_cbt_siswa);
-  updateLinkCBT(p.url_cbt_admin, p.url_cbt_guru, p.url_cbt_siswa);
+  updateLinkCBT(p.url_cbt_admin, p.url_cbt_guru, p.url_cbt_siswa, p.url_cbt_pengawas);
   function renderTujuan(id, val){
     if(!val) return;
     const el=document.getElementById(id);
